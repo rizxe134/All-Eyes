@@ -140,6 +140,10 @@ export class DisplayBindings {
           setScopeMaskEnabled(next);
           this._scopeBtn.classList.toggle('active', next);
           this._scopeBtn.setAttribute('aria-pressed', String(next));
+          this._scopeFeatherSlider?.parentElement?.classList.toggle(
+            'visible',
+            next,
+          );
           this._syncShareState();
         },
         setScopeFeather: (value) => {

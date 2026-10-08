@@ -137,6 +137,10 @@ export class VisualSettings {
       setScopeMaskEnabled(scopeEnabled);
       this._scopeBtn?.classList.toggle('active', scopeEnabled);
       this._scopeBtn?.setAttribute('aria-pressed', String(scopeEnabled));
+      this._scopeFeatherSlider?.parentElement?.classList.toggle(
+        'visible',
+        scopeEnabled,
+      );
     }
     if (typeof scopeFeatherPct === 'number' && this._scopeFeatherSlider) {
       const pct = Math.max(0, Math.min(100, Math.round(scopeFeatherPct)));
@@ -1305,6 +1309,10 @@ export class VisualSettings {
       setScopeMaskEnabled(scopeState.enabled);
       this._scopeBtn?.classList.toggle('active', scopeState.enabled);
       this._scopeBtn?.setAttribute('aria-pressed', String(scopeState.enabled));
+      this._scopeFeatherSlider?.parentElement?.classList.toggle(
+        'visible',
+        scopeState.enabled,
+      );
     }
     if (typeof scopeState.featherPct === 'number' && this._scopeFeatherSlider) {
       const pct = Math.max(0, Math.min(100, Math.round(scopeState.featherPct)));

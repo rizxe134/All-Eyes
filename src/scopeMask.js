@@ -101,7 +101,9 @@ const SCOPE_TERMINUS_SAMPLE_MS = 120;
 let _canvas = null;
 let _container = null;
 let _viewer = null;
-let _enabled = true;
+// Full window by default. The circular keyhole is an opt-in DISPLAY control;
+// a fresh web or desktop session paints no black vignette.
+let _enabled = false;
 let _featherRatio = SCOPE_FEATHER_RATIO_DEFAULT;
 let _resizeObserver = null;
 let _dprQuery = null;
@@ -561,6 +563,8 @@ export function _resetScopeMaskForTest() {
   _canvas = null;
   _container = null;
   _viewer = null;
+  // Fixture stays ON so paint tests don't each opt in. The product default
+  // above is OFF (full-window globe).
   _enabled = true;
   _featherRatio = SCOPE_FEATHER_RATIO_DEFAULT;
   _terminusAlpha = SCOPE_OUTSIDE_ALPHA;
