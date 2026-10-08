@@ -388,8 +388,8 @@ export function createCyclonesLayer({
         chips: [],
         legend: storm
           ? [
-              { label: 'Advisory center / forecast track', color: '#7fe6ed' },
-              { label: 'Center-track uncertainty cone', color: '#7fe6ed44' },
+              { label: 'Advisory center / forecast track', color: '#7dff6a' },
+              { label: 'Center-track uncertainty cone', color: '#7dff6a44' },
             ]
           : [],
         info: storm

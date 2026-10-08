@@ -491,10 +491,10 @@ test('containment legend uses the existing thresholds, colours and incident coun
   assert.deepEqual(
     controls.legend.map(({ color, count }) => [color, count]),
     [
-      ['#ff3b30', 3],
-      ['#ff7a00', 2],
-      ['#ffb300', 2],
-      ['#8bc34a', 2],
+      ['#f4ffd0', 3],
+      ['#e8ff9a', 2],
+      ['#c6e85a', 2],
+      ['#3dcc4a', 2],
     ],
   );
   assert.ok(

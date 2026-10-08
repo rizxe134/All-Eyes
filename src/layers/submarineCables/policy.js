@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
 
-export const BASE_CABLE_COLOR = '#39d5ff';
+export const BASE_CABLE_COLOR = '#5ecf78';
 
 export const BASE_LANDING_COLOR = '#8fffd2';
 

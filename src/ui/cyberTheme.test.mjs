@@ -488,7 +488,7 @@ test('Cyber side panels share one width and one framed surface material', () => 
   assert.match(cyberStyles, /--cyber-panel-control-size: 30px;/);
   assert.match(
     cyberStyles,
-    /--cyber-panel-surface: rgba\(18, 24, 27, 0\.92\);/,
+    /--cyber-panel-surface: rgba\(9, 36, 9, 0\.92\);/,
   );
   assert.match(
     cyberStyles,
@@ -496,7 +496,7 @@ test('Cyber side panels share one width and one framed surface material', () => 
   );
   assert.match(
     cyberStyles,
-    /\.cockpit-utility-control\.is-expanded::after \{[\s\S]*?width: 36px;[\s\S]*?border-top: 1px solid rgba\(225, 102, 102, 0\.84\);/,
+    /\.cockpit-utility-control\.is-expanded::after \{[\s\S]*?width: 36px;[\s\S]*?border-top: 1px solid rgba\(180, 240, 178, 0\.84\);/,
   );
   assert.match(
     cyberStyles,
@@ -625,7 +625,8 @@ test('the Display selector, voice schema and final stylesheet expose Cyber', () 
   );
   assert.match(display, /id="cyber-sonar-sector"/);
   assert.deepEqual(setHud.parameters.properties.layout.enum, HUD_LAYOUTS);
-  assert.match(stylesheet, /@import '\.\/src\/ui\/styles\/cyber\.css';\s*$/);
+  assert.match(stylesheet, /@import '\.\/src\/ui\/styles\/cyber\.css';/);
+  assert.match(stylesheet, /@import '\.\/src\/ui\/styles\/all-eyes\.css';\s*$/);
   assert.match(cyberStyles, /:root\[data-ui-theme='cyber'\]/);
   assert.match(cyberStyles, /\.material-symbols-outlined/);
   assert.match(cyberStyles, /\.pp-label/);
@@ -725,7 +726,7 @@ test('the Display selector, voice schema and final stylesheet expose Cyber', () 
   assert.match(cyberStyles, /\.hud-corner::before/);
   assert.match(
     cyberStyles,
-    /--cyber-telemetry-fill: rgba\(13, 20, 23, 0\.985\);/,
+    /--cyber-telemetry-fill: rgba\(8, 29, 7, 0\.985\);/,
   );
   assert.match(cyberStyles, /var\(--cyber-telemetry-fill\)/);
   assert.match(cyberStyles, />\s*\.panel-header\s+\.panel-title::before/);

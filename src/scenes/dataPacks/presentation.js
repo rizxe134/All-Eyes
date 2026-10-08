@@ -5,9 +5,9 @@ function caption(viewer, pack) {
   const card = document.createElement('section');
   card.dataset.directorPack = pack.id;
   Object.assign(card.style, {
-    color: '#e3faff',
-    background: '#08141eed',
-    border: '1px solid #2491a8',
+    color: '#e5fee4',
+    background: '#081f07ed',
+    border: '1px solid #28a824',
     padding: '8px',
     margin: '4px',
     maxWidth: '260px',
@@ -22,7 +22,7 @@ function caption(viewer, pack) {
     link.href = pack.attribution.url;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.style.color = '#6eeaff';
+    link.style.color = '#76fb72';
     card.append(link);
   }
   return card;
@@ -204,7 +204,7 @@ export function createPackPresentations(viewer, targets = new Map()) {
       handle.add({
         name: pack.id,
         position: xyz([anchor.lon, anchor.lat, anchor.alt]),
-        point: { pixelSize: 16, color: Cesium.Color.YELLOW },
+        point: { pixelSize: 16, color: Cesium.Color.fromCssColorString('#e8ff9a') },
         label: {
           text: pack.id,
           font: '14px sans-serif',

@@ -316,7 +316,7 @@ test('Bhote Koshi flood path draws a solid cyan sourced route after the place sh
   assert.equal(path.polyline.clampToGround.getValue(), true);
   assert.ok(path.polyline.material instanceof Cesium.ColorMaterialProperty);
   assert.ok(path.polyline.material.color.getValue().equalsEpsilon(
-    Cesium.Color.fromCssColorString('#20e7f2').withAlpha(0.96),
+    Cesium.Color.fromCssColorString('#27f220').withAlpha(0.96),
     Cesium.Math.EPSILON7,
   ));
   assert.equal(path.show.getValue(), false);

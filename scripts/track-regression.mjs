@@ -2015,7 +2015,7 @@ async function main() {
     });
     const fmtSnap = (s) => (s ? `show=${s.show} scale=${s.scale.toFixed(3)} rgba=(${s.red.toFixed(2)},${s.green.toFixed(2)},${s.blue.toFixed(2)},${s.alpha.toFixed(2)})` : 'missing');
     // Ground style (owner verdict 2026-07-03): FULL-ALPHA airborne tint —
-    // white in the flights layer, amber (#FFB800) in the military layer —
+    // white in the flights layer, amber (#a8fda5) in the military layer —
     // never the 45%-alpha stale fade, never the retired gray mute. The
     // ground cue is the ×0.8 scale (klass default ⇒ base 1.0).
     const isFullWhite = (s) => !!s && s.show && s.alpha === 1 && s.red === 1 && s.green === 1 && s.blue === 1;

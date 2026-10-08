@@ -370,7 +370,7 @@ test('detection lifecycle re-hosts unchanged painters behind the sole host liste
     assert.equal(surface.style.mixBlendMode, 'screen');
     assert.equal(
       surface.style.filter,
-      'contrast(1.05) saturate(1.05) drop-shadow(0 0 3px rgba(0, 244, 255, 0.4))',
+      'contrast(1.05) saturate(1.05) drop-shadow(0 0 3px rgba(125, 255, 106, 0.4))',
     );
     assert.equal(surface.style.display, 'none');
 
@@ -448,9 +448,9 @@ test('detection lifecycle re-hosts unchanged painters behind the sole host liste
     // These are the exact engine calls made by military style presets after
     // their production UI gate chooses CRT/NVG/FLIR defaults.
     const expectedThemes = {
-      retro: 'contrast(1.08) saturate(1.04) drop-shadow(0 0 3px rgba(255, 176, 56, 0.45))',
+      retro: 'contrast(1.08) saturate(1.04) drop-shadow(0 0 3px rgba(198, 255, 90, 0.45))',
       surveillance: 'contrast(1.12) saturate(1.12) drop-shadow(0 0 3px rgba(120, 255, 120, 0.42))',
-      thermal: 'contrast(1.1) saturate(1.08) drop-shadow(0 0 3px rgba(255, 224, 170, 0.42))',
+      thermal: 'contrast(1.1) saturate(1.08) drop-shadow(0 0 3px rgba(210, 255, 180, 0.42))',
     };
     for (const style of ['retro', 'surveillance', 'thermal']) {
       setMode('OFF');
@@ -470,7 +470,7 @@ test('detection lifecycle re-hosts unchanged painters behind the sole host liste
     assert.equal(surface.style.mixBlendMode, 'screen');
     assert.equal(
       surface.style.filter,
-      'contrast(1.05) saturate(1.05) drop-shadow(0 0 3px rgba(0, 244, 255, 0.4))',
+      'contrast(1.05) saturate(1.05) drop-shadow(0 0 3px rgba(125, 255, 106, 0.4))',
     );
     env.postRender.raise();
     assert.equal(getMode(), 'OFF');
@@ -606,7 +606,7 @@ test('space-tier callouts take the heavier plate while air contacts keep the lig
   }
 });
 
-test('surveillance military tier reaches the dedicated render target as shipped red', () => {
+test('surveillance military tier reaches the dedicated render target as the light phosphor', () => {
   const env = installEnvironment();
   try {
     initWorldOverlay(env.viewer);
@@ -617,8 +617,8 @@ test('surveillance military tier reaches the dedicated render target as shipped 
     env.postRender.raise();
 
     assert.ok(
-      env.detectionCtx.calls.some(([name, value]) => name === 'strokeStyle' && value === '#ff5a47'),
-      'the production projection/tier/batched-bracket paint path emits surveillance military red',
+      env.detectionCtx.calls.some(([name, value]) => name === 'strokeStyle' && value === '#e8ff9a'),
+      'the production projection/tier/batched-bracket paint path emits the light phosphor military tier',
     );
     assert.ok(env.detectionCtx.calls.some(([name, path]) => name === 'stroke'
       && path instanceof MockPath2D));
@@ -938,7 +938,7 @@ test('a transit vehicle is a contact: box, route, mode and operator on the share
       'and so does what the vehicle is doing',
     );
     assert.ok(env.ctx.calls.some(([name, , color, width]) => name === 'stroke' && color === '#5EF08A' && width === 1.25));
-    assert.ok(env.ctx.calls.some(([name, , color, width]) => name === 'stroke' && color === '#05080C' && width === 3.25));
+    assert.ok(env.ctx.calls.some(([name, , color, width]) => name === 'stroke' && color === '#040e03' && width === 3.25));
     assert.ok(!env.detectionCtx.calls.some(([name, , color]) => name === 'stroke' && color === '#5EF08A'));
     // The operator travels on the object for the two-tier card form, which is
     // where `klass` is read; the host's track label does not paint it.

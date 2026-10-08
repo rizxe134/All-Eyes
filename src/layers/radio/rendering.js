@@ -329,7 +329,7 @@ export function createRendering({
         point: {
           pixelSize: 13,
           color: Cesium.Color.fromCssColorString(markerColor).withAlpha(0.86),
-          outlineColor: Cesium.Color.fromCssColorString('#071b25'),
+          outlineColor: Cesium.Color.fromCssColorString('#082507'),
           outlineWidth: 1,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           scaleByDistance: new Cesium.NearFarScalar(

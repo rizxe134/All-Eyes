@@ -15,7 +15,7 @@ export function createLabels({ state: layerState, services, parts, source }) {
       position,
       variant: 'label',
       title: 'ISS',
-      accent: '#ff4444',
+      accent: '#a8fda5',
       priority: 1000,
       collisionGroup: 'ambient-label',
       paintLane: 'ambient-label',

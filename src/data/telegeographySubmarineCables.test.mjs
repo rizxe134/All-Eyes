@@ -72,7 +72,7 @@ test('cable overlay entries satisfy the shared presentation contract', () => {
   );
   assert.equal(entry.variant, 'label');
   assert.equal(entry.title, 'Atlantic Crossing-1');
-  assert.equal(entry.accent, '#39d5ff');
+  assert.equal(entry.accent, '#5ecf78');
   assert.equal(entry.collisionGroup, 'ambient-label');
   assert.equal(entry.paintLane, 'ambient-label');
   assert.equal(

@@ -20,6 +20,7 @@ import {
   TRAIL_MAX_POINTS,
   RENDER_DELAY_SEC,
   TRAIL_COLOR,
+  TRACKED_TINT,
   CYAN_TRANSPARENT,
 } from './policy.js';
 
@@ -779,7 +780,7 @@ export function createTracking({
       return;
     flightState._trackedEntity.gevLabelModel = trackedLabelModelFromText(
       _trackedLabelText(icao24),
-      '#39d0ff',
+      '#7dff6a',
     );
     refreshTrackedReadout(flightState._trackedEntity);
     // The readout and the context slot describe the same contact — refresh them
@@ -961,7 +962,7 @@ export function createTracking({
           () =>
             parts.rendering._modelOwnsVisual(flightState._trackedIcao)
               ? CYAN_TRANSPARENT
-              : Cesium.Color.CYAN,
+              : TRACKED_TINT,
           false,
         ),
         sizeInMeters: false,
@@ -1000,7 +1001,7 @@ export function createTracking({
     flightState._trackedEntity.gevTrackedId = `flights:${icao24}`;
     flightState._trackedEntity.gevLabelModel = trackedLabelModelFromText(
       _trackedLabelText(icao24),
-      '#39d0ff',
+      '#7dff6a',
     );
 
     // A billboard has a ~zero bounding sphere, so Cesium's default follow distance is

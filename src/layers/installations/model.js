@@ -40,7 +40,7 @@ export function createModel({ state: layerState, services, parts, source }) {
 
   function colorFor(record) {
     return Cesium.Color.fromCssColorString(
-      COLOR_BY_CLASS[record.class] || '#9ca6b0',
+      COLOR_BY_CLASS[record.class] || '#8ac28b',
     );
   }
 

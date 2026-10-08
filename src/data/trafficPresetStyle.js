@@ -67,16 +67,16 @@ const DOT_STYLE = {
   },
   crt: {
     jam: {
-      rgba: [255, 59, 48, 0.95],
+      rgba: [200, 255, 70, 0.95],
       sizeDelta: 3,
       outline: { rgba: [0, 0, 0, 0.9], width: 2 },
     },
     slow: {
-      rgba: [255, 179, 0, 0.92],
+      rgba: [40, 255, 20, 0.92],
       sizeDelta: 2,
       outline: { rgba: [0, 0, 0, 0.85], width: 1 },
     },
-    free: { rgba: [0, 255, 102, 0.9], sizeDelta: 1, outline: null },
+    free: { rgba: [0, 160, 40, 0.9], sizeDelta: 1, outline: null },
   },
 };
 

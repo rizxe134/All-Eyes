@@ -32,18 +32,18 @@ export const thermalShader = {
     uniform float palette;
     in vec2 v_textureCoordinates;
 
-    // ── Ironbow "Predator" thermal palette ────────────────
-    // Maps a 0-1 temperature to the classic FLIR ironbow ramp:
-    // black -> deep purple -> magenta -> red -> orange -> yellow -> white.
+    // ── Phosphor thermal palette ─────────────────────────
+    // Maps a 0-1 temperature onto one green hue. Cold is near-black,
+    // hot is the lightest phosphor. Shade carries the scale.
     vec3 ironbow(float t) {
       t = clamp(t, 0.0, 1.0);
       const vec3 c0 = vec3(0.0, 0.0, 0.0);     // cold
-      const vec3 c1 = vec3(0.13, 0.0, 0.30);   // deep purple
-      const vec3 c2 = vec3(0.49, 0.0, 0.45);   // magenta
-      const vec3 c3 = vec3(0.86, 0.10, 0.18);  // red
-      const vec3 c4 = vec3(1.0, 0.55, 0.0);    // orange
-      const vec3 c5 = vec3(1.0, 0.91, 0.32);   // yellow
-      const vec3 c6 = vec3(1.0, 1.0, 1.0);     // hot (white)
+      const vec3 c1 = vec3(0.02, 0.12, 0.04);  // dim
+      const vec3 c2 = vec3(0.05, 0.28, 0.08);  // low
+      const vec3 c3 = vec3(0.15, 0.55, 0.18);  // mid
+      const vec3 c4 = vec3(0.45, 0.85, 0.28);  // bright
+      const vec3 c5 = vec3(0.75, 1.0, 0.45);   // hot
+      const vec3 c6 = vec3(0.94, 1.0, 0.82);   // hottest
       float s = t * 6.0;
       if (s < 1.0) return mix(c0, c1, s);
       if (s < 2.0) return mix(c1, c2, s - 1.0);

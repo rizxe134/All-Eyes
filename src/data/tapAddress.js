@@ -45,7 +45,7 @@
  * Lives in `src/data/` rather than under `server/providers/` because both
  * sides need the same answer: the server as a trust boundary, the browser to
  * give immediate feedback on a typed address without a round trip. Sharing one
- * module means they cannot drift — the same reason #274 exists about eight
+ * module means they cannot drift — the same reason #227744 exists about eight
  * copies of haversine. `server/providers/gbfs.js` importing
  * `src/data/gbfsSource.js` is the established direction for this.
  *

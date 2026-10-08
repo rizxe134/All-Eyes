@@ -61,7 +61,7 @@ export const animeShader = {
       float outline = 1.0 - smoothstep(0.05, mix(0.35, 0.1, edgeThick), edge) * 0.6 * intensity;
 
       // Warm color shift (Ghibli palette tends warm)
-      vec3 warmShift = saturated * vec3(1.02, 1.0, 0.95);
+      vec3 warmShift = saturated * vec3(0.94, 1.04, 0.90);
 
       vec3 result = warmShift * outline;
       out_FragColor = vec4(mix(color.rgb, result, intensity), color.a);

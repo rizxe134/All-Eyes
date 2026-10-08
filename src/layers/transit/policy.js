@@ -185,11 +185,11 @@ export const SELECTED_CARD_REFRESH_MS = 250;
 /** Mode palette: distinct at a glance, none reused by flights (white/cyan), military (amber), or vessels. */
 export const TRANSIT_MODE_COLORS = Object.freeze({
   bus: '#5EF08A',
-  tram: '#FFC24A',
-  subway: '#FF4538',
-  rail: '#D9A6FF',
-  ferry: '#5FD6FF',
-  unknown: '#D8DDE5',
+  tram: '#e8ff9a',
+  subway: '#f4ffd0',
+  rail: '#b6ff8a',
+  ferry: '#7dff6a',
+  unknown: '#8fbf96',
 });
 
 /**

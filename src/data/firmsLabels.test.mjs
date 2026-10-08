@@ -9,9 +9,9 @@ import {
 } from './firmsLabels.js';
 
 test('FIRMS formatting helpers retain the shipped severity palette', () => {
-  assert.equal(accentForSeverity('red'), '224, 82, 82');
-  assert.equal(accentForSeverity('orange'), '240, 178, 62');
-  assert.equal(accentForSeverity('yellow'), '244, 227, 108');
+  assert.equal(accentForSeverity('red'), '244, 255, 208');
+  assert.equal(accentForSeverity('orange'), '198, 232, 90');
+  assert.equal(accentForSeverity('yellow'), '61, 204, 74');
   assert.equal(accentForSeverity('chartreuse'), accentForSeverity('yellow'));
 });
 

@@ -1353,7 +1353,7 @@ async function main() {
         position,
         point: {
           pixelSize: 64,
-          color: Cesium.Color.MAGENTA,
+          color: Cesium.Color.fromCssColorString('#c6ff4a'),
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
         },
       });

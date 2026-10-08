@@ -9,11 +9,11 @@ export const MAX_RENDERED = 700;
 export const GOOGLE_MILITARY_PLACE_TYPES = new Set(['military_base']);
 
 export const COLOR_BY_CLASS = {
-  airfield: '#5aa9ff',
-  naval_base: '#48c7d5',
-  range: '#d9a85d',
-  military_land: '#9ca6b0',
-  places_candidate: '#c58cff',
+  airfield: '#7dff6a',
+  naval_base: '#5ecf78',
+  range: '#e8ff9a',
+  military_land: '#3d6b48',
+  places_candidate: '#f4ffd0',
 };
 
 export const EARTH_MEAN_RADIUS_M = 6371008.8;

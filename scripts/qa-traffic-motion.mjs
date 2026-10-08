@@ -143,7 +143,7 @@ try {
       };
       const clock = document.createElement('div');
       clock.style.cssText =
-        'position:fixed;bottom:4px;left:38%;padding:3px 8px;background:#000c;color:#fff;font:12px monospace;z-index:999999;pointer-events:none';
+        'position:fixed;bottom:4px;left:38%;padding:3px 8px;background:#000000cc;color:#fff;font:12px monospace;z-index:999999;pointer-events:none';
       document.body.append(clock);
       viewer.camera.moveEnd.addEventListener(() =>
         window.__motion.moveEnds.push(performance.now()),

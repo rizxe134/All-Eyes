@@ -18,13 +18,13 @@ const SLOW_THRESHOLD = 0.55;
 
 /**
  * Bucket color palette as Cesium-free rgba tuples ([r, g, b] 0–255 + alpha 0–1):
- * green #2ecc71 / amber #f0b23e / red #e05252, all at 0.9 alpha.
+ * green #2ecc71 / amber #acf8aa / red #b3f1b1, all at 0.9 alpha.
  * @type {{free:number[], slow:number[], jam:number[]}}
  */
 export const FLOW_BUCKET_RGBA = {
-  free: [46, 204, 113, 0.9],
-  slow: [240, 178, 62, 0.9],
-  jam: [224, 82, 82, 0.9],
+  free: [61, 204, 74, 0.9],
+  slow: [198, 232, 90, 0.9],
+  jam: [244, 255, 208, 0.9],
 };
 
 /**

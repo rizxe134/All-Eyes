@@ -120,10 +120,10 @@ test('tr3b sprites are real distinct glyphs, not the airliner fallback', () => {
     assert.equal((svg.match(/cx="0" cy="6"/g) || []).length >= 1, true);
   }
   // Cold: a near-black hull with only subtly visible lights (no pure white).
-  assert.match(coldSvg, /fill="#0d1014"/);
+  assert.match(coldSvg, /fill="#071b06"/);
   assert.doesNotMatch(coldSvg, /fill="#ffffff"/);
   // Hot: cold hull, white emitter cores, and a baked glow halo for bloom/FLIR.
-  assert.match(hotSvg, /fill="#0b0e12"/);
+  assert.match(hotSvg, /fill="#061706"/);
   assert.match(hotSvg, /radialGradient id="tr3bGlow"/);
   assert.equal((hotSvg.match(/fill="url\(#tr3bGlow\)"/g) || []).length, 4,
     'all four emitters carry a glow halo');

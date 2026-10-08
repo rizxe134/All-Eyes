@@ -513,7 +513,7 @@ test('static entities preserve polygon parts, holes and geographic seam coordina
   );
   for (const outline of outlines) {
     assert.deepEqual(outline.polyline.material, {
-      value: '#7fe6ed',
+      value: '#7dff6a',
       alpha: 0.55,
     });
   }

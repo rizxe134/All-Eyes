@@ -60,7 +60,7 @@ function repairKey(file, tmp, key) {
  *
  * A client can start more than one server process for one connection: Claude
  * Desktop was reported to start two processes; serving the panel's page from
- * one and sending its `panel_request` calls to the other reproduces #927.
+ * one and sending its `panel_request` calls to the other reproduces #95e793.
  * Per-process keys then mismatch, and the panel refuses the request.
  * The first process to run creates the key, without replacing one
  * another process created at the same moment; the rest read it. When the file

@@ -273,7 +273,7 @@ try {
     const overlay = document.createElement('div');
     overlay.id = 'installation-label-probe';
     overlay.style.cssText =
-      'position:fixed;top:60px;left:360px;z-index:99999;background:#07121cdd;color:#fff;padding:8px 12px;font:13px monospace;pointer-events:none';
+      'position:fixed;top:60px;left:360px;z-index:99999;background:#071c07dd;color:#fff;padding:8px 12px;font:13px monospace;pointer-events:none';
     document.body.append(overlay);
     const screen = new C.Cartesian2();
     window.__installationFrames = [];

@@ -130,12 +130,12 @@ const ARROW_LENGTH_FACTOR = 1.6;
 const DRAG_THROTTLE_MS = 16;
 const HOVER_THROTTLE_MS = 120;
 
-const COLOR_RING_HEADING = Cesium.Color.fromCssColorString('#35d8ff');
-const COLOR_RING_PITCH = Cesium.Color.fromCssColorString('#ff5fd0');
-const COLOR_MOVE_EAST = Cesium.Color.fromCssColorString('#ff5252');
+const COLOR_RING_HEADING = Cesium.Color.fromCssColorString('#40fa3a');
+const COLOR_RING_PITCH = Cesium.Color.fromCssColorString('#82fc7e');
+const COLOR_MOVE_EAST = Cesium.Color.fromCssColorString('#a8fda5');
 const COLOR_MOVE_NORTH = Cesium.Color.fromCssColorString('#52ff7a');
-const COLOR_MOVE_UP = Cesium.Color.fromCssColorString('#5b8cff');
-const COLOR_HANDLE = Cesium.Color.fromCssColorString('#ffd97a');
+const COLOR_MOVE_UP = Cesium.Color.fromCssColorString('#64fb5f');
+const COLOR_HANDLE = Cesium.Color.fromCssColorString('#a8fda5');
 
 const toRadians = (deg) => (deg * Math.PI) / 180;
 const toDeg = (rad) => (rad * 180) / Math.PI;

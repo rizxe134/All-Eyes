@@ -85,7 +85,7 @@ async function amberPixels() {
       const r = data[i];
       const g = data[i + 1];
       const b = data[i + 2];
-      // Warm and saturated: the amber mark (#ffb547) blended over imagery.
+      // Warm and saturated: the amber mark (#a8fda5) blended over imagery.
       if (r > 150 && g > 90 && g < 220 && b < 130 && r - b > 70 && r - g > 20)
         amber += 1;
     }

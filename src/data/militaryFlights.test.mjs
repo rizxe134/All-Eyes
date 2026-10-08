@@ -439,7 +439,7 @@ test('real military track path creates no native label and publishes every cache
     assert.deepEqual(entity.gevLabelModel, {
       title: 'RCH451',
       details: ['C17 · 05-8152', 'United States Air Force · 28000 ft · 450 kt'],
-      accent: '#ffd166',
+      accent: '#e8ff9a',
     });
     viewer.scene.preUpdate.raiseEvent();
     const initialAppliedFrames = appliedFrames;

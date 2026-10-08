@@ -12,11 +12,11 @@ import { transitStyleProfile } from '../../data/transitPresetStyle.js';
 
 const MODE_COLOR = {
   bus: '#5EF08A',
-  tram: '#FFC24A',
-  subway: '#FF4538',
-  rail: '#D9A6FF',
-  ferry: '#5FD6FF',
-  unknown: '#D8DDE5',
+  tram: '#e8ff9a',
+  subway: '#f4ffd0',
+  rail: '#b6ff8a',
+  ferry: '#7dff6a',
+  unknown: '#8fbf96',
 };
 // Final Cesium batching uses 3,152 bytes per two-lane edge.
 // The 1,278-instance body plus 64 bytes/instance reserve stays below 2 MiB.

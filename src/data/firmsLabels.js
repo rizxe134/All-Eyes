@@ -25,9 +25,9 @@ export function fireDetectionKey(fire) {
 
 /** Severity accent palette — matches the FIRMS glow-sprite color stops. */
 const ACCENT_RGB = Object.freeze({
-  red: '224, 82, 82',
-  orange: '240, 178, 62',
-  yellow: '244, 227, 108',
+  red: '244, 255, 208',
+  orange: '198, 232, 90',
+  yellow: '61, 204, 74',
 });
 
 /**

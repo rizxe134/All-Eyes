@@ -345,7 +345,7 @@ async function main() {
       'station-tag options show category-colored circles before their labels',
       initial.filterPalette.every((entry) => entry.label.startsWith('● '))
         && musicOption?.color === '#54d17a'
-        && newsOption?.color === '#44adff',
+        && newsOption?.color === '#4ffa49',
       JSON.stringify({ musicOption, newsOption }),
     );
     check('All is the initial Radio filter', initial.state.filter === 'all' && initial.state.filteredCount === 750, `${initial.state.filteredCount} stations`);

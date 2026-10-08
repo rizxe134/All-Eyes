@@ -2178,7 +2178,7 @@ test('under FLIR and NVG every sprite is white-hot with a dark halo, and selecti
     assert.notEqual(entry.marker.image, plainImage, 'a haloed raster');
     assert.match(
       Buffer.from(entry.marker.image.split(',')[1], 'base64').toString(),
-      /#05080C/,
+      /#040e03/,
       'with the dark ring',
     );
     assert.ok(entry.marker.width > plainWidth * 1.2, 'and larger');
@@ -2838,7 +2838,7 @@ test('every styling path retains the mode palette and exact unpadded size', asyn
   parts.selection.selectVehicle(entry.key);
   check('#5EF08A', 30);
   parts.rendering.paintMode(entry, 'subway');
-  check('#FF4538', 30);
+  check('#F4FFD0', 30);
   app.style('thermal');
   check('#FFFFFF', 39);
   parts.selection.clearSelection();
@@ -2848,9 +2848,9 @@ test('every styling path retains the mode palette and exact unpadded size', asyn
   parts.selection.selectVehicle(entry.key);
   check('#FFFFFF', 39);
   app.vision('normal', false);
-  check('#FF4538', 30);
+  check('#F4FFD0', 30);
   parts.selection.clearSelection();
-  check('#FF4538', 20);
+  check('#F4FFD0', 20);
 });
 
 test('QA fleets at both budgets exercise real marker motion', async (t) => {

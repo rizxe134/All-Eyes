@@ -112,9 +112,9 @@ export const SIZE_BY_TYPE = {
  */
 
 export const FLOW_BUCKET_COLORS = {
-  free: Cesium.Color.fromCssColorString('#2ecc71').withAlpha(0.9),
-  slow: Cesium.Color.fromCssColorString('#f0b23e').withAlpha(0.9),
-  jam: Cesium.Color.fromCssColorString('#e05252').withAlpha(0.9),
+  free: Cesium.Color.fromCssColorString('#3dcc4a').withAlpha(0.9),
+  slow: Cesium.Color.fromCssColorString('#c6e85a').withAlpha(0.9),
+  jam: Cesium.Color.fromCssColorString('#f4ffd0').withAlpha(0.9),
 };
 
 // ─── Jam-viz prototype (live mode only — see 2026-07-21 design doc) ────────
@@ -140,12 +140,12 @@ export const HEAT_JAM_PULSE_ALPHA = 0.2;
 
 /** @const {Cesium.Color} Jam corridor color (bucket red, alpha pulsed live). */
 
-export const HEAT_JAM_COLOR = Cesium.Color.fromCssColorString('#e05252');
+export const HEAT_JAM_COLOR = Cesium.Color.fromCssColorString('#f4ffd0');
 
 /** @const {Cesium.Color} Slow corridor color (bucket amber, faint + static). */
 
 export const HEAT_SLOW_COLOR =
-  Cesium.Color.fromCssColorString('#f0b23e').withAlpha(0.2);
+  Cesium.Color.fromCssColorString('#c6e85a').withAlpha(0.2);
 
 /** @const {number} Far-distance scale floor for jam dots (shipped: 0.3). */
 

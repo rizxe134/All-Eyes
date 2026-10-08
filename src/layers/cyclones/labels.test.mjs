@@ -71,7 +71,7 @@ test('storm cards join the fire and vessel card tier with fire-card clearance', 
   assert.equal(selected.variant, 'selected');
   assert.equal(selected.selected, true);
   assert.equal(selected.protected, true);
-  assert.equal(selected.accent, '#ffe19a');
+  assert.equal(selected.accent, '#f4ffd0');
   // Fire policy: gap = max(12, marker + 8), leader starts gap - 6 out.
   assert.equal(selected.gapPx, 20);
   assert.equal(selected.leaderOffsetPx, 14);
@@ -79,7 +79,7 @@ test('storm cards join the fire and vessel card tier with fire-card clearance', 
   assert.deepEqual(ambient.details, ['PTC']);
   assert.equal(ambient.variant, 'card');
   assert.equal(ambient.protected, false);
-  assert.equal(ambient.accent, '#7fe6ed');
+  assert.equal(ambient.accent, '#7dff6a');
   assert.equal(ambient.gapPx, 17);
   assert.equal(ambient.leaderOffsetPx, 11);
 

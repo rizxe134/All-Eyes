@@ -164,7 +164,7 @@ export function createNamedMarkers({ state, services, parts, overlayHost }) {
             position,
             title: record.name,
             priority: record.areaM2 || 0,
-            accent: COLOR_BY_CLASS[record.class] || '#9ca6b0',
+            accent: COLOR_BY_CLASS[record.class] || '#8ac28b',
           }),
         };
         markers.set(record.id, marker);

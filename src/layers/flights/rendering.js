@@ -13,6 +13,7 @@ import {
 import { limitCourseStep, courseSlewCapDps } from '../../data/motionModel.js';
 import {
   MIL_TINT,
+  TRACKED_TINT,
   GROUND_SCALE,
   COCKPIT_CONTACT_SIZE_PX,
   COCKPIT_CIVILIAN_COLOR,
@@ -161,7 +162,7 @@ export function createRendering({
   /** Model tint, mirroring the billboard color rules. */
 
   function _modelColor(icao24) {
-    if (icao24 === flightState._trackedIcao) return Cesium.Color.CYAN;
+    if (icao24 === flightState._trackedIcao) return TRACKED_TINT;
     return isMilitaryIcao(icao24) ? MIL_TINT : Cesium.Color.WHITE;
   }
 
@@ -690,7 +691,7 @@ export function createRendering({
         asynchronous: false,
         minimumPixelSize: TRACKED_MODEL_MIN_PX,
         scale: trackedSpec.scale,
-        color: flightState._irBoost ? Cesium.Color.WHITE : Cesium.Color.CYAN,
+        color: flightState._irBoost ? Cesium.Color.WHITE : TRACKED_TINT,
         colorBlendMode: Cesium.ColorBlendMode.MIX,
         // The tracked aircraft uses the same dominant light tint as the fleet;
         // IR boost removes the remaining diffuse hint with flat UNLIT white.

@@ -91,7 +91,7 @@ export const CULL_LIFT_M = 12;
 /** Color stops shared by cell heat fills and detection glow sprites. */
 
 export const DETECTION_COLOR_STOPS = [
-  { name: 'red', color: Cesium.Color.RED },
-  { name: 'orange', color: Cesium.Color.ORANGE },
-  { name: 'yellow', color: Cesium.Color.YELLOW },
+  { name: 'red', color: Cesium.Color.fromCssColorString('#f4ffd0') },
+  { name: 'orange', color: Cesium.Color.fromCssColorString('#c6e85a') },
+  { name: 'yellow', color: Cesium.Color.fromCssColorString('#3dcc4a') },
 ];

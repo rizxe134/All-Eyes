@@ -37,7 +37,7 @@
     0 0 0 1px rgba(255, 255, 255, 0.03) inset,
     0 1px 0 rgba(255, 255, 255, 0.06) inset;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 212, 255, 0.46) rgba(255, 255, 255, 0.06);
+  scrollbar-color: rgba(14, 249, 6, 0.46) rgba(255, 255, 255, 0.06);
 }
 
 /* Class-qualified, not id-qualified, so a theme's header rule still wins. */
@@ -82,12 +82,12 @@ button.sl-status:focus-visible {
 
 .sl-status.is-busy {
   color: var(--accent);
-  border-color: rgba(0, 212, 255, 0.55);
+  border-color: rgba(14, 249, 6, 0.55);
 }
 
 .sl-status.is-warn {
-  color: #ffb300;
-  border-color: rgba(255, 179, 0, 0.55);
+  color: #a8fda5;
+  border-color: rgba(168, 253, 165, 0.55);
 }
 
 /* Collapsed strips hide the body entirely: nothing to paint or tab into. */
@@ -179,8 +179,8 @@ button.sl-status:focus-visible {
 }
 
 .sl-chips .data-toggle-chip.chip-error {
-  color: #ffb300;
-  border-color: rgba(255, 179, 0, 0.55);
+  color: #a8fda5;
+  border-color: rgba(168, 253, 165, 0.55);
 }
 
 /* ── Errors ──────────────────────────────────────────────────────────────── */
@@ -188,7 +188,7 @@ button.sl-status:focus-visible {
   font-family: var(--font-sans);
   font-size: 0.72rem;
   line-height: 1.4;
-  color: #ff8a80;
+  color: #a8fda5;
 }
 
 /* ── Filters and legend ──────────────────────────────────────────────────── */
@@ -361,7 +361,7 @@ button.sl-status:focus-visible {
   justify-content: space-between;
   gap: 6px;
   padding: 5px 6px;
-  background: rgba(10, 10, 15, 0.85);
+  background: rgba(5, 20, 5, 0.85);
   border-bottom: 1px solid var(--glass-border);
 }
 
@@ -376,7 +376,7 @@ button.sl-status:focus-visible {
 .sl-viewer-tools .scene-btn {
   padding: 4px 8px;
   font-size: var(--sl-text-small);
-  background: rgba(10, 10, 15, 0.75);
+  background: rgba(5, 20, 5, 0.75);
   flex: none;
   min-width: 0;
   display: inline-flex;
@@ -385,7 +385,7 @@ button.sl-status:focus-visible {
 }
 
 .sl-viewer-tools .sl-seg {
-  background: rgba(10, 10, 15, 0.75);
+  background: rgba(5, 20, 5, 0.75);
 }
 
 @container (max-width: 380px) {
@@ -400,7 +400,7 @@ button.sl-status:focus-visible {
   height: 26px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(10, 10, 15, 0.8);
+  background: rgba(5, 20, 5, 0.8);
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 1.1rem;
@@ -412,7 +412,7 @@ button.sl-status:focus-visible {
 }
 
 .sl-viewer-x:hover {
-  color: #0a0a0f;
+  color: #051405;
   background: #fff;
   border-color: #fff;
 }
@@ -535,7 +535,7 @@ button.sl-status:focus-visible {
   display: flex;
   flex-direction: column;
   font-family: var(--font-mono);
-  border-color: rgba(0, 212, 255, 0.55);
+  border-color: rgba(14, 249, 6, 0.55);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
   outline: none;
 }
@@ -566,8 +566,8 @@ button.sl-status:focus-visible {
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   color: var(--text-primary);
-  border-color: rgba(0, 212, 255, 0.6);
-  background: rgba(10, 10, 15, 0.82);
+  border-color: rgba(14, 249, 6, 0.6);
+  background: rgba(5, 20, 5, 0.82);
 }
 
 .sl-viewer-wrap-expanded #sl-viewer-expand::after {

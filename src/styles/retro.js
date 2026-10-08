@@ -163,7 +163,7 @@ export const retroShader = {
       }
 
       // ── Warm phosphor tint (P1 green-amber) ─────────────
-      vec3 warmTint = result * vec3(1.02, 1.0, 0.94);
+      vec3 warmTint = result * vec3(0.92, 1.04, 0.88);
       result = mix(result, warmTint, 0.4 * intensity);
 
       // ── Edge vignette (darker corners — CRT curvature) ──

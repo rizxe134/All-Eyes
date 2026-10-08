@@ -324,10 +324,10 @@ function drawSunRays(ctx, cx, cy, radius, innerRadius, angle) {
   ctx.clip('evenodd');
   ctx.globalCompositeOperation = 'screen';
   const glow = ctx.createRadialGradient(sx, sy, 4, sx, sy, radius * 0.94);
-  glow.addColorStop(0, 'rgba(255, 222, 126, 0.17)');
-  glow.addColorStop(0.22, 'rgba(255, 229, 157, 0.085)');
-  glow.addColorStop(0.58, 'rgba(255, 235, 188, 0.027)');
-  glow.addColorStop(1, 'rgba(255, 242, 214, 0)');
+  glow.addColorStop(0, 'rgba(168, 253, 165, 0.17)');
+  glow.addColorStop(0.22, 'rgba(168, 253, 165, 0.085)');
+  glow.addColorStop(0.58, 'rgba(192, 253, 190, 0.027)');
+  glow.addColorStop(1, 'rgba(216, 254, 215, 0)');
   ctx.fillStyle = glow;
   ctx.fillRect(
     cx - radius - 4,
@@ -337,7 +337,7 @@ function drawSunRays(ctx, cx, cy, radius, innerRadius, angle) {
   );
 
   ctx.lineCap = 'round';
-  ctx.shadowColor = 'rgba(255, 232, 171, 0.11)';
+  ctx.shadowColor = 'rgba(176, 253, 173, 0.11)';
   ctx.shadowBlur = 18;
   const annulusWidth = Math.max(1, radius - innerRadius);
   for (let i = -2; i <= 2; i++) {
@@ -349,9 +349,9 @@ function drawSunRays(ctx, cx, cy, radius, innerRadius, angle) {
     const lineGradient = ctx.createLinearGradient(sx, sy, ex, ey);
     lineGradient.addColorStop(
       0,
-      `rgba(255, 230, 166, ${0.075 - Math.abs(i) * 0.011})`,
+      `rgba(214, 255, 168, ${0.075 - Math.abs(i) * 0.011})`,
     );
-    lineGradient.addColorStop(1, 'rgba(255, 226, 156, 0)');
+    lineGradient.addColorStop(1, 'rgba(168, 253, 165, 0)');
     ctx.strokeStyle = lineGradient;
     ctx.lineWidth = i === 0 ? 1.8 : 0.9;
     ctx.beginPath();
@@ -367,9 +367,9 @@ function drawMoonHaze(ctx, cx, cy, radius, angle) {
   const mx = cx + Math.cos(angle) * radius;
   const my = cy + Math.sin(angle) * radius;
   const haze = ctx.createRadialGradient(mx, my, 0, mx, my, radius * 0.22);
-  haze.addColorStop(0, 'rgba(63, 214, 255, 0.16)');
-  haze.addColorStop(0.42, 'rgba(63, 214, 255, 0.055)');
-  haze.addColorStop(1, 'rgba(63, 214, 255, 0)');
+  haze.addColorStop(0, 'rgba(74, 250, 68, 0.16)');
+  haze.addColorStop(0.42, 'rgba(74, 250, 68, 0.055)');
+  haze.addColorStop(1, 'rgba(74, 250, 68, 0)');
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   ctx.fillStyle = haze;
@@ -705,7 +705,7 @@ export class CelestialRing {
         this._sunCanvas.height,
       );
       drawSunRays(this._sunCtx, cx, cy, radius, rayInnerRadius, 0);
-      drawTaperedArc(this._sunCtx, cx, cy, radius, 0, '222, 190, 89', 0.56);
+      drawTaperedArc(this._sunCtx, cx, cy, radius, 0, '244, 255, 208', 0.56);
       this._sunRenderKey = sunKey;
     }
 
@@ -717,7 +717,7 @@ export class CelestialRing {
         this._moonCanvas.height,
       );
       drawMoonHaze(this._moonCtx, cx, cy, radius, 0);
-      drawTaperedArc(this._moonCtx, cx, cy, radius, 0, '48, 201, 229', 0.42);
+      drawTaperedArc(this._moonCtx, cx, cy, radius, 0, '125, 255, 106', 0.42);
       this._moonRenderKey = outlineKey;
     }
   }

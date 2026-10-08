@@ -565,7 +565,7 @@ try {
     const elapsed = ((near.t - rows[0].t) / 1000).toFixed(0);
     const roll = wrapDeg(near.rollDeg);
     const sign = roll >= 0 ? '+' : '−';
-    labels.push(`<text x="${left + 6}" y="${top + tileH + 18}" font-family="monospace" font-size="15" fill="#8fe9ff">`
+    labels.push(`<text x="${left + 6}" y="${top + tileH + 18}" font-family="monospace" font-size="15" fill="#95fc92">`
       + `${String(i).padStart(2, '0')}  t=${elapsed}s  roll ${sign}${Math.abs(roll).toFixed(1)}°  alt ${near.height.toFixed(0)}m</text>`);
   }
   composites.push({
@@ -574,7 +574,7 @@ try {
     top: 0,
   });
   const sheetPath = path.join(OUT_DIR, 'sequence-contact-sheet.jpg');
-  await sharp({ create: { width: sheetW, height: sheetH, channels: 3, background: '#05080d' } })
+  await sharp({ create: { width: sheetW, height: sheetH, channels: 3, background: '#040f03' } })
     .composite(composites)
     .jpeg({ quality: 86 })
     .toFile(sheetPath);

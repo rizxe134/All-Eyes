@@ -37,7 +37,7 @@ export function createPresentation({
       `${active.camera.city.toUpperCase()} CCTV`,
       `${active.camera.name.toUpperCase()}`,
       // A synthetic bearing (headingConfidence 'low', no human calibration)
-      // is tagged so a hashed guess never reads as a surveyed facing (#639).
+      // is tagged so a hashed guess never reads as a surveyed facing (#96e694).
       headingHudToken(active.camera),
       `FOV ${Math.round(active.camera.fovDeg)}°`,
       `COVERAGE ${area.toFixed(2)}km²`,
@@ -79,7 +79,7 @@ export function createPresentation({
       lat: camera.lat,
       lon: camera.lon,
       headingDeg: camera.headingDeg,
-      // Bearing provenance (#639): the pack's confidence flag plus the derived
+      // Bearing provenance (#96e694): the pack's confidence flag plus the derived
       // "is this a synthetic guess" bit (calibration-aware), so UI consumers
       // never have to re-derive it.
       headingConfidence: camera.headingConfidence || null,

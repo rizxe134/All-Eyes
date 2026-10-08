@@ -332,7 +332,7 @@ export function createRendering({
               width: 2.5,
               material: new Cesium.PolylineDashMaterialProperty({
                 color:
-                  Cesium.Color.fromCssColorString('#ffd166').withAlpha(0.9),
+                  Cesium.Color.fromCssColorString('#a8fda5').withAlpha(0.9),
                 dashLength: 8,
                 dashPattern: 0xf0f0,
               }),
@@ -352,7 +352,7 @@ export function createRendering({
               id: `reentry:${launch.id}:${stageIndex}`,
               position: reentryPosition,
               text: 'STAGE RE-ENTRY',
-              accent: '#ffd166',
+              accent: '#a8fda5',
               priority: 700_000 - stageIndex,
               gapPx: 8,
             }),
@@ -442,7 +442,7 @@ export function createRendering({
         point: {
           pixelSize: 6,
           color: Cesium.Color.fromCssColorString(
-            satelliteTrack ? '#7bed9f' : '#ffd166',
+            satelliteTrack ? '#7bed9f' : '#a8fda5',
           ),
           outlineWidth: 0,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
@@ -469,7 +469,7 @@ export function createRendering({
           id: `payload-position:${launch.id}`,
           position: () => livePosition,
           text: `${name}\n${parts.policyHelpers.formatMissionEventTime(liveTime)}`,
-          accent: satelliteTrack ? '#7bed9f' : '#ffd166',
+          accent: satelliteTrack ? '#7bed9f' : '#a8fda5',
           priority: 900_000,
           gapPx: 12,
         });
@@ -492,7 +492,7 @@ export function createRendering({
             width: 3,
             material:
               new parts.orbitRendering.MissionOrbitPatternMaterialProperty(
-                Cesium.Color.fromCssColorString('#c084fc').withAlpha(0.95),
+                Cesium.Color.fromCssColorString('#88fc84').withAlpha(0.95),
               ),
             arcType: Cesium.ArcType.NONE,
           },
@@ -521,7 +521,7 @@ export function createRendering({
           id: `orbit:${launch.id}`,
           position: orbitLabelPosition,
           text: satelliteTrack ? 'ORBIT' : 'PROJECTED ORBIT',
-          accent: satelliteTrack ? '#22e6e6' : '#c084fc',
+          accent: satelliteTrack ? '#29e622' : '#88fc84',
           priority: 800_000,
           gapPx: 8,
         }),

@@ -977,7 +977,7 @@ export function createBhoteKoshiEmbeddedMedia({
     leader.classList.add('bhote-embedded-callout-leader');
     leader.setAttribute('aria-hidden', 'true');
     leader.innerHTML =
-      '<path pathLength="1" fill="none" stroke="rgba(147,213,228,.72)" stroke-width="1.5"/><circle r="4" fill="#6be8ff" stroke="#ffffff" stroke-width="1.5"/>';
+      '<path pathLength="1" fill="none" stroke="rgba(148, 229, 146, .72)" stroke-width="1.5"/><circle r="4" fill="#73fb6f" stroke="#ffffff" stroke-width="1.5"/>';
     const player = documentRef.createElement('div');
     player.className = 'bhote-embedded-callout-player';
     const footer = documentRef.createElement('footer');

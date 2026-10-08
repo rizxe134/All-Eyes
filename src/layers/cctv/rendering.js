@@ -236,7 +236,7 @@ export function createRendering({
       const inVisibleSet = coverageVisible.has(record.camera.id);
       // A synthetic bearing (headingConfidence 'low', no human calibration)
       // draws its wireframe dashed so a guessed facing is visibly provisional
-      // rather than rendering identically to a surveyed one (#639). Colors,
+      // rather than rendering identically to a surveyed one (#96e694). Colors,
       // widths, and the active/idle emphasis are unchanged.
       const bearingEstimated = isHeadingEstimated(record.camera);
       const lineMaterial = (color) =>

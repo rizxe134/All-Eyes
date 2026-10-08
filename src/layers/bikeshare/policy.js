@@ -58,27 +58,27 @@ export const MAX_TOTAL_POINTS = 8000;
 /** Station has >60% bikes available. */
 
 export const COLOR_GREEN =
-  Cesium.Color.fromCssColorString('#00ff88').withAlpha(0.95);
+  Cesium.Color.fromCssColorString('#3dcc4a').withAlpha(0.95);
 
 /** Station has 30-60% bikes available. */
 
 export const COLOR_YELLOW =
-  Cesium.Color.fromCssColorString('#ffaa00').withAlpha(0.94);
+  Cesium.Color.fromCssColorString('#e8ff9a').withAlpha(0.94);
 
 /** Station has <30% bikes available. */
 
 export const COLOR_RED =
-  Cesium.Color.fromCssColorString('#ff4444').withAlpha(0.94);
+  Cesium.Color.fromCssColorString('#f4ffd0').withAlpha(0.94);
 
 /** No status data available for station. */
 
 export const COLOR_NEUTRAL =
-  Cesium.Color.fromCssColorString('#91a4b4').withAlpha(0.62);
+  Cesium.Color.fromCssColorString('#8fbf96').withAlpha(0.62);
 
 /** Station is offline (not installed, not renting, or not returning). */
 
 export const COLOR_MUTED =
-  Cesium.Color.fromCssColorString('#687581').withAlpha(0.48);
+  Cesium.Color.fromCssColorString('#3d6b48').withAlpha(0.48);
 
 /** Outline color for all station points. */
 

@@ -4,10 +4,10 @@ export const PERIMETER_OVERLAY_SOURCE_ID = 'fire-perimeters';
 
 /** CSS accent for a perimeter card by containment progress (mirrors the fill). */
 export function containmentAccent(containedPct) {
-  if (!Number.isFinite(containedPct) || containedPct <= 0) return '#ff3b30';
-  if (containedPct < 50) return '#ff7a00';
-  if (containedPct < 100) return '#ffb300';
-  return '#8bc34a';
+  if (!Number.isFinite(containedPct) || containedPct <= 0) return '#f4ffd0';
+  if (containedPct < 50) return '#e8ff9a';
+  if (containedPct < 100) return '#c6e85a';
+  return '#3dcc4a';
 }
 
 /** Shoelace area (degree², sign dropped) — relative sizes only. */

@@ -1279,7 +1279,7 @@ test('buildVesselCard: name title + type/speed/heading detail line', () => {
   const card = buildVesselCard(makeRecord());
   assert.equal(card.title, 'EVER GIVEN');
   assert.deepEqual(card.details, ['CONTAINER SHIP · 14.5KT · 231°']);
-  assert.equal(card.accent, '57, 213, 255');
+  assert.equal(card.accent, '125, 255, 106');
   assert.equal(card.selected, false);
   assert.equal(card.position, POS);
   assert.equal(card.id, 'vessel:353136000');
@@ -1309,13 +1309,13 @@ test('buildVesselCard: anchors to the billboard position when present', () => {
 
 test('buildVesselCard: tanker types carry the amber accent', () => {
   const card = buildVesselCard(makeRecord({ type: 'Crude Oil Tanker' }));
-  assert.equal(card.accent, '255, 179, 71');
+  assert.equal(card.accent, '232, 255, 154');
 });
 
 test('buildVesselCard: numeric AIS type codes read as family names, not digits', () => {
   const card = buildVesselCard(makeRecord({ type: '84' }));
   assert.deepEqual(card.details, ['TANKER · 14.5KT · 231°']);
-  assert.equal(card.accent, '255, 179, 71');
+  assert.equal(card.accent, '232, 255, 154');
 });
 
 test('cardScreenSeparated: rejects candidates inside the min separation radius', () => {

@@ -798,7 +798,7 @@ try {
       'key-required sources stay focusable, explained, and inert when no ion token is configured',
       ionSource.ariaDisabled === 'true'
         && ionSource.focusedBeforeActivation
-        // #143 names the missing key: "Needs CESIUM_ION_TOKEN — add it in Provider Settings".
+        // #114433 names the missing key: "Needs CESIUM_ION_TOKEN — add it in Provider Settings".
         && /needs [A-Z_]+.*provider settings/i.test(ionSource.ariaLabel)
         && ionSource.activeId === activeBeforeIonAttempt
         && JSON.stringify(ionSource.active) === JSON.stringify([activeBeforeIonAttempt]),

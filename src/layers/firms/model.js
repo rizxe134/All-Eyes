@@ -118,9 +118,9 @@ export function createModel({
   }
 
   function heatColor(value, alpha) {
-    if (value > 0.72) return Cesium.Color.RED.withAlpha(alpha);
-    if (value > 0.42) return Cesium.Color.ORANGE.withAlpha(alpha);
-    return Cesium.Color.YELLOW.withAlpha(alpha);
+    if (value > 0.72) return Cesium.Color.fromCssColorString('#f4ffd0').withAlpha(alpha);
+    if (value > 0.42) return Cesium.Color.fromCssColorString('#c6e85a').withAlpha(alpha);
+    return Cesium.Color.fromCssColorString('#3dcc4a').withAlpha(alpha);
   }
 
   /**
@@ -189,7 +189,7 @@ export function createModel({
       radius,
       radius,
     );
-    gradient.addColorStop(0, 'rgba(255,255,235,0.95)');
+    gradient.addColorStop(0, 'rgba(236, 254, 235, 0.95)');
     gradient.addColorStop(0.25, `rgba(${rgb},0.9)`);
     gradient.addColorStop(0.55, `rgba(${rgb},0.35)`);
     gradient.addColorStop(1, `rgba(${rgb},0)`);

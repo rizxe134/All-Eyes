@@ -11,8 +11,8 @@ export const PROVIDER_COLORS = Object.freeze({
 
 /** Colours every provider shares: the selection highlight and the marker. */
 export const COLORS = Object.freeze({
-  selected: '#00d4ff',
-  position: '#ffb300',
+  selected: '#7dff6a',
+  position: '#e8ff9a',
 });
 
 /** Panorama modes the imagery filter understands. */

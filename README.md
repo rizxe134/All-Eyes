@@ -57,6 +57,11 @@ Server-side keys (stay on this machine):
 - Switch sensor grades (CRT, night vision, thermal, noir, snow). The screen stays green and pixelated either way.
 - Copy a share link for the current camera, style, layers, and tracked target.
 - Talk to the map with the mic control when an OpenAI key or a configured ChatGPT sign-in is present.
+- DISPLAY ▸ **Draw** turns the globe into a whiteboard. Pick Area, Line, or Pin, click the vertices, type an optional label, and finish. Clear wipes the board.
+
+Twenty layers and map sources. **Seventeen have a keyless path.**
+
+**Sits on the real ground.** Entity heights are aligned to work with Google 3D tiles, so aircraft park on aprons and cameras stand on street corners instead of floating.
 
 ## Theme
 

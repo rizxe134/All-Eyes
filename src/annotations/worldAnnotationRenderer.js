@@ -24,11 +24,11 @@ import { showOsmCredit, hideOsmCredit } from '../data/dataCredits.js';
  */
 
 const PALETTE = {
-  primary: '#8be9ff',
-  amber: '#ffb547',
-  cyan: '#39d0ff',
-  green: '#5dff9f',
-  red: '#ff6b6b',
+  primary: '#7dff6a',
+  amber: '#e8ff9a',
+  cyan: '#b6ff6a',
+  green: '#3dcc4a',
+  red: '#f4ffd0',
 };
 
 /**

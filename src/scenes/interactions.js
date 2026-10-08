@@ -25,7 +25,7 @@ export function createSceneInteractions(
         if (item.action.url) {
           const link = document.createElement('a');
           link.textContent = 'Source';
-          link.style.color = '#6eeaff';
+          link.style.color = '#76fb72';
           link.href = item.action.url;
           link.target = '_blank';
           link.rel = 'noopener noreferrer';
@@ -39,7 +39,7 @@ export function createSceneInteractions(
       for (const [id, button] of buttons) {
         button.disabled = state.busy;
         button.setAttribute('aria-pressed', String(state.selected === id));
-        button.style.outline = state.selected === id ? '2px solid #6eeaff' : '';
+        button.style.outline = state.selected === id ? '2px solid #76fb72' : '';
       }
     },
   });
@@ -96,9 +96,9 @@ export function createSceneInteractions(
         maxWidth: '300px',
         maxHeight: '40vh',
         overflowY: 'auto',
-        background: '#08141eed',
-        color: '#e3faff',
-        border: '1px solid #2491a8',
+        background: '#081f07ed',
+        color: '#e5fee4',
+        border: '1px solid #28a824',
         padding: '10px',
         font: '13px sans-serif',
       });
@@ -118,9 +118,9 @@ export function createSceneInteractions(
         button.dataset.directorAction = item.id;
         Object.assign(button.style, {
           display: 'block',
-          background: '#10242e',
-          color: '#e3faff',
-          border: '1px solid #397080',
+          background: '#0d320c',
+          color: '#e5fee4',
+          border: '1px solid #279623',
           borderRadius: '3px',
           padding: '6px 10px',
           cursor: 'pointer',
@@ -154,7 +154,7 @@ export function createSceneInteractions(
         for (const item of items) {
           const button = buttons.get(item.id);
           button.style.outline = matches.includes(item)
-            ? '2px solid #6eeaff'
+            ? '2px solid #76fb72'
             : '';
         }
         status.textContent = `Selected feature: ${matches[0].target.featureId}. Choose an action.`;

@@ -61,7 +61,7 @@ export function initImageryBoxTool({
   let attaching = Promise.resolve(viewer.dataSources.add(dataSource)).catch(
     () => null,
   );
-  const stroke = cesium.Color.fromCssColorString('#8be9ff');
+  const stroke = cesium.Color.fromCssColorString('#92fc8e');
   const previewRectangle = () => {
     const box = dragBox();
     return box

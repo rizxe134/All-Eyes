@@ -152,17 +152,17 @@ export const CAMERA_ICON = (() => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
     <defs>
       <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#c9f6ff"/>
-        <stop offset="45%" stop-color="#6fd9ff"/>
-        <stop offset="100%" stop-color="#1a5f78"/>
+        <stop offset="0%" stop-color="#ccfeca"/>
+        <stop offset="45%" stop-color="#77fb73"/>
+        <stop offset="100%" stop-color="#1d781a"/>
       </linearGradient>
     </defs>
     <g transform="translate(4 6)">
-      <rect x="0" y="8" width="20" height="9" rx="2.5" fill="#0e1720" stroke="#75e7ff" stroke-width="1.2"/>
-      <rect x="17" y="10" width="10" height="5" rx="1.5" fill="#132433" stroke="#75e7ff" stroke-width="1"/>
-      <circle cx="24" cy="12.5" r="3.1" fill="url(#lens)" stroke="#dbfbff" stroke-width="0.8"/>
-      <rect x="6.4" y="17" width="4.2" height="8.5" rx="1.2" fill="#10212d" stroke="#75e7ff" stroke-width="1"/>
-      <rect x="4.2" y="24" width="8.6" height="2.5" rx="1.1" fill="#0b151d" stroke="#4ecde7" stroke-width="0.8"/>
+      <rect x="0" y="8" width="20" height="9" rx="2.5" fill="#0a2509" stroke="#7dfc78" stroke-width="1.2"/>
+      <rect x="17" y="10" width="10" height="5" rx="1.5" fill="#0f390d" stroke="#7dfc78" stroke-width="1"/>
+      <circle cx="24" cy="12.5" r="3.1" fill="url(#lens)" stroke="#ddfedc" stroke-width="0.8"/>
+      <rect x="6.4" y="17" width="4.2" height="8.5" rx="1.2" fill="#0d310c" stroke="#7dfc78" stroke-width="1"/>
+      <rect x="4.2" y="24" width="8.6" height="2.5" rx="1.1" fill="#082008" stroke="#53e74e" stroke-width="0.8"/>
     </g>
   </svg>`;
   return 'data:image/svg+xml;base64,' + btoa(svg);
@@ -405,19 +405,19 @@ export const CAMERA_SEEDS = [
 // ---------------------------------------------------------------------------
 
 export const IDLE_CAMERA_COLOR =
-  Cesium.Color.fromCssColorString('#6be8ff').withAlpha(0.88);
+  Cesium.Color.fromCssColorString('#5ecf78').withAlpha(0.88);
 
 export const ACTIVE_CAMERA_COLOR =
-  Cesium.Color.fromCssColorString('#ffd97a').withAlpha(0.95);
+  Cesium.Color.fromCssColorString('#f4ffd0').withAlpha(0.95);
 
 export const IDLE_COVERAGE_COLOR =
-  Cesium.Color.fromCssColorString('#2fe0ff').withAlpha(0.24);
+  Cesium.Color.fromCssColorString('#3dcc4a').withAlpha(0.24);
 
 export const IDLE_COVERAGE_CENTER_MUTED =
-  Cesium.Color.fromCssColorString('#2fe0ff').withAlpha(0.2);
+  Cesium.Color.fromCssColorString('#3dcc4a').withAlpha(0.2);
 
 export const IDLE_COVERAGE_EDGE_MUTED =
-  Cesium.Color.fromCssColorString('#2fe0ff').withAlpha(0.18);
+  Cesium.Color.fromCssColorString('#3dcc4a').withAlpha(0.18);
 
 export const ACTIVE_COVERAGE_EDGE =
   Cesium.Color.fromCssColorString('#8dff87').withAlpha(0.58);
@@ -435,7 +435,7 @@ export const ACTIVE_COVERAGE_CENTER_DEPTHFAIL =
   Cesium.Color.fromCssColorString('#d7ff8d').withAlpha(0.26);
 
 export const PLANE_OUTLINE_COLOR =
-  Cesium.Color.fromCssColorString('#6be8ff').withAlpha(0.55);
+  Cesium.Color.fromCssColorString('#7dff6a').withAlpha(0.55);
 
 /**
  * Card budget while the staggered geometry drain is running — the raised

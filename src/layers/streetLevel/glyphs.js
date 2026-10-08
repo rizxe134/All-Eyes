@@ -48,7 +48,7 @@ function dot(ctx, c, radius, color, outline, width) {
 /** Cone glyph pointing "up"; rotate the billboard by the compass angle. */
 export function imageConeGlyph({
   size = 32,
-  color = '#e8eaed',
+  color = '#dff7de',
   pano = false,
 } = {}) {
   return cachedGlyph(`cone:${size}:${color}:${pano}`, size, (ctx, c) => {
@@ -59,17 +59,17 @@ export function imageConeGlyph({
       c,
       size * 0.16,
       color,
-      'rgba(10,10,15,0.85)',
+      'rgba(5, 20, 5, 0.85)',
       Math.max(1, size * 0.05),
     );
   });
 }
 
 /** Marker for the image the viewer currently shows. */
-export function positionMarkerGlyph({ size = 44, color = '#ffb300' } = {}) {
+export function positionMarkerGlyph({ size = 44, color = '#e8ff9a' } = {}) {
   return cachedGlyph(`pos:${size}:${color}`, size, (ctx, c) => {
     wedge(ctx, c, size * 0.48, 0.55, color, 0.55);
-    dot(ctx, c, size * 0.2, color, '#0a0a0f', 2);
+    dot(ctx, c, size * 0.2, color, '#051405', 2);
     ring(ctx, c, size * 0.3, color, 1.5, 0.8);
   });
 }

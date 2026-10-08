@@ -116,15 +116,15 @@ export const CATEGORY_MATCHERS = Object.freeze({
 });
 
 export const RADIO_CATEGORY_COLORS = Object.freeze({
-  all: '#b9fbff',
-  news: '#44adff',
-  talk: '#f2b84b',
-  weather: '#ff5c78',
-  'public-safety': '#ff8b4a',
-  'aviation-marine': '#a87cff',
-  'traffic-transit': '#ffd166',
+  all: '#d7ffc8',
+  news: '#7dff6a',
+  talk: '#c6e85a',
+  weather: '#e8ff9a',
+  'public-safety': '#f4ffd0',
+  'aviation-marine': '#5ecf78',
+  'traffic-transit': '#b6ff8a',
   music: '#54d17a',
-  other: '#9aa7b3',
+  other: '#8fbf96',
 });
 
 export const RADIO_CLUSTER_LABELS = Object.freeze({

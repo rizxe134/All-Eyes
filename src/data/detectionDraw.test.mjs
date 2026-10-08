@@ -169,7 +169,7 @@ test('transit brackets paint a 1.25 px mode stroke over 3.25 px dark backing', a
   const ctx = { stroke(path) { strokes.push([path, this.lineWidth, this.strokeStyle, this.globalAlpha]); } };
   const path = {};
   paintTransitBracket(ctx, path, '#FF4538', 0.75);
-  assert.deepEqual(strokes, [[path, 3.25, '#05080C', 0.75], [path, 1.25, '#FF4538', 0.75]]);
+  assert.deepEqual(strokes, [[path, 3.25, '#040e03', 0.75], [path, 1.25, '#FF4538', 0.75]]);
 });
 
 test('transit bracket backing and colour use source-over under every inherited sensor theme', async () => {
@@ -178,7 +178,7 @@ test('transit bracket backing and colour use source-over under every inherited s
     const strokes=[];
     const ctx={globalCompositeOperation:'screen',globalAlpha:0.3,stroke(p){strokes.push([this.globalCompositeOperation,this.lineWidth,this.strokeStyle]);},save(){this.saved=[this.globalCompositeOperation,this.globalAlpha];},restore(){[this.globalCompositeOperation,this.globalAlpha]=this.saved;}};
     paintTransitBracket(ctx,{},'#FF4538',1);
-    assert.deepEqual(strokes,[['source-over',3.25,'#05080C'],['source-over',1.25,'#FF4538']],theme);
+    assert.deepEqual(strokes,[['source-over',3.25,'#040e03'],['source-over',1.25,'#FF4538']],theme);
     assert.equal(ctx.globalCompositeOperation,'screen');
   }
 });

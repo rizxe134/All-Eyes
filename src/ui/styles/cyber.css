@@ -42,7 +42,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(165, 188, 199, 0.35) transparent;
+  scrollbar-color: rgba(140, 227, 137, 0.35) transparent;
 }
 
 :root[data-ui-theme='cyber'] .cctv-panel-inner > .cyber-panel-body {
@@ -69,7 +69,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(165, 188, 199, 0.35) transparent;
+  scrollbar-color: rgba(140, 227, 137, 0.35) transparent;
 }
 
 :root[data-ui-theme='cyber'] #pp-toggles > .pp-panel-body > * {
@@ -82,36 +82,36 @@
 
 :root[data-ui-theme='cyber'] {
   color-scheme: dark;
-  --cyber-red: #c45454;
-  --cyber-red-bright: #e16666;
-  --cyber-slate: #26343a;
-  --cyber-slate-raised: #334a53;
-  --cyber-grid: rgba(188, 211, 218, 0.1);
-  --cyber-telemetry-fill: rgba(13, 20, 23, 0.985);
+  --cyber-red: #b7eeb5;
+  --cyber-red-bright: #b4f0b2;
+  --cyber-slate: #144e12;
+  --cyber-slate-raised: #1c6d19;
+  --cyber-grid: rgba(173, 235, 171, 0.1);
+  --cyber-telemetry-fill: rgba(8, 29, 7, 0.985);
   --cyber-panel-width: 272px;
   --cyber-right-panel-width: 312px;
   --cyber-panel-collapsed-width: 200px;
   --cyber-panel-gap: 8px;
   --cyber-panel-control-size: 30px;
-  --cyber-panel-surface: rgba(18, 24, 27, 0.92);
+  --cyber-panel-surface: rgba(9, 36, 9, 0.92);
   --cyber-panel-surface-detail: linear-gradient(
     135deg,
-    rgba(68, 88, 94, 0.16),
+    rgba(34, 131, 31, 0.16),
     transparent 48%
   );
   --cyber-panel-shadow:
-    3px 0 0 rgba(196, 84, 84, 0.2) inset,
-    -1px 0 0 rgba(226, 235, 236, 0.05) inset, 0 10px 28px rgba(0, 0, 0, 0.42);
-  --bg-dark: #090d0f;
+    3px 0 0 rgba(183, 238, 181, 0.2) inset,
+    -1px 0 0 rgba(217, 246, 216, 0.05) inset, 0 10px 28px rgba(0, 0, 0, 0.42);
+  --bg-dark: #051305;
   --glass-bg: var(--cyber-panel-surface);
-  --glass-border: rgba(206, 222, 226, 0.28);
-  --glass-border-hover: rgba(196, 84, 84, 0.82);
-  --accent: #e9f0f1;
-  --accent-dim: rgba(196, 84, 84, 0.2);
-  --accent-glow: rgba(196, 84, 84, 0.34);
+  --glass-border: rgba(193, 240, 192, 0.28);
+  --glass-border-hover: rgba(183, 238, 181, 0.82);
+  --accent: #e3f8e2;
+  --accent-dim: rgba(183, 238, 181, 0.2);
+  --accent-glow: rgba(183, 238, 181, 0.34);
   --text-primary: #f2f5f4;
-  --text-secondary: rgba(226, 235, 236, 0.82);
-  --text-dim: rgba(180, 198, 202, 0.58);
+  --text-secondary: rgba(217, 246, 216, 0.82);
+  --text-dim: rgba(154, 231, 151, 0.58);
   --panel-radius: 1px;
   --btn-radius: 1px;
   --cyber-panel-frame: polygon(
@@ -228,7 +228,7 @@
   min-height: 28px;
   gap: 9px;
   padding: 0 2px 7px 8px;
-  border-bottom: 1px solid rgba(206, 222, 226, 0.08);
+  border-bottom: 1px solid rgba(193, 240, 192, 0.08);
 }
 
 /* The right-rail surfaces use different content gutters, but their disclosure
@@ -351,8 +351,8 @@
   height: 1px;
   background: linear-gradient(
     90deg,
-    rgba(196, 84, 84, 0.62),
-    rgba(206, 222, 226, 0.08)
+    rgba(183, 238, 181, 0.62),
+    rgba(193, 240, 192, 0.08)
   );
 }
 
@@ -373,7 +373,7 @@
   height: var(--cyber-panel-control-size);
   place-items: center;
   padding: 0;
-  border-color: rgba(206, 222, 226, 0.22);
+  border-color: rgba(193, 240, 192, 0.22);
   clip-path: polygon(
     5px 0,
     calc(100% - 5px) 0,
@@ -399,11 +399,11 @@
   left: 50%;
   width: 36px;
   height: 6px;
-  border-top: 1px solid rgba(225, 102, 102, 0.84);
+  border-top: 1px solid rgba(180, 240, 178, 0.84);
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(196, 84, 84, 0.22) 18% 82%,
+    rgba(183, 238, 181, 0.22) 18% 82%,
     transparent
   );
   clip-path: polygon(0 0, 7px 100%, calc(100% - 7px) 100%, 100% 0);
@@ -487,10 +487,10 @@
   ) {
   border-color: var(--cyber-red);
   color: var(--text-primary);
-  background-color: rgba(64, 45, 46, 0.94);
+  background-color: rgba(23, 88, 21, 0.94);
   box-shadow:
     3px 0 0 var(--cyber-red) inset,
-    0 0 12px rgba(196, 84, 84, 0.14);
+    0 0 12px rgba(183, 238, 181, 0.14);
 }
 
 :root[data-ui-theme='cyber'] .pp-toggle-btn.active,
@@ -498,14 +498,14 @@
 :root[data-ui-theme='cyber'] .map-stack-chip.active {
   border-color: var(--cyber-red);
   color: var(--text-primary);
-  background: rgba(64, 45, 46, 0.94);
+  background: rgba(23, 88, 21, 0.94);
   box-shadow:
     3px 0 0 var(--cyber-red) inset,
-    0 0 12px rgba(196, 84, 84, 0.14);
+    0 0 12px rgba(183, 238, 181, 0.14);
 }
 
 :root[data-ui-theme='cyber'] .pp-mode-seg {
-  border-color: rgba(206, 222, 226, 0.24);
+  border-color: rgba(193, 240, 192, 0.24);
   border-radius: 1px;
 }
 
@@ -522,10 +522,10 @@
 :root[data-ui-theme='cyber'] #detection-toggle.panoptic,
 :root[data-ui-theme='cyber'] #detection-toggle.god {
   border-color: var(--cyber-red);
-  background: rgba(64, 45, 46, 0.94);
+  background: rgba(23, 88, 21, 0.94);
   box-shadow:
     3px 0 0 var(--cyber-red) inset,
-    0 0 12px rgba(196, 84, 84, 0.14);
+    0 0 12px rgba(183, 238, 181, 0.14);
 }
 
 :root[data-ui-theme='cyber']
@@ -540,8 +540,8 @@
 }
 
 :root[data-ui-theme='cyber'] :where(.pp-select, select, input, textarea) {
-  border-color: rgba(206, 222, 226, 0.24);
-  background-color: rgba(26, 35, 39, 0.96);
+  border-color: rgba(193, 240, 192, 0.24);
+  background-color: rgba(14, 53, 12, 0.96);
   color: var(--text-primary);
 }
 
@@ -591,7 +591,7 @@
   place-items: center;
   width: 1.05rem;
   min-width: 1.05rem;
-  color: rgba(235, 241, 241, 0.88);
+  color: rgba(228, 249, 227, 0.88);
   font-family: var(--font-mono);
   font-size: 0 !important;
   font-style: normal;
@@ -792,7 +792,7 @@
   :where(button, a[href], input, select, textarea):focus-visible {
   outline-color: var(--cyber-red-bright) !important;
   box-shadow:
-    0 0 0 2px #090d0f,
+    0 0 0 2px #051305,
     0 0 0 4px var(--cyber-red-bright);
 }
 
@@ -805,7 +805,7 @@
   ) {
   border-color: var(--cyber-red-bright);
   color: var(--text-primary);
-  background-color: rgba(64, 45, 46, 0.94);
+  background-color: rgba(23, 88, 21, 0.94);
 }
 
 :root[data-ui-theme='cyber']
@@ -821,7 +821,7 @@
 :root[data-ui-theme='cyber'] #title-bar h1,
 :root[data-ui-theme='cyber'] #style-indicator {
   color: #f5f7f6;
-  text-shadow: 2px 2px 0 rgba(196, 84, 84, 0.3);
+  text-shadow: 2px 2px 0 rgba(183, 238, 181, 0.3);
 }
 
 :root[data-ui-theme='cyber'] #title-bar .subtitle,
@@ -831,14 +831,14 @@
 }
 
 :root[data-ui-theme='cyber'] #title-bar .title-logo {
-  filter: drop-shadow(0 0 10px rgba(196, 84, 84, 0.24));
+  filter: drop-shadow(0 0 10px rgba(183, 238, 181, 0.24));
 }
 
 :root[data-ui-theme='cyber']
   #title-bar
   .title-logo
   :is(#outer_eye, #inner_eye) {
-  fill: #090d0f;
+  fill: #051305;
   stroke: #f5f7f6;
 }
 
@@ -849,13 +849,13 @@
 
 :root[data-ui-theme='cyber'] #title-bar .title-logo #globe_cage {
   fill: #f5f7f6;
-  stroke: #090d0f;
+  stroke: #051305;
   opacity: 0.72;
 }
 
 :root[data-ui-theme='cyber'] #top-center-actions button {
-  --cyber-action-edge: rgba(226, 235, 236, 0.34);
-  --cyber-action-fill: rgba(14, 20, 23, 0.94);
+  --cyber-action-edge: rgba(217, 246, 216, 0.34);
+  --cyber-action-fill: rgba(8, 30, 7, 0.94);
   position: relative;
   isolation: isolate;
   border: 0;
@@ -889,7 +889,7 @@
 :root[data-ui-theme='cyber'] #top-center-actions button:focus-visible,
 :root[data-ui-theme='cyber'] #top-center-actions button[aria-pressed='true'] {
   --cyber-action-edge: var(--cyber-red);
-  --cyber-action-fill: rgba(64, 45, 46, 0.94);
+  --cyber-action-fill: rgba(23, 88, 21, 0.94);
   color: var(--cyber-red-bright);
   box-shadow: none;
 }
@@ -915,14 +915,14 @@
   background:
     linear-gradient(
       90deg,
-      rgba(196, 84, 84, 0.16),
+      rgba(183, 238, 181, 0.16),
       transparent 18% 82%,
-      rgba(196, 84, 84, 0.16)
+      rgba(183, 238, 181, 0.16)
     ),
-    rgba(10, 15, 18, 0.96);
+    rgba(6, 23, 5, 0.96);
   box-shadow:
-    0 0 0 1px rgba(196, 84, 84, 0.62) inset,
-    0 0 0 2px rgba(238, 243, 243, 0.035) inset;
+    0 0 0 1px rgba(183, 238, 181, 0.62) inset,
+    0 0 0 2px rgba(232, 249, 232, 0.035) inset;
   clip-path: polygon(
     12px 0,
     calc(100% - 12px) 0,
@@ -946,9 +946,9 @@
   height: 0.22rem;
   background: repeating-linear-gradient(
     90deg,
-    rgba(196, 84, 84, 0.9) 0 2px,
+    rgba(183, 238, 181, 0.9) 0 2px,
     transparent 2px 6px,
-    rgba(226, 235, 236, 0.38) 6px 7px,
+    rgba(217, 246, 216, 0.38) 6px 7px,
     transparent 7px 11px
   );
   opacity: 0.68;
@@ -957,28 +957,28 @@
 
 :root[data-ui-theme='cyber'] #command-dock > #location-bar,
 :root[data-ui-theme='cyber'] #command-dock > #control-panel {
-  border: 1px solid rgba(112, 145, 153, 0.34);
+  border: 1px solid rgba(62, 208, 57, 0.34);
   background:
-    linear-gradient(135deg, rgba(62, 86, 94, 0.26), transparent 52%),
-    rgba(28, 39, 43, 0.92);
+    linear-gradient(135deg, rgba(33, 126, 30, 0.26), transparent 52%),
+    rgba(15, 58, 13, 0.92);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.32) inset,
-    3px 0 0 rgba(196, 84, 84, 0.18) inset;
+    3px 0 0 rgba(183, 238, 181, 0.18) inset;
 }
 
 :root[data-ui-theme='cyber'] #command-dock > #location-bar {
-  border-left-color: rgba(196, 84, 84, 0.68);
+  border-left-color: rgba(183, 238, 181, 0.68);
 }
 
 :root[data-ui-theme='cyber'] #command-dock > #control-panel {
-  border-right-color: rgba(196, 84, 84, 0.68);
+  border-right-color: rgba(183, 238, 181, 0.68);
 }
 
 :root[data-ui-theme='cyber'] #command-dock > #location-bar::after,
 :root[data-ui-theme='cyber'] #command-dock > #control-panel::after {
   position: absolute;
   bottom: 0.22rem;
-  color: rgba(165, 190, 196, 0.42);
+  color: rgba(137, 227, 134, 0.42);
   font-size: 0.32rem;
   letter-spacing: 0.1rem;
   pointer-events: none;
@@ -1015,20 +1015,20 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  border: 1px solid rgba(196, 84, 84, 0.58);
+  border: 1px solid rgba(183, 238, 181, 0.58);
   border-radius: 0;
   background:
-    linear-gradient(180deg, rgba(196, 84, 84, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(183, 238, 181, 0.14), transparent 34%),
     repeating-linear-gradient(
       90deg,
-      rgba(188, 211, 218, 0.035) 0 1px,
+      rgba(173, 235, 171, 0.035) 0 1px,
       transparent 1px 9px
     ),
-    rgba(38, 52, 58, 0.98);
+    rgba(20, 78, 18, 0.98);
   box-shadow:
     0 9px 22px rgba(0, 0, 0, 0.48),
-    3px 0 0 rgba(196, 84, 84, 0.72) inset,
-    -3px 0 0 rgba(196, 84, 84, 0.32) inset;
+    3px 0 0 rgba(183, 238, 181, 0.72) inset,
+    -3px 0 0 rgba(183, 238, 181, 0.32) inset;
   clip-path: polygon(
     12px 0,
     calc(100% - 12px) 0,
@@ -1042,9 +1042,9 @@
 }
 
 :root[data-ui-theme='cyber'] #command-dock #gev-voice-button {
-  border: 1px solid rgba(226, 235, 236, 0.24);
-  background: rgba(8, 13, 15, 0.32);
-  box-shadow: 0 0 0 3px rgba(196, 84, 84, 0.08) inset;
+  border: 1px solid rgba(217, 246, 216, 0.24);
+  background: rgba(5, 19, 4, 0.32);
+  box-shadow: 0 0 0 3px rgba(183, 238, 181, 0.08) inset;
   clip-path: polygon(
     8px 0,
     100% 0,
@@ -1057,12 +1057,12 @@
 
 :root[data-ui-theme='cyber'] #command-dock .gev-mic-orbit {
   position: relative;
-  border-color: rgba(196, 84, 84, 0.58);
+  border-color: rgba(183, 238, 181, 0.58);
   border-radius: 0;
-  background: rgba(196, 84, 84, 0.1);
+  background: rgba(183, 238, 181, 0.1);
   box-shadow:
-    0 0 0 0.16rem rgba(196, 84, 84, 0.07),
-    0 0 0.7rem rgba(196, 84, 84, 0.12);
+    0 0 0 0.16rem rgba(183, 238, 181, 0.07),
+    0 0 0.7rem rgba(183, 238, 181, 0.12);
   transform: rotate(45deg) scale(0.8);
 }
 
@@ -1132,7 +1132,7 @@
     linear-gradient(
       90deg,
       rgba(var(--cyber-voice-alert), 0.09),
-      rgba(3, 13, 16, 0.9) 24% 76%,
+      rgba(3, 16, 3, 0.9) 24% 76%,
       rgba(var(--cyber-voice-wave), 0.08)
     );
   box-shadow:
@@ -1306,12 +1306,12 @@
   height: auto;
   transform: none;
   pointer-events: none;
-  border: 1px solid rgba(196, 84, 84, 0.62);
+  border: 1px solid rgba(183, 238, 181, 0.62);
   background:
-    linear-gradient(135deg, rgba(62, 86, 94, 0.22), transparent 46%),
-    linear-gradient(rgba(188, 211, 218, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(188, 211, 218, 0.045) 1px, transparent 1px),
-    rgba(12, 18, 21, 0.98);
+    linear-gradient(135deg, rgba(33, 126, 30, 0.22), transparent 46%),
+    linear-gradient(rgba(173, 235, 171, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(173, 235, 171, 0.045) 1px, transparent 1px),
+    rgba(7, 27, 6, 0.98);
   background-size:
     auto,
     32px 32px,
@@ -1319,7 +1319,7 @@
     auto;
   box-shadow:
     0 1rem 2.6rem rgba(0, 0, 0, 0.64),
-    4px 0 0 rgba(196, 84, 84, 0.2) inset;
+    4px 0 0 rgba(183, 238, 181, 0.2) inset;
   clip-path: var(--cyber-panel-frame);
 }
 
@@ -1327,7 +1327,7 @@
   position: absolute;
   top: 0.46rem;
   left: 0.7rem;
-  color: rgba(225, 102, 102, 0.78);
+  color: rgba(180, 240, 178, 0.78);
   font-size: 0.4rem;
   letter-spacing: 0.12rem;
   pointer-events: none;
@@ -1346,11 +1346,11 @@
   :where(.style-btn, .location-pill, .poi-pill) {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(142, 171, 178, 0.3);
+  border: 1px solid rgba(105, 219, 101, 0.3);
   border-radius: 0;
   background:
-    linear-gradient(135deg, rgba(55, 78, 85, 0.42), transparent 66%),
-    rgba(31, 45, 50, 0.94);
+    linear-gradient(135deg, rgba(29, 113, 27, 0.42), transparent 66%),
+    rgba(17, 66, 15, 0.94);
   clip-path: polygon(
     0 0,
     calc(100% - 7px) 0,
@@ -1377,15 +1377,15 @@
 }
 
 :root[data-ui-theme='cyber'] #command-dock .style-btn.active {
-  border-color: rgba(225, 102, 102, 0.78);
+  border-color: rgba(180, 240, 178, 0.78);
   background:
-    linear-gradient(135deg, rgba(196, 84, 84, 0.42), transparent 72%),
-    rgba(60, 42, 43, 0.96);
+    linear-gradient(135deg, rgba(183, 238, 181, 0.42), transparent 72%),
+    rgba(21, 83, 19, 0.96);
   box-shadow: 3px 0 0 var(--cyber-red) inset;
 }
 
 :root[data-ui-theme='cyber'] #command-dock #search-toggle {
-  color: rgba(235, 241, 241, 0.9);
+  color: rgba(228, 249, 227, 0.9);
   font-size: 0;
 }
 
@@ -1435,14 +1435,14 @@
 
 :root[data-ui-theme='cyber'] .dock-tray-toggle,
 :root[data-ui-theme='cyber'] .context-mode-button {
-  background-color: rgba(38, 52, 58, 0.95);
-  border-color: rgba(152, 179, 186, 0.34);
+  background-color: rgba(20, 78, 18, 0.95);
+  border-color: rgba(119, 222, 116, 0.34);
 }
 
 #intel-hud[data-variant='cyber'] {
   --hud-color: rgba(244, 247, 246, 0.94) !important;
-  --hud-glow: rgba(196, 84, 84, 0.24) !important;
-  --hud-border: rgba(196, 84, 84, 0.74) !important;
+  --hud-glow: rgba(183, 238, 181, 0.24) !important;
+  --hud-border: rgba(183, 238, 181, 0.74) !important;
 }
 
 #intel-hud[data-variant='cyber'] .hud-sonar {
@@ -1455,15 +1455,15 @@
     var(--cyber-sonar-size-vh, 104vh)
   );
   aspect-ratio: 1;
-  border: 1px solid rgba(226, 235, 236, 0.2);
+  border: 1px solid rgba(217, 246, 216, 0.2);
   border-radius: 50%;
   opacity: var(--cyber-sonar-visual-intensity, 0.57);
   overflow: hidden;
   pointer-events: none;
   transform: translate(-50%, -50%);
   box-shadow:
-    0 0 0 1px rgba(196, 84, 84, 0.12),
-    inset 0 0 48px rgba(196, 84, 84, 0.035);
+    0 0 0 1px rgba(183, 238, 181, 0.12),
+    inset 0 0 48px rgba(183, 238, 181, 0.035);
 }
 
 :root[data-cyber-sonar='off'] #intel-hud[data-variant='cyber'] .hud-sonar {
@@ -1483,7 +1483,7 @@
   background: repeating-radial-gradient(
     circle,
     transparent 0 calc(var(--cyber-sonar-ring-step, 12.5%) - 1px),
-    rgba(226, 235, 236, 0.17) calc(var(--cyber-sonar-ring-step, 12.5%) - 1px)
+    rgba(217, 246, 216, 0.17) calc(var(--cyber-sonar-ring-step, 12.5%) - 1px)
       var(--cyber-sonar-ring-step, 12.5%)
   );
 }
@@ -1491,13 +1491,13 @@
 #intel-hud[data-variant='cyber'] .hud-sonar::after {
   background: conic-gradient(
     from 0deg,
-    rgba(245, 250, 250, 0.3) 0deg,
-    rgba(235, 116, 116, 0.14) 0.55deg,
-    rgba(196, 84, 84, 0.075) var(--cyber-sonar-sector-quarter, 6deg),
-    rgba(150, 206, 215, 0.035) var(--cyber-sonar-sector-middle, 14.4deg),
+    rgba(243, 252, 243, 0.3) 0deg,
+    rgba(177, 243, 175, 0.14) 0.55deg,
+    rgba(183, 238, 181, 0.075) var(--cyber-sonar-sector-quarter, 6deg),
+    rgba(141, 227, 138, 0.035) var(--cyber-sonar-sector-middle, 14.4deg),
     transparent var(--cyber-sonar-sector-width, 24deg) 360deg
   );
-  filter: drop-shadow(0 0 4px rgba(226, 235, 236, 0.1));
+  filter: drop-shadow(0 0 4px rgba(217, 246, 216, 0.1));
   mask-image: radial-gradient(
     circle,
     #000 0 84%,
@@ -1534,13 +1534,13 @@
 #intel-hud[data-variant='cyber'] .hud-bottom-bar {
   display: flex;
   border-color: var(--hud-border);
-  background-color: rgba(14, 20, 23, 0.9);
+  background-color: rgba(8, 30, 7, 0.9);
   background-image: linear-gradient(
     90deg,
-    rgba(196, 84, 84, 0.12),
+    rgba(183, 238, 181, 0.12),
     transparent 46%
   );
-  box-shadow: 0 0 0 1px rgba(234, 240, 241, 0.06) inset;
+  box-shadow: 0 0 0 1px rgba(227, 248, 227, 0.06) inset;
   clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
 }
 
@@ -1581,7 +1581,7 @@
   box-sizing: border-box;
   padding: 8px 11px;
   border: 0;
-  background: rgba(196, 84, 84, 0.72);
+  background: rgba(183, 238, 181, 0.72);
   clip-path: var(--cyber-panel-frame);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
 }
@@ -1591,7 +1591,7 @@
   z-index: -1;
   inset: 1px;
   background:
-    linear-gradient(135deg, rgba(68, 88, 94, 0.2), transparent 48%),
+    linear-gradient(135deg, rgba(34, 131, 31, 0.2), transparent 48%),
     var(--cyber-telemetry-fill);
   clip-path: inherit;
   content: '';
@@ -1642,7 +1642,7 @@
     left: 54px;
     width: 300px;
     padding-left: 10px;
-    border-left: 1px solid rgba(196, 84, 84, 0.72);
+    border-left: 1px solid rgba(183, 238, 181, 0.72);
   }
 
   :root[data-ui-theme='cyber']
@@ -1785,29 +1785,29 @@
     min-height: 132px;
     flex: 1 1 auto;
     border-style: solid;
-    border-color: rgba(206, 222, 226, 0.14);
+    border-color: rgba(193, 240, 192, 0.14);
     overflow: hidden;
     background:
       linear-gradient(
         90deg,
         transparent 49.8%,
-        rgba(206, 222, 226, 0.08) 50%,
+        rgba(193, 240, 192, 0.08) 50%,
         transparent 50.2%
       ),
       linear-gradient(
         transparent 49.8%,
-        rgba(206, 222, 226, 0.08) 50%,
+        rgba(193, 240, 192, 0.08) 50%,
         transparent 50.2%
       ),
       radial-gradient(
         circle at center,
         transparent 0 22px,
-        rgba(196, 84, 84, 0.18) 23px 24px,
+        rgba(183, 238, 181, 0.18) 23px 24px,
         transparent 25px 45px,
-        rgba(206, 222, 226, 0.1) 46px 47px,
+        rgba(193, 240, 192, 0.1) 46px 47px,
         transparent 48px
       ),
-      rgba(7, 12, 14, 0.44);
+      rgba(4, 17, 4, 0.44);
   }
 
   :root[data-ui-theme='cyber']
@@ -1823,7 +1823,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(225, 102, 102, 0.5),
+      rgba(180, 240, 178, 0.5),
       transparent
     );
     content: '';
@@ -1866,26 +1866,26 @@
    concentric scanner is line-only so the optical center and target labels stay
    readable; controls and source-backed telemetry remain at the perimeter. */
 :root[data-ui-theme='cyber'] body.cockpit-mode #cockpit-hud {
-  --cockpit-accent: #69cbd1;
-  --cockpit-caution: #c45454;
+  --cockpit-accent: #64da60;
+  --cockpit-caution: #b7eeb5;
   --cockpit-side-panel-width: min(294px, 23vw);
-  color: #e9f2f2;
+  color: #e3f8e3;
   text-shadow: none;
   background:
     linear-gradient(
       90deg,
-      rgba(4, 24, 29, 0.38),
+      rgba(5, 29, 4, 0.38),
       transparent 18% 82%,
-      rgba(4, 24, 29, 0.38)
+      rgba(5, 29, 4, 0.38)
     ),
     linear-gradient(
       180deg,
-      rgba(2, 13, 16, 0.5),
+      rgba(2, 16, 2, 0.5),
       transparent 24% 78%,
-      rgba(2, 13, 16, 0.44)
+      rgba(2, 16, 2, 0.44)
     );
   box-shadow:
-    inset 0 0 0 1px rgba(105, 203, 209, 0.18),
+    inset 0 0 0 1px rgba(100, 218, 96, 0.18),
     inset 0 0 96px rgba(0, 0, 0, 0.42);
 }
 
@@ -1909,8 +1909,8 @@
       calc(100% - 54px) / 122px 1px no-repeat,
     linear-gradient(var(--cockpit-accent), var(--cockpit-accent)) 100%
       calc(100% - 54px) / 122px 1px no-repeat;
-  border-right: 1px solid rgba(105, 203, 209, 0.16);
-  border-left: 1px solid rgba(105, 203, 209, 0.16);
+  border-right: 1px solid rgba(100, 218, 96, 0.16);
+  border-left: 1px solid rgba(100, 218, 96, 0.16);
   clip-path: polygon(
     0 0,
     34% 0,
@@ -1957,16 +1957,16 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  color: rgba(105, 203, 209, 0.38);
+  color: rgba(100, 218, 96, 0.38);
   stroke-width: 0.8;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-frame-warning {
-  stroke: rgba(196, 84, 84, 0.65);
+  stroke: rgba(183, 238, 181, 0.65);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-frame-meter {
-  stroke: rgba(105, 203, 209, 0.9);
+  stroke: rgba(100, 218, 96, 0.9);
   stroke-width: 4;
 }
 
@@ -1984,8 +1984,8 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(3, 13, 19, 0.42) 0 28%,
-    rgba(3, 13, 19, 0.14) 58%,
+    rgba(4, 19, 3, 0.42) 0 28%,
+    rgba(4, 19, 3, 0.14) 58%,
     transparent 70%
   );
 }
@@ -1995,39 +1995,39 @@
   width: 100%;
   height: 100%;
   overflow: visible;
-  stroke: rgba(186, 212, 220, 0.45);
+  stroke: rgba(173, 235, 171, 0.45);
   stroke-width: 1;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-target-hairline {
-  stroke: rgba(105, 203, 209, 0.4);
+  stroke: rgba(100, 218, 96, 0.4);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-target-side-arcs {
-  stroke: rgba(211, 225, 230, 0.58);
+  stroke: rgba(201, 242, 199, 0.58);
   stroke-width: 16;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-target-ticks {
-  stroke: rgba(213, 233, 237, 0.75);
+  stroke: rgba(208, 244, 206, 0.75);
   stroke-width: 6;
   stroke-dasharray: 1 9;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-target-dots {
-  stroke: rgba(105, 203, 209, 0.8);
+  stroke: rgba(100, 218, 96, 0.8);
   stroke-width: 3;
   stroke-dasharray: 2 13;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-target-warning-dots {
-  stroke: rgba(196, 84, 84, 0.88);
+  stroke: rgba(183, 238, 181, 0.88);
   stroke-width: 4;
   stroke-dasharray: 2 14;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-target-core {
-  stroke: rgba(206, 222, 230, 0.5);
+  stroke: rgba(197, 241, 195, 0.5);
   stroke-width: 1;
 }
 
@@ -2167,7 +2167,7 @@
   width: max-content;
   padding: 0 12px 8px;
   border: 0;
-  color: rgba(231, 241, 241, 0.84);
+  color: rgba(225, 248, 224, 0.84);
   background: none;
   font-size: 7px;
   font-weight: 700;
@@ -2179,20 +2179,20 @@
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-roll-arc::after {
   inset: 20px 8% 0;
-  border-color: rgba(105, 203, 209, 0.52);
+  border-color: rgba(100, 218, 96, 0.52);
   border-radius: 50% 50% 0 0;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-roll-arc span {
-  color: rgba(205, 225, 226, 0.5);
+  color: rgba(193, 240, 191, 0.5);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-roll-arc span::after {
-  background: rgba(105, 203, 209, 0.72);
+  background: rgba(100, 218, 96, 0.72);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-roll-arc span.active {
-  color: #f1f6f6;
+  color: #edfbec;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-topline {
@@ -2210,9 +2210,9 @@
   width: min(252px, 24vw);
   box-sizing: border-box;
   padding: 8px 12px 7px;
-  border-top: 1px solid rgba(105, 203, 209, 0.46);
-  border-bottom: 1px solid rgba(105, 203, 209, 0.16);
-  background: linear-gradient(90deg, rgba(10, 27, 31, 0.72), transparent);
+  border-top: 1px solid rgba(100, 218, 96, 0.46);
+  border-bottom: 1px solid rgba(100, 218, 96, 0.16);
+  background: linear-gradient(90deg, rgba(9, 33, 8, 0.72), transparent);
   clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
 }
 
@@ -2220,8 +2220,8 @@
   content: 'SYS 06  //  SENSOR FUSION  //  READY';
   grid-column: 3;
   justify-self: end;
-  color: rgba(205, 225, 226, 0.6);
-  background: linear-gradient(270deg, rgba(10, 27, 31, 0.72), transparent);
+  color: rgba(193, 240, 191, 0.6);
+  background: linear-gradient(270deg, rgba(9, 33, 8, 0.72), transparent);
   font-size: 7px;
   letter-spacing: 0.16em;
   text-align: right;
@@ -2237,10 +2237,10 @@
   z-index: 146;
   max-width: min(430px, calc(100vw - 40px));
   padding: 3px 10px;
-  border-color: rgba(105, 203, 209, 0.46);
+  border-color: rgba(100, 218, 96, 0.46);
   border-radius: 1px;
-  background: rgba(5, 18, 22, 0.94);
-  color: rgba(220, 238, 239, 0.94);
+  background: rgba(6, 22, 5, 0.94);
+  color: rgba(215, 245, 214, 0.94);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.42);
   clip-path: polygon(
     6px 0,
@@ -2267,14 +2267,14 @@
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-aircraft-meta {
-  color: rgba(205, 225, 226, 0.48);
+  color: rgba(193, 240, 191, 0.48);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-vision-controls {
   margin-top: 0;
-  border-color: rgba(105, 203, 209, 0.38);
+  border-color: rgba(100, 218, 96, 0.38);
   border-radius: 1px;
-  background: rgba(6, 20, 24, 0.78);
+  background: rgba(6, 24, 6, 0.78);
   box-shadow: none;
 }
 
@@ -2287,9 +2287,9 @@
   body.cockpit-mode
   .cockpit-vision-controls
   .cockpit-vision-current {
-  border-color: rgba(196, 84, 84, 0.7);
-  background: rgba(196, 84, 84, 0.12);
-  box-shadow: inset 0 -2px 0 rgba(196, 84, 84, 0.82);
+  border-color: rgba(183, 238, 181, 0.7);
+  background: rgba(183, 238, 181, 0.12);
+  box-shadow: inset 0 -2px 0 rgba(183, 238, 181, 0.82);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-reticle {
@@ -2302,13 +2302,13 @@
   border-radius: 0;
   color: transparent;
   background:
-    linear-gradient(rgba(231, 241, 241, 0.86), rgba(231, 241, 241, 0.86)) 50%
+    linear-gradient(rgba(225, 248, 224, 0.86), rgba(225, 248, 224, 0.86)) 50%
       0 / 1px 11px no-repeat,
-    linear-gradient(rgba(231, 241, 241, 0.86), rgba(231, 241, 241, 0.86)) 50%
+    linear-gradient(rgba(225, 248, 224, 0.86), rgba(225, 248, 224, 0.86)) 50%
       100% / 1px 11px no-repeat,
-    linear-gradient(90deg, rgba(231, 241, 241, 0.86), rgba(231, 241, 241, 0.86))
+    linear-gradient(90deg, rgba(225, 248, 224, 0.86), rgba(225, 248, 224, 0.86))
       0 50% / 11px 1px no-repeat,
-    linear-gradient(90deg, rgba(231, 241, 241, 0.86), rgba(231, 241, 241, 0.86))
+    linear-gradient(90deg, rgba(225, 248, 224, 0.86), rgba(225, 248, 224, 0.86))
       100% 50% / 11px 1px no-repeat;
   font-size: 0;
   opacity: 0.92;
@@ -2327,7 +2327,7 @@
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-reticle::before {
   width: 5px;
   height: 5px;
-  border: 1px solid rgba(231, 241, 241, 0.86);
+  border: 1px solid rgba(225, 248, 224, 0.86);
   transform: translate(-50%, -50%);
 }
 
@@ -2335,8 +2335,8 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(196, 84, 84, 0.96);
-  box-shadow: 0 0 8px rgba(196, 84, 84, 0.8);
+  background: rgba(183, 238, 181, 0.96);
+  box-shadow: 0 0 8px rgba(183, 238, 181, 0.8);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-horizon-guide {
@@ -2359,9 +2359,9 @@
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-horizon-guide small {
   padding: 3px 8px;
-  border: 1px solid rgba(196, 84, 84, 0.62);
-  color: #eef4f4;
-  background: rgba(8, 22, 26, 0.58);
+  border: 1px solid rgba(183, 238, 181, 0.62);
+  color: #e9fae8;
+  background: rgba(7, 28, 6, 0.58);
 }
 
 :root[data-ui-theme='cyber']
@@ -2384,7 +2384,7 @@
   > span
   b {
   border-radius: 0;
-  background: rgba(4, 18, 22, 0.38);
+  background: rgba(5, 22, 4, 0.38);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-compass {
@@ -2395,12 +2395,12 @@
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-readout {
   min-width: 104px;
   padding: 5px 10px 6px;
-  border-top-color: rgba(105, 203, 209, 0.48);
-  border-bottom-color: rgba(196, 84, 84, 0.34);
+  border-top-color: rgba(100, 218, 96, 0.48);
+  border-bottom-color: rgba(183, 238, 181, 0.34);
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(6, 22, 26, 0.56),
+    rgba(7, 26, 6, 0.56),
     transparent
   );
 }
@@ -2412,12 +2412,12 @@
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-heading-value {
   min-width: 66px;
-  color: #f0f5f5;
+  color: #ebfaeb;
   font-size: 29px;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-compass-tape::before {
-  border-color: rgba(105, 203, 209, 0.54);
+  border-color: rgba(100, 218, 96, 0.54);
   background: transparent;
 }
 
@@ -2425,7 +2425,7 @@
   body.cockpit-mode
   .cockpit-compass-tape
   span::before {
-  background: rgba(105, 203, 209, 0.66);
+  background: rgba(100, 218, 96, 0.66);
 }
 
 :root[data-ui-theme='cyber']
@@ -2434,12 +2434,12 @@
   top: var(--cockpit-context-top, clamp(255px, 28vh, 300px));
   bottom: auto;
   max-height: min(44vh, 410px);
-  border-color: rgba(105, 203, 209, 0.34);
-  border-top-color: rgba(196, 84, 84, 0.82);
+  border-color: rgba(100, 218, 96, 0.34);
+  border-top-color: rgba(183, 238, 181, 0.82);
   border-radius: 0;
   background:
-    linear-gradient(135deg, rgba(105, 203, 209, 0.07), transparent 38%),
-    rgba(8, 23, 27, 0.78);
+    linear-gradient(135deg, rgba(100, 218, 96, 0.07), transparent 38%),
+    rgba(7, 28, 7, 0.78);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.025),
     0 12px 30px rgba(0, 0, 0, 0.24);
@@ -2479,7 +2479,7 @@
 :root[data-ui-theme='cyber']
   body.cockpit-mode
   :is(.cockpit-context-header, .cockpit-signal-header) {
-  border-bottom-color: rgba(105, 203, 209, 0.25);
+  border-bottom-color: rgba(100, 218, 96, 0.25);
 }
 
 :root[data-ui-theme='cyber']
@@ -2490,9 +2490,9 @@
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-context-cohorts > div,
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-signal-list li {
-  border-color: rgba(105, 203, 209, 0.16);
+  border-color: rgba(100, 218, 96, 0.16);
   border-radius: 0;
-  background: rgba(7, 19, 23, 0.42);
+  background: rgba(6, 24, 6, 0.42);
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-utility-controls {
@@ -2548,7 +2548,7 @@
   left: calc(50% - 25px);
   width: 50px;
   height: 6px;
-  background: rgba(196, 84, 84, 0.22);
+  background: rgba(183, 238, 181, 0.22);
   pointer-events: none;
 }
 
@@ -2560,7 +2560,7 @@
   right: 16px;
   bottom: 12px;
   left: 16px;
-  border-bottom: 1px solid rgba(206, 222, 226, 0.08);
+  border-bottom: 1px solid rgba(193, 240, 192, 0.08);
   pointer-events: none;
 }
 
@@ -2589,14 +2589,14 @@
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-utility-divider {
   background: linear-gradient(
     90deg,
-    rgba(196, 84, 84, 0.62),
-    rgba(206, 222, 226, 0.08)
+    rgba(183, 238, 181, 0.62),
+    rgba(193, 240, 192, 0.08)
   );
   box-shadow: none;
 }
 
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-utility-glyph {
-  border-color: rgba(206, 222, 226, 0.22);
+  border-color: rgba(193, 240, 192, 0.22);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.03);
   color: #f2f5f4;
@@ -2644,7 +2644,7 @@
   position: relative;
   width: var(--cyber-right-panel-width);
   padding: 8px;
-  border-color: rgba(105, 203, 209, 0.34);
+  border-color: rgba(100, 218, 96, 0.34);
   border-radius: 0;
   background-color: var(--cyber-panel-surface);
   background-image: var(--cyber-panel-surface-detail);
@@ -2664,11 +2664,11 @@
   left: 50%;
   width: 36px;
   height: 6px;
-  border-top: 1px solid rgba(225, 102, 102, 0.84);
+  border-top: 1px solid rgba(180, 240, 178, 0.84);
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(196, 84, 84, 0.22) 18% 82%,
+    rgba(183, 238, 181, 0.22) 18% 82%,
     transparent
   );
   clip-path: polygon(0 0, 7px 100%, calc(100% - 7px) 100%, 100% 0);
@@ -2721,7 +2721,7 @@
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-position-readout,
 :root[data-ui-theme='cyber'] body.cockpit-mode .cockpit-help {
   bottom: 24px;
-  color: rgba(205, 225, 226, 0.54);
+  color: rgba(193, 240, 191, 0.54);
   font-size: 8px;
 }
 

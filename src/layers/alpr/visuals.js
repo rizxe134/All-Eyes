@@ -107,7 +107,7 @@ export function directionWedgePositions(record, heightM = 0, heightAt = null) {
 
 /** Paint the original cyan/coral gradient with a crisp V-shaped boundary. */
 export function paintDirectionWedge(ctx, origin, left, right, selected) {
-  const rgb = selected ? '255, 100, 116' : '82, 212, 255';
+  const rgb = selected ? '244, 255, 208' : '125, 255, 106';
   const gradient = ctx.createLinearGradient(
     origin.x,
     origin.y,

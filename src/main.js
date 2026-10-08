@@ -11,7 +11,7 @@ application.start().catch((error) => {
   console.error('All Eyes initialization failed:', error);
   const loaderStatus = document.querySelector('#loading-screen .loader-status');
   loaderStatus.textContent = `Error: ${describeError(error)}`;
-  loaderStatus.style.color = '#ff4444';
+  loaderStatus.style.color = '#a8fda5';
 });
 
 export { application };

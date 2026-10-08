@@ -33,19 +33,19 @@ test('normalizeVesselType preserves text and degrades unknown codes', () => {
 });
 
 test('vessel type CSS and card accents stay paired', () => {
-  assert.equal(vesselTypeCss('Crude Oil Tanker'), '#ffb347');
-  assert.equal(vesselTypeCss('Container Ship'), '#39d5ff');
-  assert.equal(vesselTypeCss('Passenger/Ferry'), '#ff7adf');
-  assert.equal(vesselTypeCss('Fishing'), '#7cff9b');
-  assert.equal(vesselTypeCss('Tug'), '#f7f0a3');
-  assert.equal(accentForVesselType('Tanker'), '255, 179, 71');
-  assert.equal(accentForVesselType('Cargo'), '57, 213, 255');
-  assert.equal(accentForVesselType('Passenger'), '255, 122, 223');
-  assert.equal(accentForVesselType('Fishing'), '124, 255, 155');
-  assert.equal(accentForVesselType('Pilot Vessel'), '247, 240, 163');
-  assert.equal(accentForVesselType('Dredger'), '57, 213, 255');
-  assert.equal(accentForVesselType('84'), '255, 179, 71');
-  assert.equal(vesselTypeCss('62'), '#ff7adf');
+  assert.equal(vesselTypeCss('Crude Oil Tanker'), '#e8ff9a');
+  assert.equal(vesselTypeCss('Container Ship'), '#7dff6a');
+  assert.equal(vesselTypeCss('Passenger/Ferry'), '#d7ffc8');
+  assert.equal(vesselTypeCss('Fishing'), '#3dcc4a');
+  assert.equal(vesselTypeCss('Tug'), '#c6e85a');
+  assert.equal(accentForVesselType('Tanker'), '232, 255, 154');
+  assert.equal(accentForVesselType('Cargo'), '125, 255, 106');
+  assert.equal(accentForVesselType('Passenger'), '215, 255, 200');
+  assert.equal(accentForVesselType('Fishing'), '61, 204, 74');
+  assert.equal(accentForVesselType('Pilot Vessel'), '198, 232, 90');
+  assert.equal(accentForVesselType('Dredger'), '94, 207, 120');
+  assert.equal(accentForVesselType('84'), '232, 255, 154');
+  assert.equal(vesselTypeCss('62'), '#d7ffc8');
 });
 
 test('vessel viewport cohort preserves the shipped 118px grid density', () => {

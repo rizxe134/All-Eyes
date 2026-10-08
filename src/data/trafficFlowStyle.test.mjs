@@ -42,10 +42,10 @@ test('flowColor returns the rgba tuple for the level bucket', () => {
   assert.deepEqual(flowColor(0.1), FLOW_BUCKET_RGBA.jam);
 });
 
-test('bucket palette: green #2ecc71 / amber #f0b23e / red #e05252 @ alpha 0.9', () => {
-  assert.deepEqual(FLOW_BUCKET_RGBA.free, [46, 204, 113, 0.9]);
-  assert.deepEqual(FLOW_BUCKET_RGBA.slow, [240, 178, 62, 0.9]);
-  assert.deepEqual(FLOW_BUCKET_RGBA.jam, [224, 82, 82, 0.9]);
+test('bucket palette: free #3dcc4a / slow #c6e85a / jam #f4ffd0 @ alpha 0.9', () => {
+  assert.deepEqual(FLOW_BUCKET_RGBA.free, [61, 204, 74, 0.9]);
+  assert.deepEqual(FLOW_BUCKET_RGBA.slow, [198, 232, 90, 0.9]);
+  assert.deepEqual(FLOW_BUCKET_RGBA.jam, [244, 255, 208, 0.9]);
 });
 
 // ── speed scale ─────────────────────────────────────────────

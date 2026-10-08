@@ -32,10 +32,10 @@ test('a haloed glyph draws the dark ring under the shipped white body', () => {
   assert.notEqual(plain, haloed);
   assert.match(
     haloed,
-    /stroke="#05080C" stroke-opacity="1" stroke-width="14\.77"/,
+    /stroke="#040e03" stroke-opacity="1" stroke-width="14\.77"/,
   );
   assert.ok(
-    haloed.indexOf('#05080C') < haloed.indexOf('fill="white"'),
+    haloed.indexOf('#040e03') < haloed.indexOf('fill="white"'),
     'ring first, body on top',
   );
   assert.match(haloed, /viewBox="-\d+ -\d+ \d+ \d+"/, 'padded frame');

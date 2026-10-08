@@ -41,7 +41,7 @@ export function buildSyntheticCctvSvg({ cameraId, label, city, status }) {
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="hsl(${hue}, 35%, 10%)" />
       <stop offset="60%" stop-color="hsl(${hue2}, 42%, 6%)" />
-      <stop offset="100%" stop-color="#020509" />
+      <stop offset="100%" stop-color="#020902" />
     </linearGradient>
     <radialGradient id="flare" cx="0.22" cy="0.24" r="0.78">
       <stop offset="0%" stop-color="hsla(${hue2}, 100%, 65%, 0.35)" />
@@ -56,17 +56,17 @@ export function buildSyntheticCctvSvg({ cameraId, label, city, status }) {
   <rect width="960" height="540" fill="url(#bg)" />
   <rect width="960" height="540" fill="url(#flare)" />
   <rect width="960" height="540" fill="url(#scan)" />
-  <g stroke="rgba(123,233,255,0.25)" stroke-width="1" fill="none">
+  <g stroke="rgba(130, 252, 126, 0.25)" stroke-width="1" fill="none">
     <path d="M60 460 Q300 300 520 420 T900 320" />
     <path d="M100 160 Q340 40 620 130 T920 90" />
     <path d="M20 280 Q220 230 390 270 T760 250" />
   </g>
-  <g fill="none" stroke="rgba(180,248,255,0.2)" stroke-width="1">
+  <g fill="none" stroke="rgba(184, 253, 182, 0.2)" stroke-width="1">
     <rect x="70" y="80" width="820" height="380" rx="8" />
     <line x1="70" y1="270" x2="890" y2="270" />
     <line x1="480" y1="80" x2="480" y2="460" />
   </g>
-  <g fill="#9cefff" font-family="JetBrains Mono, monospace" text-transform="uppercase">
+  <g fill="#a2fd9e" font-family="JetBrains Mono, monospace" text-transform="uppercase">
     <text x="74" y="54" font-size="16" letter-spacing="2">CCTV FEED PLACEHOLDER</text>
     <text x="74" y="512" font-size="14" letter-spacing="1.5">${safeLabel} · ${safeCity}</text>
     <text x="646" y="512" font-size="13" letter-spacing="1.2">${safeId}</text>

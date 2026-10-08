@@ -23,7 +23,7 @@ export function createOrbitRendering({
       fabric: {
         type: 'GevMissionOrbitTactical',
         uniforms: {
-          color: Cesium.Color.CYAN,
+          color: Cesium.Color.fromCssColorString('#7dff6a'),
           groupCount: MISSION_ORBIT_PATTERN_GROUPS,
           dashCount: MISSION_ORBIT_DASHES_PER_GROUP,
         },
@@ -118,7 +118,7 @@ export function createOrbitRendering({
       positions: orbitPath,
       width: 3,
       material: createMissionOrbitPatternMaterial(
-        Cesium.Color.fromCssColorString('#22e6e6').withAlpha(0.95),
+        Cesium.Color.fromCssColorString('#29e622').withAlpha(0.95),
       ),
     });
     collection.show = missionOrbitPrimitiveVisible(launch.id);

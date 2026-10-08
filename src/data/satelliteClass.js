@@ -30,7 +30,7 @@ export const SATELLITE_CLASSES = Object.freeze({
     // (flights.js MIL_TINT / militaryFlights.js MIL_ICON_COLOR) and must not
     // leak into another domain. Slightly warm so it also separates from the
     // pure white the civilian air fleet draws in.
-    color: '#fff6e5',
+    color: '#f4ffd0',
     blurb: 'Crewed stations and their visiting vehicles',
   }),
   nav: Object.freeze({
@@ -38,15 +38,15 @@ export const SATELLITE_CLASSES = Object.freeze({
     // Cyan — the strongest accent goes to the class users actually name
     // ("how many GPS satellites are up?"). Takes over the slot the catch-all
     // VISUAL group used to occupy, so this adds no new hue to the app.
-    color: '#4fd8ff',
+    color: '#7dff6a',
     blurb: 'GNSS navigation — GPS, GLONASS, Galileo',
   }),
   geo: Object.freeze({
     label: 'GEO',
     // Violet, unchanged. Already the app's "space" semantic (the detection
-    // overlay paints the SAT tier #bda4ff), and the geostationary belt draws
+    // overlay paints the SAT tier #a9fda6), and the geostationary belt draws
     // as one clean equatorial ring at globe scale.
-    color: '#c89bff',
+    color: '#b6ff8a',
     blurb: 'Geostationary belt — comms and weather, fixed over the equator',
   }),
   visual: Object.freeze({
@@ -54,7 +54,7 @@ export const SATELLITE_CLASSES = Object.freeze({
     // Muted blue-gray. This is the catch-all bucket, so it gives up the bright
     // cyan it used to hold and recedes behind the three classes that mean
     // something. Still well clear of the dense shell by luminance.
-    color: '#9fb3c4',
+    color: '#8fbf96',
     blurb: 'Brightest naked-eye objects — CelesTrak visual group',
   }),
   comms: Object.freeze({
@@ -63,7 +63,7 @@ export const SATELLITE_CLASSES = Object.freeze({
     // texture behind the core catalog, never compete with it. Rec.601 luma
     // ~0.40 against VISUAL's ~0.69 keeps the two separable even when the
     // NVG/FLIR shaders collapse the scene to a single channel.
-    color: '#54697f',
+    color: '#3d6b48',
     blurb: 'Broadband constellation shell — shown only in DENSE mode',
   }),
 });

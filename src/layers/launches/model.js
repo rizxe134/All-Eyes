@@ -128,7 +128,7 @@ export function createModel({ state: layerState, services, parts, source }) {
 
   /**
    * Select a stable marker color from the mission operator and payload name.
-   * Labels stay cyan so the layer remains visually coherent.
+   * Labels stay phosphor green so the layer remains visually coherent.
    * @param {object} launch Normalized launch record.
    * @returns {Cesium.Color}
    */
@@ -137,23 +137,23 @@ export function createModel({ state: layerState, services, parts, source }) {
     const identity =
       `${launch.provider || ''} ${launch.name || ''} ${launch.missionName || ''}`.toLowerCase();
     if (/nasa|national aeronautics/.test(identity))
-      return Cesium.Color.fromCssColorString('#ff9f43');
+      return Cesium.Color.fromCssColorString('#f4ffd0');
     if (/starlink|spacex|space exploration/.test(identity))
-      return Cesium.Color.fromCssColorString('#4cc9f0');
+      return Cesium.Color.fromCssColorString('#7dff6a');
     if (/rocket lab/.test(identity))
-      return Cesium.Color.fromCssColorString('#7bed9f');
+      return Cesium.Color.fromCssColorString('#3dcc4a');
     if (/isro|indian space/.test(identity))
-      return Cesium.Color.fromCssColorString('#ff66c4');
+      return Cesium.Color.fromCssColorString('#e8ff9a');
     if (/cnsa|china national|long march/.test(identity))
-      return Cesium.Color.fromCssColorString('#ffd166');
+      return Cesium.Color.fromCssColorString('#c6e85a');
     if (/blue origin/.test(identity))
-      return Cesium.Color.fromCssColorString('#a78bfa');
+      return Cesium.Color.fromCssColorString('#b6ff8a');
     if (/ula|united launch alliance/.test(identity))
-      return Cesium.Color.fromCssColorString('#f97316');
+      return Cesium.Color.fromCssColorString('#d7ffc8');
     if (/arianespace|esa|european space/.test(identity))
-      return Cesium.Color.fromCssColorString('#60a5fa');
-    if (launch.provider) return Cesium.Color.fromCssColorString('#c084fc');
-    return Cesium.Color.fromCssColorString('#22e6e6');
+      return Cesium.Color.fromCssColorString('#5ecf78');
+    if (launch.provider) return Cesium.Color.fromCssColorString('#8fe89a');
+    return Cesium.Color.fromCssColorString('#4ecf6a');
   }
 
   /**

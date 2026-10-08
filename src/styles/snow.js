@@ -57,8 +57,8 @@ export const snowShader = {
       vec2 uv = v_textureCoordinates;
       vec4 color = texture(colorTexture, uv);
 
-      // Cool/blue color shift
-      vec3 cool = color.rgb * vec3(0.85, 0.9, 1.1);
+      // Green phosphor shift
+      vec3 cool = color.rgb * vec3(0.9, 1.08, 0.85);
 
       // Desaturate partially
       float luma = dot(cool, vec3(0.299, 0.587, 0.114));
@@ -69,7 +69,7 @@ export const snowShader = {
 
       // Add white frost overlay on brighter areas
       float frostMask = smoothstep(0.3, 0.8, luma);
-      vec3 frosted = mix(brightened, vec3(0.95, 0.97, 1.0), frostMask * 0.25 * intensity);
+      vec3 frosted = mix(brightened, vec3(0.90, 1.0, 0.88), frostMask * 0.25 * intensity);
 
       // Accumulate snow particle layers (density controls amount)
       float snow = 0.0;
@@ -85,7 +85,7 @@ export const snowShader = {
 
       // Subtle fog in lower areas
       float fog = smoothstep(0.0, 0.4, 1.0 - uv.y) * 0.1 * intensity;
-      result = mix(result, vec3(0.85, 0.88, 0.95), fog);
+      result = mix(result, vec3(0.82, 0.95, 0.84), fog);
 
       out_FragColor = vec4(mix(color.rgb, result, intensity), color.a);
     }

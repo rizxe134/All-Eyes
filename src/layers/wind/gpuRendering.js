@@ -25,7 +25,7 @@ czm_material czm_getMaterial(czm_materialInput materialInput)
     float ends = smoothstep(0.0, 0.055, along) * (1.0 - smoothstep(0.945, 1.0, along));
     float edge = 1.0 - smoothstep(0.26, 0.5, abs(materialInput.st.t - 0.5));
     float horizon = smoothstep(0.0, 0.065, v_windFacing);
-    material.diffuse = mix(vec3(0.50, 0.79, 0.90), vec3(0.91, 0.99, 1.0), tip);
+    material.diffuse = mix(vec3(0.18, 0.62, 0.28), vec3(0.78, 1.0, 0.55), tip);
     material.alpha = (ghostAlpha + 0.64 * tail + 0.16 * tip) * ends * edge * horizon * heightFade;
     return material;
 }`;

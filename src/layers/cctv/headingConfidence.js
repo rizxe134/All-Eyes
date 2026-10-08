@@ -1,7 +1,7 @@
 /**
  * @module headingConfidence
  *
- * Consumers for the catalog's per-camera `headingConfidence` flag (#639).
+ * Consumers for the catalog's per-camera `headingConfidence` flag (#96e694).
  *
  * Packs whose feed publishes no facing get a synthetic bearing from
  * `fallbackHeadingFromId` — a hash of the id string, with no geographic

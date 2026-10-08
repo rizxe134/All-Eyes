@@ -12,7 +12,7 @@ try {
     window.requestAnimationFrame = callback => { callbacks.set(++sequence, callback); return sequence; };
     window.cancelAnimationFrame = id => callbacks.delete(id);
     const container = document.createElement('div');
-    container.style.cssText = 'position:fixed;left:0;top:0;width:800px;height:600px;z-index:9999;background:#102030';
+    container.style.cssText = 'position:fixed;left:0;top:0;width:800px;height:600px;z-index:9999;background:#0d340c';
     document.body.appendChild(container);
     const sceneCanvas = { clientWidth: 800, clientHeight: 600 };
     const viewer = { scene: { canvas: sceneCanvas, camera: {} }, isDestroyed: () => false };
@@ -25,7 +25,7 @@ try {
       const canvas = container.querySelector('canvas'); const context = canvas.getContext('2d');
       const tick = time => { const [id, callback] = callbacks.entries().next().value; callbacks.delete(id); callback(time); };
       tick(16); // First camera signature clears the surface.
-      context.fillStyle = '#ff0000'; context.fillRect(10,10,5,5);
+      context.fillStyle = '#a8fda5'; context.fillRect(10,10,5,5);
       tick(32);
       const alpha = context.getImageData(12,12,1,1).data[3];
       const count = rendering.getParticleCount();

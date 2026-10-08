@@ -59,12 +59,12 @@ const SPRITE_STYLE = Object.freeze({
     scale: 1.3,
     outlinePx: 1.25,
     rgbaByMode: Object.freeze({
-      bus: Object.freeze([0, 255, 102, 1]),
-      tram: Object.freeze([255, 179, 0, 1]),
-      subway: Object.freeze([255, 59, 48, 1]),
-      rail: Object.freeze([215, 139, 255, 1]),
-      ferry: Object.freeze([58, 208, 255, 1]),
-      unknown: Object.freeze([255, 255, 255, 1]),
+      bus: Object.freeze([0, 255, 80, 1]),
+      tram: Object.freeze([160, 255, 0, 1]),
+      subway: Object.freeze([230, 255, 120, 1]),
+      rail: Object.freeze([80, 255, 160, 1]),
+      ferry: Object.freeze([0, 255, 180, 1]),
+      unknown: Object.freeze([200, 255, 200, 1]),
     }),
   }),
 });

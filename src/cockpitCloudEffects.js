@@ -96,8 +96,8 @@ const FRAGMENT_SHADER = `
         float powder = 1.0 - exp(-density * 2.2);
         float lighting = mix(0.22, 1.0, absorption * powder);
         vec3 cloudColor = mix(
-          vec3(0.31, 0.36, 0.43),
-          vec3(0.96, 0.96, 0.93),
+          vec3(0.12, 0.28, 0.16),
+          vec3(0.82, 0.96, 0.78),
           lighting
         );
         float sampleAlpha = (1.0 - alpha) * density * (0.16 + uStrength * 0.13);

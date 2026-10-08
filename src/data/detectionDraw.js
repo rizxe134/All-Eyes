@@ -246,7 +246,7 @@ export function paintTransitBracket(ctx, path, color, alpha = 1) {
   ctx.save?.();
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = alpha;
-  ctx.strokeStyle = '#05080C';
+  ctx.strokeStyle = '#040e03';
   ctx.lineWidth = 3.25;
   ctx.stroke(path);
   ctx.strokeStyle = color;

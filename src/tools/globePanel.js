@@ -80,13 +80,13 @@ function panelHtml(runtime, panelKey) {
 <meta charset="utf-8">
 <title>All Eyes</title>
 <style>
-  html, body { margin: 0; height: 100%; min-height: ${PANEL_HEIGHT_PX}px; background: #05070a;
-    color: #b8c4cc; font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }
+  html, body { margin: 0; height: 100%; min-height: ${PANEL_HEIGHT_PX}px; background: #030c03;
+    color: #9fe89c; font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }
   #status { position: absolute; inset: 0; z-index: 10000; display: flex; align-items: center;
     justify-content: center; padding: 0 24px; text-align: center; }
   #actions { position: absolute; right: 10px; top: 10px; z-index: 10001; display: flex; gap: 6px; }
-  #actions button { padding: 6px 10px; border: 1px solid #3a4a55; border-radius: 6px;
-    background: rgba(5, 7, 10, 0.75); color: #dfe8ee; font: inherit; cursor: pointer; }
+  #actions button { padding: 6px 10px; border: 1px solid #1e741b; border-radius: 6px;
+    background: rgba(3, 12, 3, 0.75); color: #d8f6d7; font: inherit; cursor: pointer; }
   #actions button[hidden] { display: none; }
 </style>
 </head>

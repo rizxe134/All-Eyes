@@ -205,7 +205,7 @@ export function createFlightSnapshotRenderer({
           rotation: 0,
           alignedAxis: Cesium.Cartesian3.ZERO,
           color: isTracked
-            ? Cesium.Color.CYAN
+            ? rendering._modelColor(icao24)
             : rendering._fleetBillboardColor(icao24),
           sizeInMeters: false,
           scaleByDistance: rendering._normalBillboardScaleByDistance(),

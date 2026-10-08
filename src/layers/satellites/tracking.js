@@ -383,7 +383,7 @@ export function createTracking({ state: layerState, services, parts, source }) {
     layerState._trackedEntity.gevLabelModel = {
       title,
       details,
-      accent: '#ffd84d',
+      accent: '#e8ff9a',
     };
     refreshTrackedReadout(layerState._trackedEntity);
   }
@@ -407,7 +407,7 @@ export function createTracking({ state: layerState, services, parts, source }) {
     point.show = false;
 
     // Show orbital path
-    parts.rendering._showOrbitPath(noradId, Cesium.Color.YELLOW);
+    parts.rendering._showOrbitPath(noradId, Cesium.Color.fromCssColorString('#e8ff9a'));
 
     // Tracked entity position propagates per evaluation through the per-frame
     // cache (WS-D2) — dot, host readout, and camera share one SGP4 epoch per frame.
@@ -438,7 +438,7 @@ export function createTracking({ state: layerState, services, parts, source }) {
       viewFrom,
       point: {
         pixelSize: 14,
-        color: Cesium.Color.YELLOW,
+        color: Cesium.Color.fromCssColorString('#e8ff9a'),
         outlineColor: Cesium.Color.WHITE,
         outlineWidth: 2,
         disableDepthTestDistance: Number.POSITIVE_INFINITY,

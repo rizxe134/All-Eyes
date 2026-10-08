@@ -602,14 +602,14 @@ export function createWindRendering({
       context.globalAlpha = alpha * 0.55;
       context.lineWidth = 1.0;
       context.strokeStyle =
-        overlay === 'none' ? windTrailColor(speed) : '#9ddce4';
+        overlay === 'none' ? windTrailColor(speed) : '#9ce79a';
       context.beginPath();
       context.moveTo(startX, startY);
       context.lineTo(point.x, point.y);
       context.stroke();
       if (distance > 0.6) {
         context.globalAlpha = alpha * 0.9;
-        context.strokeStyle = '#d6f4f5';
+        context.strokeStyle = '#d7f5d6';
         context.lineWidth = 1.35;
         context.beginPath();
         context.moveTo(

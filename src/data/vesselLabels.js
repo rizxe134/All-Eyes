@@ -19,25 +19,25 @@ export const VESSEL_CARD_FADE_DISTANCE_M = 5_000_000;
  * vessel type colors so billboard chevrons and host cards cannot drift apart.
  */
 const TYPE_STYLES = [
-  { pattern: /tanker/i, css: '#ffb347', accent: '255, 179, 71' },
+  { pattern: /tanker/i, css: '#e8ff9a', accent: '232, 255, 154' },
   {
     pattern: /cargo|container|bulk|carrier/i,
-    css: '#39d5ff',
-    accent: '57, 213, 255',
+    css: '#7dff6a',
+    accent: '125, 255, 106',
   },
   {
     pattern: /passenger|ferry|cruise/i,
-    css: '#ff7adf',
-    accent: '255, 122, 223',
+    css: '#d7ffc8',
+    accent: '215, 255, 200',
   },
-  { pattern: /fishing/i, css: '#7cff9b', accent: '124, 255, 155' },
+  { pattern: /fishing/i, css: '#3dcc4a', accent: '61, 204, 74' },
   {
     pattern: /tug|tow|pilot|supply|service/i,
-    css: '#f7f0a3',
-    accent: '247, 240, 163',
+    css: '#c6e85a',
+    accent: '198, 232, 90',
   },
 ];
-const DEFAULT_STYLE = { css: '#39d5ff', accent: '57, 213, 255' };
+const DEFAULT_STYLE = { css: '#5ecf78', accent: '94, 207, 120' };
 
 const NUMERIC_TYPE_SPECIALS = {
   30: 'FISHING',

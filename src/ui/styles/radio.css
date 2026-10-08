@@ -5,7 +5,7 @@
   min-height: 0;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(65, 220, 231, 0.16);
+  border-top: 1px solid rgba(71, 231, 65, 0.16);
 }
 .radio-panel-inner {
   position: relative;
@@ -14,12 +14,12 @@
   flex-direction: column;
   gap: 9px;
   padding: 10px;
-  border: 1px solid rgba(65, 220, 231, 0.18);
+  border: 1px solid rgba(71, 231, 65, 0.18);
   border-radius: 8px;
-  background: rgba(2, 15, 20, 0.42);
+  background: rgba(3, 20, 2, 0.42);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 212, 255, 0.46) rgba(255, 255, 255, 0.06);
+  scrollbar-color: rgba(14, 249, 6, 0.46) rgba(255, 255, 255, 0.06);
 }
 #radio-panel .panel-header {
   margin-bottom: 0;
@@ -30,7 +30,7 @@
   letter-spacing: 0.12em;
 }
 .radio-layer-state.active {
-  color: #65f7ff;
+  color: #6efb69;
 }
 .radio-directory-row {
   display: grid;
@@ -51,23 +51,23 @@
 #radio-filter {
   min-width: 0;
   padding: 7px 24px 7px 8px;
-  border: 1px solid rgba(65, 220, 231, 0.28);
+  border: 1px solid rgba(71, 231, 65, 0.28);
   border-radius: 5px;
-  color: #c5faff;
-  background: rgba(5, 24, 31, 0.88);
+  color: #c8fec6;
+  background: rgba(6, 31, 5, 0.88);
   font: 9px/1.2 var(--font-mono);
 }
 .radio-station-card {
   display: grid;
   gap: 4px;
   padding: 10px;
-  border: 1px solid rgba(65, 220, 231, 0.18);
+  border: 1px solid rgba(71, 231, 65, 0.18);
   border-radius: 7px;
-  background: rgba(2, 15, 20, 0.48);
+  background: rgba(3, 20, 2, 0.48);
   overflow-wrap: anywhere;
 }
 .radio-station-card strong {
-  color: #e8feff;
+  color: #e9fee9;
   font: 11px/1.25 var(--font-mono);
   letter-spacing: 0.05em;
 }
@@ -76,7 +76,7 @@
   font: 8px/1.35 var(--font-mono);
 }
 #radio-station-tags {
-  color: #72dce6;
+  color: #76e672;
 }
 .radio-tuner {
   display: grid;
@@ -86,14 +86,14 @@
   gap: 5px;
   padding: 8px;
   overflow: hidden;
-  border: 1px solid rgba(65, 220, 231, 0.22);
+  border: 1px solid rgba(71, 231, 65, 0.22);
   border-radius: 7px;
   background: linear-gradient(
     180deg,
-    rgba(1, 9, 13, 0.92),
-    rgba(4, 24, 30, 0.72)
+    rgba(1, 13, 1, 0.92),
+    rgba(5, 30, 4, 0.72)
   );
-  box-shadow: inset 0 0 18px rgba(0, 212, 255, 0.045);
+  box-shadow: inset 0 0 18px rgba(14, 249, 6, 0.045);
 }
 .radio-tuner[hidden] {
   display: none;
@@ -103,13 +103,13 @@
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  color: #6daeb5;
+  color: #51d54d;
   font: 7px/1.2 var(--font-mono);
   letter-spacing: 0.1em;
 }
 #radio-tuner-value {
   min-width: 0;
-  color: #a8f7ff;
+  color: #adfdaa;
   overflow: hidden;
   text-align: right;
   text-overflow: ellipsis;
@@ -123,20 +123,20 @@
   height: 51px;
   overflow: hidden;
   contain: paint;
-  border-block: 1px solid rgba(72, 225, 237, 0.3);
+  border-block: 1px solid rgba(78, 237, 72, 0.3);
   background:
     linear-gradient(
       180deg,
       transparent 23px,
-      rgba(65, 220, 231, 0.8) 24px,
+      rgba(71, 231, 65, 0.8) 24px,
       transparent 25px,
       transparent 28px,
-      rgba(65, 220, 231, 0.6) 29px,
+      rgba(71, 231, 65, 0.6) 29px,
       transparent 30px
     ),
     radial-gradient(
       ellipse at center,
-      rgba(39, 177, 191, 0.12),
+      rgba(44, 191, 39, 0.12),
       transparent 70%
     );
 }
@@ -144,9 +144,9 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  color: #58cbd6;
+  color: #5bd757;
   font: 9px/1 var(--font-mono);
-  text-shadow: 0 0 7px rgba(65, 220, 231, 0.5);
+  text-shadow: 0 0 7px rgba(71, 231, 65, 0.5);
   pointer-events: none;
 }
 .radio-tuner-tick {
@@ -154,16 +154,16 @@
   top: 6px;
   bottom: 0;
   min-width: 1px;
-  border-left: 1px solid rgba(85, 224, 235, 0.38);
-  color: #58cbd6;
+  border-left: 1px solid rgba(90, 235, 85, 0.38);
+  color: #5bd757;
   padding-left: 3px;
   white-space: nowrap;
   transform: translateX(-50%);
   transition: left 80ms linear;
 }
 .radio-tuner-tick.is-current {
-  border-left-color: rgba(168, 247, 255, 0.9);
-  color: #a8f7ff;
+  border-left-color: rgba(173, 253, 170, 0.9);
+  color: #adfdaa;
 }
 .radio-tuner-needle {
   position: absolute;
@@ -173,10 +173,10 @@
   left: calc(7px + (100% - 14px) * var(--radio-tuner-ratio, 0));
   width: 3px;
   border-radius: 1px;
-  background: #ff6f4f;
+  background: #a8fda5;
   box-shadow:
-    0 0 4px #ff6f4f,
-    0 0 10px rgba(255, 77, 50, 0.65);
+    0 0 4px #a8fda5,
+    0 0 10px rgba(168, 253, 165, 0.65);
   pointer-events: none;
   transform: translateX(-50%);
   transition: left 0.18s ease-out;
@@ -228,21 +228,21 @@
   box-shadow: none;
 }
 .radio-tuner.is-static .radio-tuner-dial {
-  box-shadow: inset 0 0 14px rgba(255, 111, 79, 0.1);
+  box-shadow: inset 0 0 14px rgba(168, 253, 165, 0.1);
 }
 .radio-tuner.is-static #radio-tuner-station {
-  color: #ff9b7e;
+  color: #a8fda5;
 }
 .radio-tuner-readout span:first-child {
   min-width: 0;
-  color: #7fe6ef;
+  color: #83ef7f;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .radio-tuner-readout span:last-child {
   flex: 0 0 auto;
-  color: #517f84;
+  color: #2dad28;
 }
 .radio-transport {
   display: grid;
@@ -252,17 +252,17 @@
 .radio-transport button {
   min-height: 30px;
   padding: 6px 3px;
-  border: 1px solid rgba(65, 220, 231, 0.28);
+  border: 1px solid rgba(71, 231, 65, 0.28);
   border-radius: 5px;
-  color: #8feaf2;
-  background: rgba(14, 69, 78, 0.14);
+  color: #92f28f;
+  background: rgba(16, 78, 14, 0.14);
   font: 8px/1 var(--font-mono);
   letter-spacing: 0.06em;
   cursor: pointer;
 }
 .radio-transport button:hover:not(:disabled),
 .radio-transport button:focus-visible:not(:disabled) {
-  border-color: #65f7ff;
+  border-color: #6efb69;
   color: #fff;
   outline: none;
 }
@@ -273,9 +273,9 @@
 }
 #radio-play-btn.active {
   color: #fff;
-  border-color: rgba(101, 247, 255, 0.8);
-  background: rgba(65, 220, 231, 0.18);
-  box-shadow: 0 0 12px rgba(65, 220, 231, 0.12);
+  border-color: rgba(110, 251, 105, 0.8);
+  background: rgba(71, 231, 65, 0.18);
+  box-shadow: 0 0 12px rgba(71, 231, 65, 0.12);
 }
 .radio-volume-row {
   display: grid;
@@ -291,11 +291,11 @@
 }
 .radio-playback-state {
   min-height: 12px;
-  color: #79d7df;
+  color: #7cdf79;
   font: 8px/1.35 var(--font-mono);
 }
 .radio-playback-state.error {
-  color: #ff9d8f;
+  color: #a8fda5;
 }
 .radio-links {
   display: flex;
@@ -304,7 +304,7 @@
   gap: 5px 10px;
 }
 .radio-links a {
-  color: #64cbd5;
+  color: #64da5f;
   font: 7px/1.3 var(--font-mono);
   letter-spacing: 0.06em;
   text-decoration: none;
@@ -315,7 +315,7 @@
 }
 .radio-privacy {
   margin: 0;
-  color: rgba(190, 230, 230, 0.48);
+  color: rgba(184, 238, 182, 0.48);
   font: 7px/1.4 var(--font-mono);
 }
 #military-awareness-panel {
@@ -324,7 +324,7 @@
   overflow: auto;
   box-sizing: border-box;
   padding: 2px 1px 0;
-  color: #dceeff;
+  color: #defedd;
   background: transparent;
   border: 0;
   font:
@@ -357,11 +357,11 @@
   margin: 0 0 8px;
 }
 .military-awareness-controls button {
-  border: 1px solid rgba(98, 181, 255, 0.34);
+  border: 1px solid rgba(107, 251, 102, 0.34);
   border-radius: 4px;
   padding: 4px 3px;
-  color: #a9d9ff;
-  background: rgba(42, 113, 171, 0.12);
+  color: #aefdab;
+  background: rgba(45, 173, 40, 0.12);
   font:
     9px/1.2 ui-monospace,
     SFMono-Regular,
@@ -373,13 +373,13 @@
 .military-awareness-controls button:hover,
 .military-awareness-controls button:focus-visible {
   color: #fff;
-  border-color: rgba(127, 200, 255, 0.85);
-  background: rgba(66, 148, 211, 0.24);
+  border-color: rgba(134, 252, 130, 0.85);
+  background: rgba(71, 211, 66, 0.24);
   outline: none;
 }
 .military-awareness-controls button:disabled {
-  color: #627181;
-  border-color: rgba(98, 181, 255, 0.12);
+  color: #30b82b;
+  border-color: rgba(107, 251, 102, 0.12);
   background: transparent;
   cursor: default;
 }
@@ -392,14 +392,14 @@
   justify-content: space-between;
 }
 .military-awareness-row b {
-  color: #7fc8ff;
+  color: #86fc82;
 }
 .military-awareness-row.unknown b {
-  color: #8fcfff;
+  color: #95fc92;
 }
 .military-awareness-row small,
 .military-awareness-note {
-  color: #a9b7c7;
+  color: #8fe48c;
 }
 .military-awareness-row ul {
   margin: 4px 0 0;
@@ -416,7 +416,7 @@
   width: 100%;
   border: 0;
   padding: 1px 0;
-  color: #dceeff;
+  color: #defedd;
   background: transparent;
   font: inherit;
   text-align: left;
@@ -430,13 +430,13 @@
 .military-awareness-target:focus-visible {
   color: #fff;
   outline: none;
-  text-shadow: 0 0 8px rgba(114, 202, 255, 0.85);
+  text-shadow: 0 0 8px rgba(122, 251, 118, 0.85);
 }
 .military-awareness-target:focus-visible {
-  box-shadow: inset 0 -1px 0 #7fc8ff;
+  box-shadow: inset 0 -1px 0 #86fc82;
 }
 .military-awareness-target span {
-  color: #7fc8ff;
+  color: #86fc82;
   white-space: nowrap;
 }
 .military-awareness-note {
@@ -447,25 +447,25 @@
   display: grid;
   gap: 7px;
   padding: 12px 4px 4px;
-  border-top: 1px solid rgba(98, 181, 255, 0.16);
+  border-top: 1px solid rgba(107, 251, 102, 0.16);
 }
 .military-awareness-standby strong {
-  color: #79c2ff;
+  color: #81fc7c;
   font-size: 10px;
   letter-spacing: 0.1em;
 }
 .military-awareness-standby span {
-  color: #8192a6;
+  color: #55d651;
   font-size: 9px;
   letter-spacing: 0.05em;
 }
 .military-awareness-standby button {
   justify-self: start;
   padding: 4px 12px;
-  border: 1px solid rgba(98, 181, 255, 0.34);
+  border: 1px solid rgba(107, 251, 102, 0.34);
   border-radius: 4px;
-  color: #a9d9ff;
-  background: rgba(42, 113, 171, 0.12);
+  color: #aefdab;
+  background: rgba(45, 173, 40, 0.12);
   font:
     9px/1.2 ui-monospace,
     SFMono-Regular,
@@ -489,14 +489,14 @@
   --compass-rotation: 0deg;
   position: absolute;
   box-sizing: border-box;
-  border: 1px solid rgba(111, 196, 255, 0.2);
-  outline: 1px dashed rgba(111, 196, 255, 0.28);
+  border: 1px solid rgba(119, 251, 115, 0.2);
+  outline: 1px dashed rgba(119, 251, 115, 0.28);
   outline-offset: -5px;
   border-radius: 50%;
   box-shadow:
-    inset 0 0 0 5px rgba(34, 128, 196, 0.018),
-    inset 0 0 24px rgba(34, 128, 196, 0.035),
-    0 0 14px rgba(34, 128, 196, 0.05);
+    inset 0 0 0 5px rgba(39, 196, 34, 0.018),
+    inset 0 0 24px rgba(39, 196, 34, 0.035),
+    0 0 14px rgba(39, 196, 34, 0.05);
 }
 .military-awareness-compass-ring::before {
   content: '';
@@ -507,9 +507,9 @@
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-bottom: 8px solid rgba(127, 200, 255, 0.88);
+  border-bottom: 8px solid rgba(134, 252, 130, 0.88);
   transform: translateX(-50%);
-  filter: drop-shadow(0 0 5px rgba(87, 184, 255, 0.7));
+  filter: drop-shadow(0 0 5px rgba(97, 251, 91, 0.7));
 }
 .military-awareness-compass-ring::after {
   content: '';
@@ -518,7 +518,7 @@
   border-radius: 50%;
   background: repeating-conic-gradient(
     from 0deg,
-    rgba(125, 205, 255, 0.38) 0deg 0.7deg,
+    rgba(132, 252, 128, 0.38) 0deg 0.7deg,
     transparent 0.7deg 15deg
   );
   -webkit-mask: radial-gradient(
@@ -540,20 +540,20 @@
 .military-awareness-compass-heading {
   position: absolute;
   transform: translate(-50%, -50%);
-  color: rgba(156, 213, 255, 0.7);
+  color: rgba(162, 253, 158, 0.7);
   font:
     9px/1 ui-monospace,
     SFMono-Regular,
     Menlo,
     monospace;
   letter-spacing: 0.08em;
-  text-shadow: 0 0 7px rgba(53, 161, 235, 0.55);
+  text-shadow: 0 0 7px rgba(59, 235, 53, 0.55);
 }
 .military-awareness-compass-label.cardinal-n {
-  color: rgba(255, 188, 87, 0.92);
+  color: rgba(168, 253, 165, 0.92);
 }
 .military-awareness-compass-heading {
-  color: rgba(190, 225, 249, 0.76);
+  color: rgba(192, 249, 190, 0.76);
   font-size: 8px;
 }
 .military-awareness-direction-marker {
@@ -570,22 +570,22 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  color: #74dbff;
+  color: #7cfc77;
   font: 23px/1 sans-serif;
   transform-origin: 50% 50%;
   text-shadow:
-    0 0 5px rgba(87, 223, 255, 0.9),
-    0 0 13px rgba(87, 223, 255, 0.35);
+    0 0 5px rgba(97, 251, 91, 0.9),
+    0 0 13px rgba(97, 251, 91, 0.35);
 }
 .military-awareness-direction-label {
   position: absolute;
   left: 50%;
   top: 50%;
   padding: 3px 6px;
-  border: 1px solid rgba(116, 219, 255, 0.24);
+  border: 1px solid rgba(124, 252, 119, 0.24);
   border-radius: 3px;
-  color: #bceeff;
-  background: rgba(5, 12, 20, 0.68);
+  color: #c0fdbe;
+  background: rgba(5, 20, 5, 0.68);
   font:
     8px/1.3 ui-monospace,
     SFMono-Regular,
@@ -593,7 +593,7 @@
     monospace;
   text-align: center;
   white-space: pre;
-  text-shadow: 0 0 5px rgba(116, 219, 255, 0.38);
+  text-shadow: 0 0 5px rgba(124, 252, 119, 0.38);
 }
 
 .data-toggle-row.gev-voice-focus {
@@ -691,30 +691,30 @@
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-dim);
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.15);
+  box-shadow: 0 0 10px rgba(14, 249, 6, 0.15);
 }
 
 .data-toggle-btn.active.feed-stale,
 .data-toggle-btn.active.feed-partial,
 .data-toggle-btn.active.feed-fallback {
-  color: #ffd27a;
-  border-color: rgba(255, 190, 82, 0.75);
-  background: rgba(255, 174, 51, 0.1);
-  box-shadow: 0 0 10px rgba(255, 174, 51, 0.12);
+  color: #a8fda5;
+  border-color: rgba(168, 253, 165, 0.75);
+  background: rgba(168, 253, 165, 0.1);
+  box-shadow: 0 0 10px rgba(168, 253, 165, 0.12);
 }
 
 .data-toggle-btn.active.feed-degraded {
-  color: #ffad72;
-  border-color: rgba(255, 137, 72, 0.78);
-  background: rgba(255, 112, 48, 0.1);
-  box-shadow: 0 0 10px rgba(255, 112, 48, 0.12);
+  color: #a8fda5;
+  border-color: rgba(168, 253, 165, 0.78);
+  background: rgba(168, 253, 165, 0.1);
+  box-shadow: 0 0 10px rgba(168, 253, 165, 0.12);
 }
 
 .data-toggle-btn.active.feed-unavailable {
-  color: #ff8585;
-  border-color: rgba(255, 92, 92, 0.78);
-  background: rgba(255, 60, 60, 0.1);
-  box-shadow: 0 0 10px rgba(255, 60, 60, 0.12);
+  color: #a8fda5;
+  border-color: rgba(168, 253, 165, 0.78);
+  background: rgba(168, 253, 165, 0.1);
+  box-shadow: 0 0 10px rgba(168, 253, 165, 0.12);
 }
 
 .data-toggle-meta {
@@ -786,9 +786,9 @@
 }
 
 .data-toggle-chip.chip-error {
-  color: #ff8585;
-  border-color: rgba(255, 92, 92, 0.6);
-  background: rgba(255, 60, 60, 0.08);
+  color: #a8fda5;
+  border-color: rgba(168, 253, 165, 0.6);
+  background: rgba(168, 253, 165, 0.08);
 }
 
 .data-toggle-legend-item {
@@ -914,12 +914,12 @@
   gap: 7px;
   margin-top: 3px;
   padding: 9px;
-  border: 1px solid rgba(255, 170, 60, 0.28);
+  border: 1px solid rgba(168, 253, 165, 0.28);
   border-radius: 7px;
   background: linear-gradient(
     180deg,
-    rgba(31, 18, 4, 0.58),
-    rgba(4, 20, 24, 0.72)
+    rgba(5, 31, 4, 0.58),
+    rgba(5, 24, 4, 0.72)
   );
 }
 .sdr-radio-heading,
@@ -936,12 +936,12 @@
   justify-content: space-between;
 }
 .sdr-radio-heading strong {
-  color: #ffd38a;
+  color: #a8fda5;
   font: 9px/1 var(--font-mono);
   letter-spacing: 0.1em;
 }
 #sdr-connection-state {
-  color: #9e865f;
+  color: #b7eeb5;
   font: 7px/1 var(--font-mono);
   letter-spacing: 0.1em;
 }
@@ -957,10 +957,10 @@
 .sdr-radio-card select,
 .sdr-radio-card input[type='number'] {
   min-height: 28px;
-  border: 1px solid rgba(255, 183, 82, 0.28);
+  border: 1px solid rgba(168, 253, 165, 0.28);
   border-radius: 5px;
-  color: #ffd79a;
-  background: rgba(38, 25, 8, 0.52);
+  color: #a8fda5;
+  background: rgba(9, 38, 8, 0.52);
   font: 8px/1 var(--font-mono);
 }
 .sdr-radio-card button {
@@ -970,10 +970,10 @@
 .sdr-radio-card button:hover:not(:disabled),
 .sdr-radio-card button:focus-visible:not(:disabled),
 .sdr-radio-card button.active {
-  border-color: #ffd38a;
+  border-color: #a8fda5;
   color: #fff;
   outline: none;
-  background: rgba(130, 83, 18, 0.28);
+  background: rgba(22, 130, 18, 0.28);
 }
 .sdr-radio-card button:disabled,
 .sdr-radio-card select:disabled {
@@ -987,7 +987,7 @@
 }
 .sdr-gain-row label,
 .sdr-frequency-row label {
-  color: #9e865f;
+  color: #b7eeb5;
   font: 7px/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
@@ -1000,7 +1000,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px 8px;
-  color: #9e865f;
+  color: #b7eeb5;
   font: 7px/1.3 var(--font-mono);
   letter-spacing: 0.08em;
 }
@@ -1008,7 +1008,7 @@
   display: none;
 }
 .sdr-adsb-stats output {
-  color: #ffd79a;
+  color: #a8fda5;
   font: 9px/1 var(--font-mono);
 }
 .sdr-frequency-row input[type='number'] {
@@ -1020,16 +1020,16 @@
   margin-left: auto;
 }
 .sdr-radio-card .radio-volume-row {
-  color: #9e865f;
+  color: #b7eeb5;
 }
 .sdr-radio-card .radio-playback-state {
-  color: #ddbe86;
+  color: #b7eeb5;
 }
 .sdr-radio-card .radio-playback-state.error {
-  color: #ff9d8f;
+  color: #a8fda5;
 }
 .sdr-feed-status {
-  color: #9e865f;
+  color: #b7eeb5;
   font: 8px/1.3 var(--font-mono);
   letter-spacing: 0.08em;
   overflow-wrap: anywhere;

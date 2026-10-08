@@ -277,7 +277,7 @@ export function createRendering({
             .toUpperCase(),
           ...(record.memberNames || []).slice(0, 3),
         ],
-        accent: COLOR_BY_CLASS[record.class] || '#9ca6b0',
+        accent: COLOR_BY_CLASS[record.class] || '#8ac28b',
       };
       registerEntityContext(entity, {
         id: record.id,

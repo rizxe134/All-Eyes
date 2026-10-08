@@ -19,8 +19,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 212, 255, 0.06);
-  border: 1px solid rgba(0, 212, 255, 0.34);
+  background: rgba(14, 249, 6, 0.06);
+  border: 1px solid rgba(14, 249, 6, 0.34);
   border-radius: 0.18rem;
   color: var(--text-secondary);
   font-family: var(--font-mono);
@@ -36,16 +36,16 @@
 
 .gev-voice-tier-btn:hover {
   color: var(--text-primary);
-  border-color: rgba(0, 212, 255, 0.6);
-  background: rgba(0, 212, 255, 0.12);
+  border-color: rgba(14, 249, 6, 0.6);
+  background: rgba(14, 249, 6, 0.12);
 }
 
 /* MINI engaged — amber, distinct from the cyan default so the cheaper tier
    is legible at a glance without reading the label. */
 .gev-voice-tier-btn[aria-pressed='true'] {
-  color: #ffc46b;
-  border-color: rgba(255, 196, 107, 0.55);
-  background: rgba(255, 196, 107, 0.12);
+  color: #a8fda5;
+  border-color: rgba(168, 253, 165, 0.55);
+  background: rgba(168, 253, 165, 0.12);
 }
 
 .gev-voice-cost-value {
@@ -59,11 +59,11 @@
 }
 
 .gev-voice-cost-value[data-level='warn'] {
-  color: #ffc46b;
+  color: #a8fda5;
 }
 
 .gev-voice-cost-value[data-level='cap'] {
-  color: #ff6b6b;
+  color: #a8fda5;
   font-weight: 600;
 }
 

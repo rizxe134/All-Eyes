@@ -388,7 +388,7 @@ function buildLocalInfrastructureWorkload(count) {
             tags: { associated_river: `River ${index % 23}` },
           },
       priority: index % 7,
-      accent: isDatacenter ? '#00ffff' : '#0088ff',
+      accent: isDatacenter ? '#f4ffd0' : '#7dff6a',
     });
     // The allocation harness uses identity view/projection matrices, so its
     // positions are normalized screen coordinates rather than WGS84 points.
@@ -447,7 +447,7 @@ function buildPhase3FirmsWorkload(count) {
               tags: { associated_river: `River ${index % 23}` },
             },
         priority: index % 7,
-        accent: isDatacenter ? '#00ffff' : '#0088ff',
+        accent: isDatacenter ? '#f4ffd0' : '#7dff6a',
       });
       entry.horizonCull = false;
       (isDatacenter ? datacenters : dams).push(entry);
@@ -460,7 +460,7 @@ function buildPhase3FirmsWorkload(count) {
           id: `fire:${fireIndex}`,
           position,
           gapPx: 10,
-          accent: '224, 82, 82',
+          accent: '244, 255, 208',
           title: `▲ ${50 + fireIndex} MW`,
           details: ['high · 2h · N20'],
           selected: false,
@@ -536,7 +536,7 @@ function buildPhase3VesselsWorkload(count) {
               tags: { associated_river: `River ${index % 23}` },
             },
         priority: index % 7,
-        accent: isDatacenter ? '#00ffff' : '#0088ff',
+        accent: isDatacenter ? '#f4ffd0' : '#7dff6a',
       });
       entry.horizonCull = false;
       (isDatacenter ? datacenters : dams).push(entry);
@@ -550,7 +550,7 @@ function buildPhase3VesselsWorkload(count) {
           id: `fire:${fireIndex}`,
           position,
           gapPx: 10,
-          accent: '224, 82, 82',
+          accent: '244, 255, 208',
           title: `▲ ${50 + fireIndex} MW`,
           details: ['high · 2h · N20'],
           selected: false,
@@ -569,7 +569,7 @@ function buildPhase3VesselsWorkload(count) {
         id: selected ? 'vessel:selected' : `vessel:${vesselIndex}`,
         position,
         gapPx: selected ? 12 : 10,
-        accent: '57, 213, 255',
+        accent: '125, 255, 106',
         title: selected ? 'SELECTED VESSEL' : `VESSEL ${vesselIndex}`,
         details: selected
           ? ['CARGO · 14.5KT · 231°', 'MMSI 353136000 · POS: LIVE']
@@ -646,7 +646,7 @@ function buildPhase3TrackedWorkload(count) {
     gevLabelModel: {
       title: 'ALLOC01',
       details: ['FL350 · 451 kts', 'TEST AIR · A320'],
-      accent: '#39d0ff',
+      accent: '#7dff6a',
     },
   };
   const tracked = createTrackedOverlayEntry(trackedEntity);
@@ -748,7 +748,7 @@ function buildPhase5EarthquakesWorkload(count) {
       position,
       magnitude: 2.5 + (index % 45) / 10,
       accent:
-        index % 3 === 0 ? '#ff0000' : index % 3 === 1 ? '#ffa500' : '#ffff00',
+        index % 3 === 0 ? '#f4ffd0' : index % 3 === 1 ? '#e8ff9a' : '#3dcc4a',
     });
     entry.horizonCull = false;
     earthquakes.push(entry);
@@ -883,7 +883,7 @@ function buildPhase5MilitaryWorkload(count) {
   entry.id = 'military:allocation-probe';
   entry.title = 'RCH451';
   entry.details = ['C17 · 05-8152', 'USAF · 28000 ft · 400 kt'];
-  entry.accent = '#ffd166';
+  entry.accent = '#e8ff9a';
   return workload;
 }
 
@@ -1006,7 +1006,7 @@ function buildAllLiveRadioWorkload(count) {
       id: `cluster-${index}`,
       position: () => position,
       text: `${3 + index} NEWS`,
-      accent: '#44adff',
+      accent: '#7dff6a',
       stationCount: 3 + index,
     });
     entry.horizonCull = false;

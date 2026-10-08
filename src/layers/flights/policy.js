@@ -12,7 +12,7 @@ export const FOCUS_EVIDENCE_DEV = import.meta.env?.DEV === true;
 
 /** Amber tint for known-military aircraft rendered by this layer (matches the military layer's icon color). */
 
-export const MIL_TINT = Cesium.Color.fromCssColorString('#FFB800');
+export const MIL_TINT = Cesium.Color.fromCssColorString('#e8ff9a');
 
 // --- Ground traffic (owner reversal 2026-07-03: "absolutely we should see planes
 // taxiing and landing") -----------------------------------------------------------
@@ -107,12 +107,15 @@ export const MODEL_COLOR_BLEND_AMOUNT = 0.94;
 
 export const MODEL_BELLY_OFFSET_NATIVE = 6.719;
 
-export const CYAN_TRANSPARENT = Cesium.Color.CYAN.withAlpha(0);
+export const CYAN_TRANSPARENT = Cesium.Color.fromCssColorString('#7dff6a').withAlpha(0);
+
+/** Phosphor green used wherever a tracked contact used to be tinted cyan. */
+export const TRACKED_TINT = Cesium.Color.fromCssColorString('#7dff6a');
 
 export const COCKPIT_CONTACT_SIZE_PX = 6;
 
 export const COCKPIT_CIVILIAN_COLOR =
-  Cesium.Color.fromCssColorString('#DCEEFF');
+  Cesium.Color.fromCssColorString('#d7ffc8');
 
 export const TRACKED_BILLBOARD_SCALE_BY_DISTANCE = new Cesium.NearFarScalar(
   1000,
@@ -130,7 +133,7 @@ export const TRACKED_BILLBOARD_SCALE_BY_DISTANCE = new Cesium.NearFarScalar(
 
 /** @constant {string} Civilian trail hue (PRD F4, pinned). */
 
-export const TRAIL_COLOR = '#00d4ff';
+export const TRAIL_COLOR = '#7dff6a';
 
 /** @constant {number} Combined cap on trail vertices (backfill + live accumulation). */
 

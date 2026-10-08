@@ -82,7 +82,7 @@ try {
             status: 200,
             contentType: 'image/svg+xml',
             headers: { 'Cache-Control': 'no-store' },
-            body: `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="${cameraA ? '#16364d' : '#254b32'}"/><path d="M0 260L640 130M240 0L420 360" stroke="#97acb7" stroke-width="26"/><text x="30" y="55" fill="white" font-size="30">QA CAMERA ${cameraA ? 'A' : 'B'}</text></svg>`,
+            body: `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="${cameraA ? '#155013' : '#254b32'}"/><path d="M0 260L640 130M240 0L420 360" stroke="#74de70" stroke-width="26"/><text x="30" y="55" fill="white" font-size="30">QA CAMERA ${cameraA ? 'A' : 'B'}</text></svg>`,
           })
           .catch(() => {});
       if (cameraA && delayCameraA) delayedFrames.add(respond);

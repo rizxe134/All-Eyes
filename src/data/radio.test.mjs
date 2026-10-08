@@ -86,7 +86,7 @@ test('station marker categories share the dropdown palette with stable overlap p
   assert.equal(radioStationCategoryId(stations[1]), 'public-safety');
   assert.equal(radioStationCategoryId(stations[2]), 'music');
   assert.equal(radioStationCategoryId(stations[3]), 'other');
-  assert.equal(radioCategoryColor('news'), '#44adff');
+  assert.equal(radioCategoryColor('news'), '#7dff6a');
   assert.equal(radioCategoryColor('music'), '#54d17a');
   assert.equal(radioCategoryColor('genre:jazz'), '#54d17a');
 });
@@ -1477,7 +1477,7 @@ test('selected Radio station bracket is a transparent four-corner category-color
   assert.match(svg, /viewBox="0 0 40 40"/);
   assert.match(svg, /M2 13V2H13 M27 2H38V13 M38 27V38H27 M13 38H2V27/);
   assert.match(svg, /stroke="#44adff"/);
-  assert.match(radioSelectionBracketSvg('bad-color'), /stroke="#9aa7b3"/);
+  assert.match(radioSelectionBracketSvg('bad-color'), /stroke="#8fbf96"/);
 });
 
 test('Radio text uses protected selected and bounded ambient WorldOverlay entries', () => {

@@ -7,7 +7,7 @@ export const WIND_FIELDS = Object.freeze({
     units: 'm/s',
     min: 0,
     max: 30,
-    stops: ['#133a67', '#2876a3', '#66c9d1', '#c8dfac', '#f1cf79', '#ee9761'],
+    stops: ['#14381c', '#1f6b32', '#2ea043', '#5ecf78', '#b6ff6a', '#f4ffd0'],
   }),
   temperature: Object.freeze({
     label: '2 m air temperature',
@@ -17,16 +17,16 @@ export const WIND_FIELDS = Object.freeze({
     // Fixed 10°C anchors keep model comparisons honest while making everyday
     // temperature gradients distinguishable from the underlying basemap.
     stops: [
-      '#31235b',
-      '#403b92',
-      '#315fc1',
-      '#268fce',
-      '#31bdd0',
-      '#8ad4aa',
-      '#f0d255',
-      '#ee8a34',
-      '#d74638',
-      '#9f274d',
+      '#041206',
+      '#08240a',
+      '#0e3710',
+      '#164818',
+      '#1e5a28',
+      '#50b432',
+      '#8cff46',
+      '#c8ff82',
+      '#f5ffc8',
+      '#faffe6',
     ],
   }),
   pressure: Object.freeze({
@@ -34,7 +34,7 @@ export const WIND_FIELDS = Object.freeze({
     units: 'hPa',
     min: 960,
     max: 1050,
-    stops: ['#705ca0', '#6985b4', '#a5c3cd', '#d8c99a', '#dbad61'],
+    stops: ['#145c28', '#2ea043', '#5ecf78', '#b6ff6a', '#f4ffd0'],
   }),
 });
 

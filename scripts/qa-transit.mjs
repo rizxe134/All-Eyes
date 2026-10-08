@@ -105,11 +105,11 @@ check(
 );
 const palette = {
   bus: '#5EF08A',
-  tram: '#FFC24A',
-  subway: '#FF4538',
-  rail: '#D9A6FF',
-  ferry: '#5FD6FF',
-  unknown: '#D8DDE5',
+  tram: '#a8fda5',
+  subway: '#a8fda5',
+  rail: '#abfda8',
+  ferry: '#68fb63',
+  unknown: '#ccf3ca',
 };
 check(
   'all preset bracket themes preserve the six mode colours',

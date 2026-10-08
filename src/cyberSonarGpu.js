@@ -105,7 +105,7 @@ void main() {
     #endif
     float coverage = floorValue >= 0.9999 ? 1.0 : clamp((factor - floorValue) / (1.0 - floorValue), 0.0, 1.0);
     if (u_gevSonarLabelBackground < 0.5)
-        v_color.rgb = v_color.rgb * 0.28 + (vec3(0.62, 0.68, 0.72) + vec3(0.38, 0.16, 0.12) * coverage) * 0.72;
+        v_color.rgb = v_color.rgb * 0.28 + (vec3(0.22, 0.52, 0.28) + vec3(0.50, 0.42, 0.16) * coverage) * 0.72;
     // Apply before native fragment pass classification, never after main().
     v_color.a *= factor;
     ${kind === 'point' ? 'v_outlineColor.a *= factor;' : '#ifdef SDF\n    v_outlineColor.a *= factor;\n    #endif'}

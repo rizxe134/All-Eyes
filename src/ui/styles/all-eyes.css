@@ -335,6 +335,40 @@ a {
   background-size: 8px 8px;
 }
 
+#intel-hud,
+#intel-hud * {
+  --hud-color: rgba(182, 255, 140, 0.92) !important;
+  --hud-glow: rgba(61, 204, 74, 0.45) !important;
+  --hud-border: rgba(61, 204, 74, 0.55) !important;
+  color: rgba(182, 255, 140, 0.92) !important;
+}
+
+#top-center-actions,
+#top-center-actions *,
+.camera-compass-n,
+.cockpit-reticle,
+.gev-pointer-reticle {
+  color: #b6ff6a !important;
+}
+
+/* Platform emoji paint their own hues. Flatten them onto the phosphor ramp
+   outside Cyber, which already swaps these glyphs for monochrome marks. */
+:root:not([data-ui-theme='cyber']) :is(
+  .data-icon,
+  .btn-icon,
+  .pp-icon,
+  .tr3b-toggle,
+  .search-toggle-btn span
+) {
+  filter: grayscale(1) sepia(1) hue-rotate(70deg) saturate(6) brightness(1.05);
+}
+
+#cesium-credits img,
+.cesium-credit-logo,
+.cesium-widget-credits img {
+  filter: none !important;
+}
+
 @media (max-width: 520px) {
   #title-bar h1 > span:last-child,
   #title-bar .subtitle {

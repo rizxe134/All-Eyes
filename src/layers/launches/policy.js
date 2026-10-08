@@ -93,10 +93,10 @@ export const LAUNCH_PAD_ZONE_MAX_CAMERA_HEIGHT_M = 120000;
 export const LAUNCH_PAD_ZONE_MAX_CAMERA_DISTANCE_M = 180000;
 
 export const TRAJECTORY_STAGE_COLORS = [
-  '#ff9f43',
-  '#ff66c4',
-  '#a78bfa',
-  '#7bed9f',
-  '#ffd166',
-  '#60a5fa',
+  '#f4ffd0',
+  '#e8ff9a',
+  '#b6ff8a',
+  '#7dff6a',
+  '#5ecf78',
+  '#3dcc4a',
 ];

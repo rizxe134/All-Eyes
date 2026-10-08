@@ -39,24 +39,24 @@ import {
 /** Color palettes keyed by shader mode; applied as CSS custom properties. */
 const HUD_COLORS = {
   surveillance: {
-    main: 'rgba(51, 255, 51, 0.8)',
-    glow: 'rgba(51, 255, 51, 0.5)',
-    border: 'rgba(51, 255, 51, 0.2)',
+    main: 'rgba(140, 255, 120, 0.9)',
+    glow: 'rgba(140, 255, 120, 0.45)',
+    border: 'rgba(80, 200, 90, 0.35)',
   },
   thermal: {
-    main: 'rgba(255, 255, 255, 0.7)',
-    glow: 'rgba(255, 255, 255, 0.4)',
-    border: 'rgba(255, 255, 255, 0.15)',
+    main: 'rgba(232, 255, 210, 0.85)',
+    glow: 'rgba(210, 255, 180, 0.4)',
+    border: 'rgba(180, 255, 160, 0.22)',
   },
   retro: {
-    main: 'rgba(255, 170, 0, 0.8)',
-    glow: 'rgba(255, 170, 0, 0.5)',
-    border: 'rgba(255, 170, 0, 0.2)',
+    main: 'rgba(198, 255, 90, 0.88)',
+    glow: 'rgba(198, 255, 90, 0.45)',
+    border: 'rgba(160, 220, 70, 0.28)',
   },
   _default: {
-    main: 'rgba(0, 255, 255, 0.6)',
-    glow: 'rgba(0, 255, 255, 0.4)',
-    border: 'rgba(0, 255, 255, 0.15)',
+    main: 'rgba(182, 255, 140, 0.9)',
+    glow: 'rgba(125, 255, 106, 0.4)',
+    border: 'rgba(61, 204, 74, 0.4)',
   },
 };
 

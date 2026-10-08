@@ -21,7 +21,7 @@ export function validTileBounds(box) {
  * no absolute URL to read one off. Deriving `allowedOrigin` from it means
  * repointing `tileJsonUrl` at a mirror cannot silently keep loading tiles from
  * the old host: the origin check below then names the mismatch instead of
- * passing it (#933).
+ * passing it (#b7eeb5).
  */
 function tileJsonOrigin(tileJsonUrl) {
   if (typeof tileJsonUrl !== 'string') return undefined;

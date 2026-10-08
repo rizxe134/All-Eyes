@@ -280,7 +280,7 @@ export function createRendering({
           fill: false,
           outline: true,
           outlineColor:
-            Cesium.Color.fromCssColorString('#62b5ff').withAlpha(0.72),
+            Cesium.Color.fromCssColorString('#6bfb66').withAlpha(0.72),
           height: CONTEXT_RIM_HEIGHT_M,
         },
       }),

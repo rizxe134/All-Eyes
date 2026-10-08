@@ -34,11 +34,11 @@ export const BILLBOARD_SCALE = 0.7;
 
 /** @constant {Cesium.Color} Default amber tint for untracked military billboards */
 
-export const MIL_ICON_COLOR = Cesium.Color.fromCssColorString('#FFB800');
+export const MIL_ICON_COLOR = Cesium.Color.fromCssColorString('#c6ff4a');
 
 /** @constant {Cesium.Color} Lighter amber tint applied to the actively tracked aircraft */
 
-export const TRACKED_ICON_COLOR = Cesium.Color.fromCssColorString('#FFD166');
+export const TRACKED_ICON_COLOR = Cesium.Color.fromCssColorString('#f4ffd0');
 
 // --- Ground traffic (owner reversal 2026-07-03; mirror of flights.js) ---------------
 // adsb.lol/readsb flags ground traffic with alt_baro === "ground" (no separate
@@ -169,7 +169,7 @@ export const TRACKED_BILLBOARD_SCALE_BY_DISTANCE = new Cesium.NearFarScalar(
 
 /** @constant {string} Military trail hue (PRD F4, pinned). */
 
-export const TRAIL_COLOR = '#FFB800';
+export const TRAIL_COLOR = '#e8ff9a';
 
 /** @constant {number} Combined cap on trail vertices (backfill + live accumulation). */
 

@@ -242,7 +242,7 @@ test('local aircraft use their class silhouette and scale in magenta', async (t)
   assert.ok(
     Cesium.Color.equals(
       entity.billboard.color.getValue(),
-      Cesium.Color.fromCssColorString('#ff4fd8'),
+      Cesium.Color.fromCssColorString('#f4ffd0'),
     ),
   );
   assert.ok(
@@ -261,7 +261,7 @@ test('local aircraft use their class silhouette and scale in magenta', async (t)
   assert.ok(
     Cesium.Color.equals(
       heli.billboard.color.getValue(),
-      Cesium.Color.fromCssColorString('#ff4fd8'),
+      Cesium.Color.fromCssColorString('#f4ffd0'),
     ),
     'the helicopter keeps the local magenta',
   );
@@ -433,7 +433,7 @@ test('selecting an aircraft draws a magenta trail of the fixes the receiver hear
     if (second === 1) assert.equal(layer.selectAircraft('abc123'), true);
   }
   assert.equal(trails.length, 1);
-  assert.equal(trails[0].options.color, '#ff4fd8');
+  assert.equal(trails[0].options.color, '#f4ffd0');
   assert.equal(trails[0].options.width, 2.5);
   assert.equal(trails[0].positions.length, 4, 'every heard fix, oldest first');
   assert.ok(
@@ -539,7 +539,7 @@ test('the DISPLAY 3D toggle gives local aircraft magenta class models', async (t
   assert.ok(
     Cesium.Color.equals(
       model.color,
-      Cesium.Color.fromCssColorString('#ff4fd8'),
+      Cesium.Color.fromCssColorString('#f4ffd0'),
     ),
   );
   assert.equal(model.colorBlendMode, Cesium.ColorBlendMode.MIX);
@@ -637,7 +637,7 @@ test('the click card lists identity, kinematics, freshness and the receiver line
     100_000,
   );
   assert.equal(card.title, 'SHINR42');
-  assert.equal(card.accent, '#ff4fd8');
+  assert.equal(card.accent, '#f4ffd0');
   assert.deepEqual(card.details, [
     'ICAO AE5D8A · SHINR42',
     'ALT 1,600 FT · GS 130 KT · TRK 331°',
@@ -771,7 +771,7 @@ test('feed records merge with browser SDR records by ICAO and UAT-only aircraft 
   assert.ok(
     Cesium.Color.equals(
       uat.billboard.color.getValue(),
-      Cesium.Color.fromCssColorString('#ff4fd8'),
+      Cesium.Color.fromCssColorString('#f4ffd0'),
     ),
     'same magenta marker family',
   );
