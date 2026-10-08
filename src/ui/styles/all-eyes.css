@@ -334,3 +334,24 @@ a {
   opacity: 0.18;
   background-size: 8px 8px;
 }
+
+@media (max-width: 520px) {
+  #title-bar h1 > span:last-child,
+  #title-bar .subtitle {
+    display: block !important;
+  }
+
+  #title-bar h1 {
+    font-size: 8px !important;
+    gap: 6px !important;
+  }
+
+  #title-bar .title-logo {
+    width: 28px !important;
+  }
+
+  #title-bar .subtitle {
+    margin-top: 4px !important;
+    font-size: 6px !important;
+  }
+}
