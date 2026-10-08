@@ -24,6 +24,26 @@ npm run build
 npm run preview
 ```
 
+## Mac app
+
+All Eyes can run as a desktop window. The app starts its own local server on 127.0.0.1 and loads the built globe, so you do not start a terminal server yourself. `npm run dev` is unchanged for browser work.
+
+The published build is an unsigned zip of `All Eyes.app` for Apple silicon (arm64) and Intel (x64). This Linux checkout can produce those zips with:
+
+```bash
+npm run dist:mac
+```
+
+The archives land in `release/`. macOS Gatekeeper blocks an unsigned app the first time you open it. Right-click `All Eyes.app`, choose **Open**, then **Open** again. Or clear the quarantine flag:
+
+```bash
+xattr -dr com.apple.quarantine "/path/to/All Eyes.app"
+```
+
+Optional API keys can live in `~/Library/Application Support/All Eyes/runtime/.env`. The same names as [.env.example](.env.example) apply. Do not commit that file.
+
+This copy is published at [github.com/rizxe134/all-eyes](https://github.com/rizxe134/all-eyes).
+
 ## Keys
 
 Copy [.env.example](.env.example) to `.env` if you want to set keys in a file. You can also use the **POWER UP** chip inside the app (dev server only). It writes `.env` on this machine and restarts. Do not commit `.env`.

@@ -12,6 +12,7 @@ dist
 screenshots/
 qa-shots/
 output/
+release/
 .gev-logs/
 .gev-cache/
 # Browser QA gate evidence (screenshots, console and network dumps).

@@ -1,0 +1,37 @@
+appId: app.alleyes.desktop
+productName: All Eyes
+executableName: All Eyes
+asar: false
+npmRebuild: false
+directories:
+  output: release
+files:
+  - package.json
+  - dist/**/*
+  - desktop/**/*
+  - server/**/*
+  - src/**/*
+  - build/**/*
+  - scripts/google-server-key.mjs
+  - public/logo.svg
+  - "!**/*.test.mjs"
+  - "!**/*.test.js"
+  - "!**/*.md"
+  - "!desktop/build-icon.mjs"
+extraMetadata:
+  main: desktop/main.mjs
+mac:
+  category: public.app-category.reference
+  identity: null
+  gatekeeperAssess: false
+  icon: desktop/icon.icns
+  target:
+    - target: zip
+      arch:
+        - arm64
+        - x64
+linux:
+  icon: desktop/icon.png
+  target: []
+win:
+  target: []
