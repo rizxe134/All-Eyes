@@ -18,6 +18,7 @@ export interface Shell {
   suggest: HTMLElement
   output: HTMLElement
   track: HTMLElement
+  right: HTMLElement
   boot: HTMLElement
   bootText: HTMLElement
   mute: HTMLButtonElement
@@ -66,9 +67,10 @@ export function buildShell(root: HTMLElement): Shell {
   top.append(brand, clock, live, count, coords, actions)
 
   const layers = el('aside', 'ae-layers')
+  const right = el('div', 'ae-right')
   const side = el('aside', 'ae-side')
   const inspectCard = el('section', 'ae-card')
-  inspectCard.append(el('h2', '', 'CONTACT'), el('div', 'ae-inspect', 'CLICK A BLIP TO LOCK FOLLOW CAM'))
+  inspectCard.append(el('h2', '', 'CONTACT'), el('div', 'ae-inspect', 'HOVER OR CLICK A MARKER'))
   const inspect = inspectCard.querySelector('.ae-inspect') as HTMLElement
   const panels = el('div', 'ae-panels')
   side.append(inspectCard, panels)
@@ -120,7 +122,7 @@ export function buildShell(root: HTMLElement): Shell {
   const prompt = el('input', 'ae-prompt') as HTMLInputElement
   prompt.autocomplete = 'off'
   prompt.spellcheck = false
-  prompt.placeholder = 'fly tokyo   layer ships off   pass iss   help'
+  prompt.placeholder = 'fly tokyo   layer ships off   viewer   size 0.7   help'
   prompt.setAttribute('aria-label', 'Command')
   form.append(gt, prompt)
   foot.append(scrubRow, output, suggest, form)
@@ -163,7 +165,8 @@ export function buildShell(root: HTMLElement): Shell {
   dialog.append(row)
   settings.append(dialog)
 
-  hud.append(top, layers, side, radarWrap, alerts, foot, track)
+  right.append(side)
+  hud.append(top, layers, right, radarWrap, alerts, foot, track)
   const info = el('div', 'ae-infocard')
   info.hidden = true
   const infoHead = el('header')
@@ -196,6 +199,7 @@ export function buildShell(root: HTMLElement): Shell {
     suggest,
     output,
     track,
+    right,
     boot,
     bootText,
     mute,

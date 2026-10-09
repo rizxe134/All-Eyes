@@ -1,7 +1,8 @@
 /**
  * ICAO type-code to silhouette.
  * Add a row to EXACT, or a prefix rule, to teach the globe a new type.
- * Model ids match the meshes in src/core/models.ts. Add a row to teach the globe a new type.
+ * The sprite id is also the viewer mesh id in src/core/models.ts.
+ * Draw the pixels in src/plugins/aircraft/sprites.ts.
  */
 
 export interface AirGlyph {

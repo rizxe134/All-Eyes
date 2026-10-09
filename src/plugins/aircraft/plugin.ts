@@ -4,6 +4,7 @@ import { getJson } from '../../net/http'
 import { pitchDeg } from '../../core/models'
 import { parseAdsbDb, readAirCache, writeAirCache, type AirMeta } from './lookup'
 import { capAir, displayAirAltKm, parseAdsb, parseOpenSky, type AirFix } from './parse'
+import './sprites'
 import { classifyAir } from './types'
 
 const LAYER = 'aircraft'

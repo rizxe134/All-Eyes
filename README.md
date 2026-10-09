@@ -2,14 +2,13 @@
 
 A live "see the whole world" console. The globe fills the window, the interface is green phosphor and 8-bit, and the feeds run with no API keys.
 
-## What's new in 1.1.0
+## What's new in 1.2.0
 
-- Aircraft are small 3D models for the type family (Airbus and Boeing narrowbodies, four-engine and twin widebodies, regional jets, turboprops, light props, helicopters, fighters, business jets, cargo). They point along their heading and tilt with vertical rate. Helicopter rotors and propellers spin. The type code comes from the feed, or from a cached [adsbdb](https://adsbdb.com) lookup of the ICAO24 hex. The mapping table is `src/plugins/aircraft/types.ts`.
-- Hover any contact for a compact card. Click to pin and follow; drag the card by its title. Cards cover callsign, registration, type, operator, route when the feed has it, altitude, speed, vertical rate, heading, squawk, position, and age. The **KT** button cycles knots, mph, and km/h.
-- Satellites, ships, storms, quakes, events, and launches use their own small 3D models and cards (NORAD and next pass, MMSI and flag, storm wind, quake magnitude and depth, launch vehicle and pad). Satellites spin slowly.
-- Markers stay small, shrink to dots when zoomed out, thin out where they pile up, and grow only while hovered or followed. **CFG** has a marker size slider. `size 0.7`, `size up`, and `size down` do the same thing.
+- Contacts on the globe are tiny pixel sprites again, one per aircraft family, satellite class, ship type, and weather icon. They point along their heading, stay small enough to leave the Earth visible, and turn into dots when you zoom out. **CFG** still has the marker size slider. `size 0.7`, `size up`, and `size down` do the same thing.
+- The 3D model lives in a **MODEL VIEWER** panel at the top right. Hover or follow a contact and that panel shows a larger green model of the same type, turning on a pad, with the info card under it. Helicopter rotors spin. With nothing selected it shows a slow wireframe globe and `NO CONTACT SELECTED`. **HIDE** collapses it. `viewer`, `viewer on`, and `viewer off` do the same thing.
+- Cards still cover callsign, registration, type, operator, route when the feed has it, altitude, speed, vertical rate, heading, squawk, position, and age, plus satellite, ship, storm, quake, and launch fields. The **KT** button cycles knots, mph, and km/h.
 
-1.0.0 is still on the releases page.
+1.1.0 and 1.0.0 are still on the releases page.
 
 ## Run
 
@@ -30,23 +29,23 @@ Apple menu, then **About This Mac**: Chip is Apple M1 or later for Apple Silicon
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.1.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
-| Intel | `All-Eyes-1.1.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
+| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.2.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
+| Intel | `All-Eyes-1.2.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
 
 ### Windows
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Windows, recommended | `All-Eyes-1.1.0-Windows-x64-Installer.exe` | Installer |
-| 64-bit Windows, no install | `All-Eyes-1.1.0-Windows-x64-Portable.exe` | Portable exe |
+| 64-bit Windows, recommended | `All-Eyes-1.2.0-Windows-x64-Installer.exe` | Installer |
+| 64-bit Windows, no install | `All-Eyes-1.2.0-Windows-x64-Portable.exe` | Portable exe |
 
 ### Linux
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Linux, recommended | `All-Eyes-1.1.0-Linux-x64.AppImage` | AppImage |
-| Debian or Ubuntu | `All-Eyes-1.1.0-Linux-x64.deb` | Debian package |
-| Any 64-bit Linux | `All-Eyes-1.1.0-Linux-x64.tar.gz` | Archive |
+| 64-bit Linux, recommended | `All-Eyes-1.2.0-Linux-x64.AppImage` | AppImage |
+| Debian or Ubuntu | `All-Eyes-1.2.0-Linux-x64.deb` | Debian package |
+| Any 64-bit Linux | `All-Eyes-1.2.0-Linux-x64.tar.gz` | Archive |
 
 ## How to install
 
@@ -56,7 +55,7 @@ Open the section for your computer. The desktop builds are unsigned, so the firs
 <summary>macOS</summary>
 
 1. Click the Apple menu, then **About This Mac**.
-2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-1.1.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-1.1.0-macOS-Intel-x64.zip`.
+2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-1.2.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-1.2.0-macOS-Intel-x64.zip`.
 3. Double-click the zip. macOS unpacks it and shows `All Eyes.app`.
 4. Drag `All Eyes.app` into **Applications**.
 5. First launch: right-click `All Eyes.app`, choose **Open**, then **Open** again. macOS says it cannot verify the developer. That warning is expected, because the app is unsigned.
@@ -72,11 +71,11 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 <details>
 <summary>Windows</summary>
 
-1. Download `All-Eyes-1.1.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-1.1.0-Windows-x64-Portable.exe` if you do not want to install.
+1. Download `All-Eyes-1.2.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-1.2.0-Windows-x64-Portable.exe` if you do not want to install.
 2. Double-click the file you downloaded.
 3. If you see **Windows protected your PC**, choose **More info**, then **Run anyway**. That warning is expected, because the app is unsigned.
 4. Installer: step through the setup. It adds an **All Eyes** shortcut to the Start menu and the desktop. Open the app from either shortcut.
-5. Portable: nothing is installed. Double-click `All-Eyes-1.1.0-Windows-x64-Portable.exe` each time you want the globe.
+5. Portable: nothing is installed. Double-click `All-Eyes-1.2.0-Windows-x64-Portable.exe` each time you want the globe.
 
 </details>
 
@@ -85,12 +84,12 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 
 **AppImage (any distro)**
 
-1. Download `All-Eyes-1.1.0-Linux-x64.AppImage`.
+1. Download `All-Eyes-1.2.0-Linux-x64.AppImage`.
 2. In that folder, run:
 
 ```bash
-chmod +x All-Eyes-1.1.0-Linux-x64.AppImage
-./All-Eyes-1.1.0-Linux-x64.AppImage
+chmod +x All-Eyes-1.2.0-Linux-x64.AppImage
+./All-Eyes-1.2.0-Linux-x64.AppImage
 ```
 
 Or right-click the file, choose **Properties**, turn on **Allow executing file as a program**, and double-click it.
@@ -104,28 +103,28 @@ sudo apt install libfuse2
 Or skip FUSE and run:
 
 ```bash
-./All-Eyes-1.1.0-Linux-x64.AppImage --appimage-extract-and-run
+./All-Eyes-1.2.0-Linux-x64.AppImage --appimage-extract-and-run
 ```
 
 **Debian or Ubuntu package**
 
-1. Download `All-Eyes-1.1.0-Linux-x64.deb`.
+1. Download `All-Eyes-1.2.0-Linux-x64.deb`.
 2. In that folder, run:
 
 ```bash
-sudo apt install ./All-Eyes-1.1.0-Linux-x64.deb
+sudo apt install ./All-Eyes-1.2.0-Linux-x64.deb
 ```
 
 3. Open **All Eyes** from the applications menu. The package name is `all-eyes`. The program file is `/opt/All Eyes/all-eyes`.
 
 **Archive**
 
-1. Download `All-Eyes-1.1.0-Linux-x64.tar.gz`.
-2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.1.0-Linux-x64`:
+1. Download `All-Eyes-1.2.0-Linux-x64.tar.gz`.
+2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.2.0-Linux-x64`:
 
 ```bash
-tar -xzf All-Eyes-1.1.0-Linux-x64.tar.gz
-cd All-Eyes-1.1.0-Linux-x64
+tar -xzf All-Eyes-1.2.0-Linux-x64.tar.gz
+cd All-Eyes-1.2.0-Linux-x64
 ./all-eyes
 ```
 
@@ -137,7 +136,7 @@ cd All-Eyes-1.1.0-Linux-x64
 
 1. Press `/` to open the command line.
 2. Try `fly tokyo`, `pass iss`, `size 0.8`, or `help`.
-3. Hover a marker for its card. Click to pin the card and follow. Drag the card by its title bar. The **KT** button on the card switches speed units.
+3. Hover a marker. The top-right viewer shows its 3D model and card. Click to follow. The **KT** button switches speed units. `viewer off` hides the panel.
 4. Click **CFG** to add an optional OpenSky or NASA FIRMS key, or to set marker size. The globe runs with none of the keys set.
 
 Drag the globe to look around. Click empty ground to drop the follow lock and set the pin.

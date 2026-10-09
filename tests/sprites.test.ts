@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { markerParts, modelIds, pitchDeg } from '../src/core/models'
+import { knownSprites, spriteRows } from '../src/core/sprites'
+import '../src/plugins/aircraft/sprites'
 import { airTypeTable, classifyAir } from '../src/plugins/aircraft/types'
 import { eventSprite } from '../src/plugins/markers/sprites'
 import { satSprite } from '../src/plugins/satellites/sprites'
@@ -27,6 +29,20 @@ describe('aircraft type models', () => {
     expect(classifyAir('').sprite).toBe('air-unk')
     expect(classifyAir('ZZZZ').name).toBe('ZZZZ')
     expect(classifyAir('A320').sprite).not.toBe(classifyAir('B738').sprite)
+  })
+
+  it('registers a pixel sprite beside every family mesh', () => {
+    const sprites = new Set(knownSprites())
+    const meshes = new Set(modelIds())
+    for (const glyph of Object.values(airTypeTable())) {
+      expect(sprites.has(glyph.sprite), glyph.sprite).toBe(true)
+      expect(meshes.has(glyph.sprite), glyph.sprite).toBe(true)
+      expect(spriteRows(glyph.sprite).some((row) => row.includes('#'))).toBe(true)
+    }
+    for (const id of ['sat-station', 'sat-comms', 'ship-cargo', 'ship-sail', 'ico-storm', 'ico-quake', 'ico-launch']) {
+      expect(sprites.has(id), id).toBe(true)
+      expect(meshes.has(id), id).toBe(true)
+    }
   })
 
   it('has a mesh for every mapped family', () => {

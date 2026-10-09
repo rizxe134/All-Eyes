@@ -14,8 +14,10 @@ import { builtinPlugins } from '../plugins'
 import { getJson } from '../net/http'
 import { buildShell } from '../ui/shell'
 import { startRadar } from '../ui/radar'
+import { mountViewer } from '../ui/viewer'
 
 const LAYER_KEY = 'alleyes.layers.v1'
+const VIEWER_KEY = 'alleyes.viewer.v1'
 
 function parseNominatim(payload: unknown): { lat: number; lon: number; label: string } | null {
   if (!Array.isArray(payload) || !payload[0] || typeof payload[0] !== 'object') return null
@@ -68,6 +70,8 @@ export function boot(root: HTMLElement): void {
   const audio = new Sfx()
   audio.setMuted(settings.get().mute)
   const shell = buildShell(root)
+  const viewer = mountViewer()
+  shell.right.prepend(viewer.root)
   const globe = new Globe(shell.canvas, () => clock.now())
   const registry = new PluginRegistry()
   for (const plugin of builtinPlugins) registry.register(plugin)
@@ -198,10 +202,10 @@ export function boot(root: HTMLElement): void {
   function renderInspect() {
     const contact = state.trackId ? entities.get(state.trackId) : null
     if (!contact) {
-      shell.inspect.textContent = 'HOVER OR CLICK A MARKER\nCLICK PINS THE CARD'
+      shell.inspect.textContent = 'HOVER OR CLICK A MARKER'
       return
     }
-    shell.inspect.textContent = cardBody(contact)
+    shell.inspect.textContent = contact.label
   }
 
   function placeCard(x: number, y: number) {
@@ -213,20 +217,38 @@ export function boot(root: HTMLElement): void {
     shell.info.style.top = `${top}px`
   }
 
+  function focusContact() {
+    const hovered = state.hoverId ? entities.get(state.hoverId) : null
+    const pinned = state.trackId ? entities.get(state.trackId) : null
+    return hovered ?? pinned ?? null
+  }
+
   function renderCard() {
     const pinned = state.trackId ? entities.get(state.trackId) : null
-    const hovered = !pinned && state.hoverId ? entities.get(state.hoverId) : null
-    const contact = pinned ?? hovered
-    shell.infoSpeed.textContent = speedUnitLabel(settings.get().speedUnit)
+    const contact = focusContact()
+    const unit = speedUnitLabel(settings.get().speedUnit)
+    viewer.speed.textContent = unit
+    shell.infoSpeed.textContent = unit
     if (!contact) {
+      viewer.idle()
+      viewer.title.textContent = 'MODEL VIEWER'
+      viewer.card.textContent = 'NO CONTACT SELECTED'
+      shell.info.hidden = true
+      return
+    }
+    viewer.show(contact.shape || 'dot', contact.pitch ?? 0)
+    const locked = Boolean(pinned && contact.id === pinned.id)
+    viewer.title.textContent = locked ? `LOCK ${contact.label}` : contact.label
+    viewer.card.textContent = cardBody(contact)
+    if (viewer.isOpen()) {
       shell.info.hidden = true
       return
     }
     shell.info.hidden = false
-    shell.info.classList.toggle('is-pin', Boolean(pinned))
-    shell.infoTitle.textContent = pinned ? `LOCK ${contact.label}` : contact.label
-    shell.infoBody.textContent = cardBody(contact)
-    if (!pinned) placeCard(state.hoverX + 16, state.hoverY + 16)
+    shell.info.classList.toggle('is-pin', locked)
+    shell.infoTitle.textContent = viewer.title.textContent
+    shell.infoBody.textContent = viewer.card.textContent
+    if (!locked) placeCard(state.hoverX + 16, state.hoverY + 16)
   }
 
   function renderAlerts() {
@@ -349,6 +371,16 @@ export function boot(root: HTMLElement): void {
       if (input) input.value = String(markerSize)
     },
     getMarkerSize: () => settings.get().markerSize,
+    setViewer(open) {
+      viewer.setOpen(open)
+      try {
+        localStorage.setItem(VIEWER_KEY, open ? '1' : '0')
+      } catch {
+        /* private mode */
+      }
+      renderCard()
+    },
+    viewerOpen: () => viewer.isOpen(),
     screenshot,
     copyLink,
     alerts,
@@ -522,12 +554,29 @@ export function boot(root: HTMLElement): void {
     }
     renderCard()
   })
-  shell.infoSpeed.addEventListener('click', (event) => {
-    event.stopPropagation()
+  const cycleSpeed = () => {
     settings.update({ speedUnit: nextSpeedUnit(settings.get().speedUnit) })
     renderInspect()
     renderCard()
+  }
+  shell.infoSpeed.addEventListener('click', (event) => {
+    event.stopPropagation()
+    cycleSpeed()
   })
+  viewer.speed.addEventListener('click', (event) => {
+    event.stopPropagation()
+    cycleSpeed()
+  })
+  viewer.toggle.addEventListener('click', () => {
+    audio.play('click')
+    commands.setViewer(!viewer.isOpen())
+  })
+  try {
+    if (localStorage.getItem(VIEWER_KEY) === '0') viewer.setOpen(false)
+  } catch {
+    /* keep the viewer open */
+  }
+  window.addEventListener('pagehide', () => viewer.dispose())
   let draggingCard = false
   let dragOx = 0
   let dragOy = 0

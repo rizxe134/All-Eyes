@@ -195,6 +195,24 @@ export const systemPlugin: AllEyesPlugin = {
       },
     },
     {
+      name: 'viewer',
+      usage: 'viewer [on|off]',
+      summary: 'Show or hide the model viewer',
+      run(args, ctx) {
+        const arg = (args[0] ?? '').toLowerCase()
+        if (!arg) {
+          ctx.setViewer(!ctx.viewerOpen())
+        } else if (arg === 'on' || arg === 'open') {
+          ctx.setViewer(true)
+        } else if (arg === 'off' || arg === 'shut' || arg === 'hide') {
+          ctx.setViewer(false)
+        } else {
+          return 'USAGE: VIEWER [ON|OFF]'
+        }
+        return ctx.viewerOpen() ? 'VIEWER ON' : 'VIEWER OFF'
+      },
+    },
+    {
       name: 'mute',
       usage: 'mute',
       summary: 'Toggle 8-bit audio',

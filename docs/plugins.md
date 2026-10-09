@@ -99,13 +99,24 @@ Layers and panels receive `PluginContext`:
 | `getTrackId` / `onTrack` | The locked contact |
 | `log(layerId, message)` | A fault string on the layer button. Pass `''` to clear |
 
-Commands receive `CommandContext` with `flyTo`, `track`, `getTrackId`, `setLayer`, `findContact`, `searchPlace`, `setTimeMinutes`, `screenshot`, `copyLink`, and the same alerts and pin helpers.
+Commands receive `CommandContext` with `flyTo`, `track`, `getTrackId`, `setLayer`, `findContact`, `searchPlace`, `setTimeMinutes`, `screenshot`, `copyLink`, `setMarkerSize`, `setViewer`, and the same alerts and pin helpers.
 
-A `Contact` is one picked thing: id, lat, lon, altKm, heading, pitch, label, detail, brightness (0 to 1), shape, and scale. `shape` is a model id from `src/core/models.ts`. Built-ins are `dot`, `chevron`, `diamond`, `ring`, `box`, and `drop`. The globe draws a low-poly mesh in green, oriented to heading and tilted by `pitch`. Zoomed out, and past the nearest 200 contacts, it draws a dot instead. Helicopter rotors and propeller discs spin. Satellites yaw slowly.
+A `Contact` is one picked thing: id, lat, lon, altKm, heading, pitch, label, detail, brightness (0 to 1), shape, and scale. `shape` is a sprite id. Built-ins are `dot`, `chevron`, `diamond`, `ring`, `box`, and `drop`, registered in `src/core/sprites.ts`.
 
-Optional `card` is a list of `{ k, v }` rows for the hover card. Empty values are hidden. Set `speedKt` when the row labeled `SPD` should follow the KT / MPH / KM/H toggle. `formatCard` and `withSpeed` in `src/core/cards.ts` build the text.
+## Sprite and viewer model
 
-Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there and a mesh with the same id in `src/core/models.ts` to teach the globe a new type.
+The globe draws a tiny heading-rotated pixel sprite. Zoomed out (past about 2400 km) it draws a dot. Dense areas keep the brightest contact in each cell. The marker-size slider and `size` scale every sprite.
+
+The same `shape` id selects the mesh in the top-right model viewer. Hover or follow a contact and that panel shows the low-poly model on a turntable, with the card underneath. `pitch` tilts aircraft. Helicopter rotors and propellers spin in the viewer. An empty selection shows a rotating wireframe globe and `NO CONTACT SELECTED`. `viewer`, `viewer on`, and `viewer off` collapse the panel.
+
+Give a plugin both:
+
+1. Register the pixels with `registerSprite(id, rows)` from `src/core/sprites.ts`. `#` is a lit pixel. Rows must be the same width. Import that module from the plugin so it runs at startup.
+2. Add a mesh under the same id in `src/core/models.ts` (`builders`). The viewer falls back to a small octahedron if the id is missing. Set `contact.shape` to that id.
+
+Optional `card` is a list of `{ k, v }` rows. Empty values are hidden. Set `speedKt` when the row labeled `SPD` should follow the KT / MPH / KM/H toggle. `formatCard` and `withSpeed` in `src/core/cards.ts` build the text. The viewer shows those rows. If the viewer is hidden, the same text follows the pointer.
+
+Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there, the pixels in `src/plugins/aircraft/sprites.ts`, and a mesh with the same id in `src/core/models.ts`.
 
 ## Rules
 
@@ -116,6 +127,6 @@ Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefi
 
 ## Commands worth knowing
 
-`help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `beacon`, `size`, `mute`, `shot`, `link`.
+`help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `beacon`, `size`, `viewer`, `mute`, `shot`, `link`.
 
 `size 0.7` (or `size up` / `size down`) matches the marker-size slider in CFG.

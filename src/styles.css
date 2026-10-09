@@ -55,7 +55,7 @@ button { cursor: pointer; }
   pointer-events: auto;
 }
 
-.ae-top, .ae-layers, .ae-side, .ae-foot, .ae-card, .ae-radar-wrap, .ae-alerts, .ae-dialog, .ae-boot {
+.ae-top, .ae-layers, .ae-side, .ae-foot, .ae-card, .ae-radar-wrap, .ae-alerts, .ae-dialog, .ae-boot, .ae-viewer {
   background: var(--panel);
   border: 3px solid var(--line);
   box-shadow: 4px 4px 0 var(--shadow);
@@ -152,12 +152,56 @@ button { cursor: pointer; }
 }
 .ae-layer-count { font-family: "Ae Term", monospace; font-size: 18px; }
 
-.ae-side {
+.ae-right {
   position: absolute;
   top: 68px;
   right: 10px;
-  width: 300px;
+  width: 292px;
   max-height: calc(100vh - 150px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 6;
+  overflow: auto;
+}
+.ae-viewer, .ae-side { pointer-events: auto; }
+.ae-viewer { padding: 0; }
+.ae-viewer-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-family: "Ae Pixel", monospace;
+  font-size: 8px;
+  color: var(--hot);
+  background: #0c3a1c;
+}
+.ae-viewer-head span { flex: 1; }
+.ae-viewer-head .ae-btn { font-size: 8px; padding: 3px 5px; }
+.ae-viewer-body { padding: 8px; }
+.ae-viewer-body[hidden] { display: none; }
+.ae-viewer-canvas {
+  width: 100%;
+  height: 148px;
+  display: block;
+  background: #010a06;
+  border: 3px solid var(--mid);
+}
+.ae-viewer pre {
+  margin: 8px 0 0;
+  max-height: 168px;
+  overflow: auto;
+  font-size: 18px;
+  line-height: 1.15;
+  white-space: pre;
+  color: var(--ink);
+}
+.ae-side {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 100%;
   overflow: auto;
   padding: 8px;
   display: flex;
@@ -166,6 +210,7 @@ button { cursor: pointer; }
   background: transparent;
   border: 0;
   box-shadow: none;
+  min-height: 0;
 }
 .ae-card {
   padding: 8px;
@@ -417,4 +462,7 @@ button { cursor: pointer; }
   .ae-side { display: none; }
   .ae-alerts { display: none; }
   .ae-layers { max-height: 180px; }
+  .ae-right { width: 220px; }
+  .ae-viewer-canvas { height: 112px; }
+  .ae-viewer pre { max-height: 96px; font-size: 16px; }
 }

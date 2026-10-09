@@ -25,6 +25,8 @@ function fakeCtx(over: Partial<CommandContext> = {}): CommandContext {
     toggleMute: () => true,
     setMarkerSize() {},
     getMarkerSize: () => 0.7,
+    setViewer() {},
+    viewerOpen: () => true,
     screenshot() {},
     copyLink: async () => 'http://local/#x',
     alerts: {
@@ -119,6 +121,14 @@ describe('share and commands', () => {
     const text = await execute('help', registry, fakeCtx())
     expect(text).toContain('FLY')
     expect(text).toContain('PASS')
+    expect(text).toContain('VIEWER')
+    let open = true
+    const toggled = await execute('viewer off', registry, fakeCtx({
+      setViewer(next) { open = next },
+      viewerOpen: () => open,
+    }))
+    expect(toggled).toBe('VIEWER OFF')
+    expect(open).toBe(false)
   })
 
   it('finds bundled cities before the network', () => {

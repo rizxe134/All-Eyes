@@ -2,7 +2,7 @@
 
 export type EntityKind = 'air' | 'ship' | 'sat' | 'quake' | 'storm' | 'event' | 'launch' | 'beacon'
 
-/** Model id. Built-ins include dot, chevron, diamond, ring, box, and drop. Families live in src/core/models.ts. */
+/** Sprite id. The same id selects the model in the viewer. Built-ins: dot, chevron, diamond, ring, box, drop. */
 export type MarkerShape = string
 
 export type SpeedUnit = 'kt' | 'mph' | 'kmh'
@@ -91,7 +91,7 @@ export interface Settings {
   openskyId: string
   openskySecret: string
   firmsKey: string
-  /** Multiplier for marker models. About 0.35 to 1.8. */
+  /** Multiplier for globe sprites. About 0.35 to 1.8. */
   markerSize: number
   speedUnit: SpeedUnit
 }
@@ -184,6 +184,8 @@ export interface CommandContext {
   toggleMute(): boolean
   setMarkerSize(scale: number): void
   getMarkerSize(): number
+  setViewer(open: boolean): void
+  viewerOpen(): boolean
   screenshot(): void
   copyLink(): Promise<string>
   alerts: AlertBoard
