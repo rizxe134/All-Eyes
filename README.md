@@ -2,7 +2,6 @@
 
 A live "see the whole world" console. The globe fills the window, the interface is green phosphor and 8-bit, and the feeds run with no API keys.
 
-The concept was inspired by [gods-eye-view](https://github.com/bilawalsidhu/gods-eye-view). This app is a separate codebase: its own globe, module system, and interface.
 
 ## Run
 
