@@ -16,10 +16,10 @@
     "preview": "vite preview",
     "test": "vitest run",
     "desktop": "npm run build && electron .",
-    "dist:mac": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac zip --arm64 --x64 --publish never",
+    "dist:mac": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false MAC_KIND=AppleSilicon-arm64 electron-builder --mac zip --arm64 --publish never && CSC_IDENTITY_AUTO_DISCOVERY=false MAC_KIND=Intel-x64 electron-builder --mac zip --x64 --publish never",
     "dist:win": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never",
     "dist:linux": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --linux --x64 --publish never",
-    "dist:all": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac zip --arm64 --x64 --publish never && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --linux --x64 --publish never",
+    "dist:all": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false MAC_KIND=AppleSilicon-arm64 electron-builder --mac zip --arm64 --publish never && CSC_IDENTITY_AUTO_DISCOVERY=false MAC_KIND=Intel-x64 electron-builder --mac zip --x64 --publish never && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --linux --x64 --publish never",
     "icon": "node build/make-icon.mjs"
   },
   "dependencies": {
@@ -55,6 +55,7 @@
       "identity": null,
       "gatekeeperAssess": false,
       "hardenedRuntime": false,
+      "artifactName": "All-Eyes-${version}-macOS-${env.MAC_KIND}.${ext}",
       "target": [
         "zip"
       ]
@@ -75,17 +76,17 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "All-Eyes-${version}-win-${arch}-setup.${ext}"
+      "artifactName": "All-Eyes-${version}-Windows-x64-Installer.${ext}"
     },
     "portable": {
-      "artifactName": "All-Eyes-${version}-win-${arch}-portable.${ext}"
+      "artifactName": "All-Eyes-${version}-Windows-x64-Portable.${ext}"
     },
     "linux": {
       "icon": "build/icons",
       "category": "Utility",
       "maintainer": "All Eyes contributors",
       "synopsis": "Live green 8-bit intelligence globe",
-      "artifactName": "All-Eyes-${version}-linux-${arch}.${ext}",
+      "artifactName": "All-Eyes-${version}-Linux-x64.${ext}",
       "target": [
         {
           "target": "AppImage",

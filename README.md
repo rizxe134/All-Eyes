@@ -15,50 +15,43 @@ Open http://127.0.0.1:4173. `npm run build` then `npm run preview` serves the pr
 
 No keys are required. Aircraft, satellites, earthquakes, weather radar, Baltic ships, tropical cyclones, natural events, and upcoming launches come from public feeds. Optional keys live in [.env.example](.env.example) or the in-app **CFG** panel. They are never hardcoded.
 
-## Desktop apps
+## Download
 
-Each script builds the web app, then writes installers into `release/`. The app starts a local server and opens the globe. You do not start a terminal yourself. `npm run dist:all` builds Mac, Windows, and Linux in one pass.
+Apple menu, then **About This Mac**: Chip is Apple M1 or later for Apple Silicon, or the processor line says Intel.
 
-### Mac
+### macOS
 
-```bash
-npm run dist:mac
-```
-
-Unsigned arm64 and x64 zips of `All Eyes.app`. macOS Gatekeeper will block the app the first time. Right-click `All Eyes.app`, choose **Open**, then **Open** again. Or:
-
-```bash
-xattr -dr com.apple.quarantine "/path/to/All Eyes.app"
-```
+| Your computer | Download this file | What it is |
+| --- | --- | --- |
+| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.0.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
+| Intel | `All-Eyes-1.0.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
 
 ### Windows
 
-```bash
-npm run dist:win
-```
-
-Unsigned x64 files: `All-Eyes-1.0.0-win-x64-setup.exe` (NSIS installer) and `All-Eyes-1.0.0-win-x64-portable.exe` (no install). Windows SmartScreen will warn because the app is unsigned. Choose **More info**, then **Run anyway**.
+| Your computer | Download this file | What it is |
+| --- | --- | --- |
+| 64-bit Windows, recommended | `All-Eyes-1.0.0-Windows-x64-Installer.exe` | Installer |
+| 64-bit Windows, no install | `All-Eyes-1.0.0-Windows-x64-Portable.exe` | Portable exe |
 
 ### Linux
 
-```bash
-npm run dist:linux
-```
+| Your computer | Download this file | What it is |
+| --- | --- | --- |
+| 64-bit Linux, recommended | `All-Eyes-1.0.0-Linux-x64.AppImage` | AppImage |
+| Debian or Ubuntu | `All-Eyes-1.0.0-Linux-x64.deb` | Debian package |
+| Any 64-bit Linux | `All-Eyes-1.0.0-Linux-x64.tar.gz` | Archive |
 
-x64 AppImage, `.deb`, and `.tar.gz`:
+## First launch
 
-- `All-Eyes-1.0.0-linux-x86_64.AppImage`
-- `All-Eyes-1.0.0-linux-amd64.deb`
-- `All-Eyes-1.0.0-linux-x64.tar.gz`
+The desktop builds are unsigned.
 
-Make the AppImage executable, then run it:
+- **macOS:** Unzip, right-click `All Eyes.app`, choose **Open**, then **Open** again.
+- **Windows:** If SmartScreen appears, choose **More info**, then **Run anyway**.
+- **Linux:** `chmod +x All-Eyes-1.0.0-Linux-x64.AppImage`, then run it.
 
-```bash
-chmod +x All-Eyes-1.0.0-linux-x86_64.AppImage
-./All-Eyes-1.0.0-linux-x86_64.AppImage
-```
+## Desktop build
 
-Install the Debian package with `sudo apt install ./All-Eyes-1.0.0-linux-amd64.deb`. The tar.gz unpacks to a directory you can run directly.
+`npm run dist:mac`, `npm run dist:win`, `npm run dist:linux`, or `npm run dist:all` write those files into `release/`. The app starts a local server and opens the globe. You do not start a terminal yourself.
 
 ## What you can do
 
