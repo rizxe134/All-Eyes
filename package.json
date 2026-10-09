@@ -20,7 +20,7 @@
     "dist:win": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never",
     "dist:linux": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --linux --x64 --publish never",
     "dist:all": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac zip --arm64 --x64 --win --x64 --linux --x64 --publish never",
-    "icon": "node scripts/make-icon.mjs"
+    "icon": "node build/make-icon.mjs"
   },
   "dependencies": {
     "satellite.js": "^5.0.0",
@@ -51,6 +51,7 @@
     ],
     "mac": {
       "category": "public.app-category.utilities",
+      "icon": "build/icon.icns",
       "identity": null,
       "gatekeeperAssess": false,
       "hardenedRuntime": false,
