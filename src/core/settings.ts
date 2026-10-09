@@ -1,4 +1,4 @@
-import type { Settings, SettingsStore as SettingsApi } from './types'
+import type { Settings, SettingsStore as SettingsApi, SpeedUnit } from './types'
 
 const KEY = 'alleyes.settings.v1'
 
@@ -7,6 +7,19 @@ const EMPTY: Settings = {
   openskyId: '',
   openskySecret: '',
   firmsKey: '',
+  markerSize: 0.7,
+  speedUnit: 'kt',
+}
+
+function speedUnit(value: unknown): SpeedUnit {
+  if (value === 'mph' || value === 'kmh' || value === 'kt') return value
+  return 'kt'
+}
+
+function markerSize(value: unknown): number {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return EMPTY.markerSize
+  return Math.min(1.8, Math.max(0.35, n))
 }
 
 export class SettingsStore implements SettingsApi {
@@ -24,6 +37,8 @@ export class SettingsStore implements SettingsApi {
         openskyId: String(parsed.openskyId ?? ''),
         openskySecret: String(parsed.openskySecret ?? ''),
         firmsKey: String(parsed.firmsKey ?? ''),
+        markerSize: markerSize(parsed.markerSize),
+        speedUnit: speedUnit(parsed.speedUnit),
       }
     } catch {
       this.state = { ...EMPTY }

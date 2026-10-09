@@ -47,6 +47,12 @@ export function elevationDeg(satrec: satellite.SatRec, lat: number, lon: number,
   return (look.elevation * 180) / Math.PI
 }
 
+export function speedKmS(satrec: satellite.SatRec, date: Date): number | null {
+  const pv = satellite.propagate(satrec, date)
+  if (!isEci(pv.velocity)) return null
+  return Math.hypot(pv.velocity.x, pv.velocity.y, pv.velocity.z)
+}
+
 export function periodMinutes(satrec: satellite.SatRec): number {
   if (!satrec.no) return 90
   return (2 * Math.PI) / satrec.no

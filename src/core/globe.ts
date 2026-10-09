@@ -8,7 +8,8 @@ import {
   vecToLatLon,
   type Vec3,
 } from './geo'
-import type { GeoPoint, GlobeApi, GlobeClick, Marker, MarkerShape, ViewState } from './types'
+import { spriteRows } from './sprites'
+import type { GeoPoint, GlobeApi, GlobeClick, Marker, ViewState } from './types'
 
 const R = 100
 
@@ -18,10 +19,11 @@ interface DrawItem {
 }
 
 interface Pool {
-  shape: MarkerShape
+  id: string
   mesh: THREE.InstancedMesh | null
   capacity: number
   items: DrawItem[]
+  aspect: number
 }
 
 interface Flight {
@@ -132,26 +134,40 @@ uniform sampler2D uMap;
 void main() {
   float v = texture2D(uMap, vUv).a;
   if (v < 0.06) discard;
-  gl_FragColor = vec4(0.18, 0.95, 0.42, 1.0) * (v * 0.85);
+  gl_FragColor = vec4(0.18, 0.95, 0.42, 1.0) * (v * 0.42);
 }
 `
 
-function makeChevron(): THREE.BufferGeometry {
-  const shape = new THREE.Shape()
-  shape.moveTo(0, 0.95)
-  shape.lineTo(0.62, -0.72)
-  shape.lineTo(0, -0.28)
-  shape.lineTo(-0.62, -0.72)
-  shape.closePath()
-  return new THREE.ShapeGeometry(shape)
-}
+const plane = new THREE.PlaneGeometry(1, 1)
 
-function geometryFor(shape: MarkerShape): THREE.BufferGeometry {
-  if (shape === 'chevron') return makeChevron()
-  if (shape === 'diamond') return new THREE.OctahedronGeometry(0.72, 0)
-  if (shape === 'ring') return new THREE.RingGeometry(0.55, 1, 8)
-  if (shape === 'box') return new THREE.BoxGeometry(0.55, 1.25, 0.28)
-  return new THREE.IcosahedronGeometry(0.62, 0)
+function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number } {
+  const rows = spriteRows(id)
+  const height = Math.max(1, rows.length)
+  const width = Math.max(1, rows[0]?.length ?? 1)
+  const pixel = 4
+  const canvas = document.createElement('canvas')
+  canvas.width = width * pixel
+  canvas.height = height * pixel
+  const ctx = canvas.getContext('2d')
+  if (ctx) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    for (let y = 0; y < height; y++) {
+      const row = rows[y] ?? ''
+      for (let x = 0; x < width; x++) {
+        const ch = row[x]
+        if (!ch || ch === '.' || ch === ' ') continue
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(x * pixel, y * pixel, pixel, pixel)
+      }
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.magFilter = THREE.NearestFilter
+  texture.minFilter = THREE.NearestFilter
+  texture.generateMipmaps = false
+  texture.colorSpace = THREE.NoColorSpace
+  texture.needsUpdate = true
+  return { texture, aspect: width / height }
 }
 
 function graticule(): THREE.LineSegments {
@@ -200,8 +216,9 @@ export class Globe implements GlobeApi {
   }
   private atmosUniforms: { uCam: { value: THREE.Vector3 }; uSun: { value: THREE.Vector3 } }
   private layers = new Map<string, Marker[]>()
-  private pools: Pool[]
-  private markerMat: THREE.MeshBasicMaterial
+  private pools = new Map<string, Pool>()
+  private mats = new Map<string, THREE.MeshBasicMaterial>()
+  private aspects = new Map<string, number>()
   private orbit = new THREE.Group()
   private raycaster = new THREE.Raycaster()
   private pointer = new THREE.Vector2()
@@ -210,6 +227,10 @@ export class Globe implements GlobeApi {
   private follow: { lat: number; lon: number; altKm: number } | null = null
   private followRange = 1400
   private highlightId: string | null = null
+  private hoverId: string | null = null
+  private markerSize = 0.7
+  private bucket = -1
+  private lodRange = 0
   private dirty = true
   private dragging = false
   private moved = 0
@@ -219,6 +240,7 @@ export class Globe implements GlobeApi {
   private lastY = 0
   private clickers = new Set<(hit: GlobeClick) => void>()
   private movers = new Set<(hit: { lat: number; lon: number } | null) => void>()
+  private hoverers = new Set<(hit: { marker: Marker; layerId: string; x: number; y: number } | null) => void>()
   private releasers = new Set<() => void>()
   private scratch = {
     pos: new THREE.Vector3(),
@@ -297,9 +319,6 @@ export class Globe implements GlobeApi {
     this.radarMesh.visible = false
     this.scene.add(this.radarMesh)
     this.scene.add(this.orbit)
-    this.markerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false })
-    const shapes: MarkerShape[] = ['chevron', 'diamond', 'ring', 'box', 'drop']
-    this.pools = shapes.map((shape) => ({ shape, mesh: null, capacity: 0, items: [] }))
     this.addStars()
     this.loadTextures()
     this.resize()
@@ -356,13 +375,19 @@ export class Globe implements GlobeApi {
     geo.setAttribute('position', new THREE.Float32BufferAttribute(segs, 3))
     const line = new THREE.LineSegments(
       geo,
-      new THREE.LineBasicMaterial({ color: 0xe7fff0, transparent: true, opacity: 0.9, toneMapped: false }),
+      new THREE.LineBasicMaterial({ color: 0x3dff7a, transparent: true, opacity: 0.38, toneMapped: false }),
     )
     this.orbit.add(line)
   }
 
   setHighlight(id: string | null): void {
+    if (id === this.highlightId) return
     this.highlightId = id
+    this.dirty = true
+  }
+
+  setMarkerSize(scale: number): void {
+    this.markerSize = clamp(scale, 0.35, 1.8)
   }
 
   flyTo(lat: number, lon: number, rangeKm = 1800): void {
@@ -417,6 +442,11 @@ export class Globe implements GlobeApi {
   onMove(cb: (hit: { lat: number; lon: number } | null) => void): () => void {
     this.movers.add(cb)
     return () => this.movers.delete(cb)
+  }
+
+  onHover(cb: (hit: { marker: Marker; layerId: string; x: number; y: number } | null) => void): () => void {
+    this.hoverers.add(cb)
+    return () => this.hoverers.delete(cb)
   }
 
   onRelease(cb: () => void): () => void {
@@ -572,18 +602,72 @@ export class Globe implements GlobeApi {
     this.camera.lookAt(target)
   }
 
+  private spriteMaterial(id: string): THREE.MeshBasicMaterial {
+    const hit = this.mats.get(id)
+    if (hit) return hit
+    const baked = bakeSprite(id)
+    this.aspects.set(id, baked.aspect)
+    const mat = new THREE.MeshBasicMaterial({
+      map: baked.texture,
+      color: 0xffffff,
+      transparent: true,
+      alphaTest: 0.4,
+      depthWrite: false,
+      toneMapped: false,
+    })
+    this.mats.set(id, mat)
+    return mat
+  }
+
+  private drawSprite(marker: Marker): string {
+    const hot = marker.id === this.highlightId || marker.id === this.hoverId
+    if (!hot && this.view.rangeKm > 2800) return 'dot'
+    return marker.shape || 'dot'
+  }
+
   private rebuildPools() {
-    const grouped = new Map<MarkerShape, DrawItem[]>()
-    for (const pool of this.pools) grouped.set(pool.shape, [])
+    const range = this.view.rangeKm
+    const cell = range > 1100 ? clamp(range / 4200, 0.18, 5) : 0
+    const grouped = new Map<string, DrawItem[]>()
     for (const [layerId, markers] of this.layers) {
+      const declutter = cell > 0 && markers.length > 48
+      const picked = new Map<string, Marker>()
+      const extras: Marker[] = []
       for (const marker of markers) {
-        grouped.get(marker.shape)?.push({ layerId, marker })
+        const hot = marker.id === this.highlightId || marker.id === this.hoverId
+        if (!declutter || hot) {
+          extras.push(marker)
+          continue
+        }
+        const key = `${Math.floor(marker.lat / cell)}:${Math.floor(marker.lon / cell)}`
+        const prev = picked.get(key)
+        if (!prev || marker.brightness > prev.brightness) picked.set(key, marker)
+      }
+      for (const marker of picked.values()) extras.push(marker)
+      for (const marker of extras) {
+        const sprite = this.drawSprite(marker)
+        const list = grouped.get(sprite) ?? []
+        list.push({ layerId, marker })
+        grouped.set(sprite, list)
       }
     }
-    for (const pool of this.pools) {
-      pool.items = grouped.get(pool.shape) ?? []
-      this.ensurePool(pool, pool.items.length)
+    for (const [id, pool] of this.pools) {
+      if (!grouped.has(id)) {
+        pool.items = []
+        if (pool.mesh) pool.mesh.visible = false
+      }
     }
+    for (const [id, items] of grouped) {
+      let pool = this.pools.get(id)
+      if (!pool) {
+        pool = { id, mesh: null, capacity: 0, items: [], aspect: 1 }
+        this.pools.set(id, pool)
+      }
+      pool.items = items
+      this.ensurePool(pool, items.length)
+    }
+    this.bucket = range > 2800 ? 2 : range > 1100 ? 1 : 0
+    this.lodRange = range
   }
 
   private ensurePool(pool: Pool, count: number) {
@@ -600,39 +684,48 @@ export class Globe implements GlobeApi {
       this.scene.remove(pool.mesh)
       pool.mesh.dispose()
     }
-    const capacity = Math.max(128, 2 ** Math.ceil(Math.log2(count)))
-    const mesh = new THREE.InstancedMesh(geometryFor(pool.shape), this.markerMat, capacity)
+    const capacity = Math.max(64, 2 ** Math.ceil(Math.log2(count)))
+    const mesh = new THREE.InstancedMesh(plane, this.spriteMaterial(pool.id), capacity)
     mesh.count = count
     mesh.frustumCulled = false
+    mesh.renderOrder = 3
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
     this.scene.add(mesh)
     pool.mesh = mesh
     pool.capacity = capacity
+    pool.aspect = this.aspects.get(pool.id) ?? 1
   }
 
   private writeMarkers(now: number) {
-    if (this.dirty) {
+    const range = this.view.rangeKm
+    const bucket = range > 2800 ? 2 : range > 1100 ? 1 : 0
+    const drift = bucket === 0 ? 0 : bucket === 1 ? 180 : 700
+    if (this.dirty || bucket !== this.bucket || Math.abs(range - this.lodRange) > drift) {
       this.rebuildPools()
       this.dirty = false
     }
     const dist = this.camera.position.length()
-    const world = clamp(dist * 0.012, 0.55, 9)
-    for (const pool of this.pools) {
+    const height = this.canvas.clientHeight || 800
+    const tan = Math.tan((38 * Math.PI) / 360)
+    const pixels = range > 2800 ? 4.6 : 20
+    const world = clamp((pixels * dist * tan) / (height * 0.5), 0.05, 3.2) * this.markerSize
+    for (const pool of this.pools.values()) {
       const mesh = pool.mesh
       if (!mesh || !mesh.visible) continue
-      const pulseBase = pool.shape === 'ring'
+      const pulseBase = pool.id === 'ico-quake' || pool.id === 'ico-storm'
       for (let i = 0; i < pool.items.length; i++) {
-        const marker = pool.items[i].marker
-        const pulse = pulseBase ? 1 + Math.sin(now / 260 + i) * 0.14 : 1
-        const scale = world * marker.scale * pulse
-        this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.35)
+        const marker = pool.items[i]!.marker
+        const hot = marker.id === this.highlightId || marker.id === this.hoverId
+        const pulse = pulseBase ? 1 + Math.sin(now / 280 + i) * 0.08 : 1
+        const scale = world * marker.scale * pulse * (hot ? 1.85 : 1)
+        this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.28)
         this.orient(marker.lat, marker.lon, marker.heading || 0, scale)
+        this.scratch.right.multiplyScalar(pool.aspect)
         this.scratch.matrix.makeBasis(this.scratch.right, this.scratch.forward, this.scratch.up)
         this.scratch.matrix.setPosition(this.scratch.pos)
         mesh.setMatrixAt(i, this.scratch.matrix)
-        const hot = marker.id === this.highlightId
-        const b = clamp(marker.brightness, 0.18, 1)
-        this.scratch.color.setRGB(hot ? 0.78 : 0.05 + b * 0.22, hot ? 1 : 0.38 + b * 0.62, hot ? 0.62 : 0.14 + b * 0.22)
+        const b = clamp(marker.brightness * (hot ? 1 : 0.82), 0.2, 1)
+        this.scratch.color.setRGB(hot ? 0.78 : 0.05 + b * 0.18, hot ? 1 : 0.32 + b * 0.55, hot ? 0.62 : 0.12 + b * 0.18)
         mesh.setColorAt(i, this.scratch.color)
       }
       mesh.instanceMatrix.needsUpdate = true
@@ -661,7 +754,7 @@ export class Globe implements GlobeApi {
     const y = event.clientY - rect.top
     let best: { marker: Marker; layerId: string; d: number } | null = null
     const camN = this.camera.position.clone().normalize()
-    for (const pool of this.pools) {
+    for (const pool of this.pools.values()) {
       for (const item of pool.items) {
         const marker = item.marker
         const v = latLonToVec(marker.lat, marker.lon, marker.altKm, R)
@@ -670,7 +763,7 @@ export class Globe implements GlobeApi {
         const projected = this.project(marker.lat, marker.lon, marker.altKm)
         if (!projected.visible) continue
         const d = Math.hypot(projected.x - x, projected.y - y)
-        if (d < 18 && (!best || d < best.d)) best = { marker, layerId: item.layerId, d }
+        if (d < 14 && (!best || d < best.d)) best = { marker, layerId: item.layerId, d }
       }
     }
     return best ? { marker: best.marker, layerId: best.layerId } : null
@@ -690,6 +783,21 @@ export class Globe implements GlobeApi {
     if (!this.dragging) {
       const ground = this.ground(event)
       for (const fn of this.movers) fn(ground)
+      const picked = this.pickMarker(event)
+      const id = picked?.marker.id ?? null
+      const changed = id !== this.hoverId
+      if (changed) {
+        this.hoverId = id
+        this.dirty = true
+      }
+      if (picked) {
+        const rect = this.canvas.getBoundingClientRect()
+        for (const fn of this.hoverers) {
+          fn({ marker: picked.marker, layerId: picked.layerId, x: event.clientX - rect.left, y: event.clientY - rect.top })
+        }
+      } else if (changed) {
+        for (const fn of this.hoverers) fn(null)
+      }
       return
     }
     const dx = event.clientX - this.lastX

@@ -218,9 +218,30 @@ async function route(req, url) {
     return upstream(target, { ttl: 60000 })
   }
 
+  if (path === '/api/adsbdb') {
+    const hex = (url.searchParams.get('hex') || '').toLowerCase()
+    if (!/^[0-9a-f]{6}$/.test(hex)) return jsonError(400, 'bad hex')
+    return upstream(`https://api.adsbdb.com/v0/aircraft/${hex}`, {
+      ttl: 24 * 60 * 60 * 1000,
+      timeout: 8000,
+      key: `adsbdb:${hex}`,
+    })
+  }
+
   if (path === '/api/ais/locations') {
     return upstream('https://meri.digitraffic.fi/api/ais/v1/locations', {
       ttl: 20000,
+      headers: {
+        accept: 'application/json',
+        'digitraffic-user': UA,
+      },
+      timeout: 20000,
+    })
+  }
+
+  if (path === '/api/ais/vessels') {
+    return upstream('https://meri.digitraffic.fi/api/ais/v1/vessels', {
+      ttl: 10 * 60 * 1000,
       headers: {
         accept: 'application/json',
         'digitraffic-user': UA,

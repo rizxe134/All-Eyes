@@ -185,6 +185,40 @@ button { cursor: pointer; }
 }
 .ae-k { color: var(--mid); }
 
+.ae-infocard {
+  position: fixed;
+  z-index: 24;
+  pointer-events: auto;
+  min-width: 168px;
+  max-width: 280px;
+  background: rgba(2, 14, 8, 0.9);
+  border: 3px solid var(--mid);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+.ae-infocard header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: grab;
+  background: #0c3a1c;
+  padding: 4px 6px;
+  font-family: "Ae Pixel", monospace;
+  font-size: 8px;
+  color: var(--hot);
+}
+.ae-infocard header .ae-btn { font-size: 12px; padding: 1px 4px; }
+.ae-infocard pre {
+  margin: 0;
+  padding: 6px 8px 8px;
+  font-size: 18px;
+  line-height: 1.15;
+  white-space: pre;
+}
+.ae-infocard.is-pin { border-color: var(--hot); }
+.ae-infocard.is-pin header { background: #145c2c; }
+
 .ae-radar-wrap {
   position: absolute;
   left: 10px;

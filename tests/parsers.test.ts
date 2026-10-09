@@ -36,6 +36,8 @@ describe('aircraft parsers', () => {
       ],
     })
     expect(fixes[0]?.altM).toBeCloseTo(35000 * 0.3048, 1)
+    expect(fixes[0]?.typeCode).toBe('B77W')
+    expect(fixes[0]?.registration).toBe('')
     expect(fixes[1]?.onGround).toBe(true)
     expect(fixes[1]?.altM).toBe(0)
   })

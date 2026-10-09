@@ -28,6 +28,11 @@ export interface Shell {
   settings: HTMLElement
   settingsForm: HTMLFormElement
   watchForm: HTMLFormElement
+  info: HTMLElement
+  infoHead: HTMLElement
+  infoTitle: HTMLElement
+  infoBody: HTMLElement
+  infoSpeed: HTMLButtonElement
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) {
@@ -137,6 +142,17 @@ export function buildShell(root: HTMLElement): Shell {
   dialog.append(field('OpenSky client id', 'openskyId', 'text'))
   dialog.append(field('OpenSky client secret', 'openskySecret', 'password'))
   dialog.append(field('NASA FIRMS map key', 'firmsKey', 'password'))
+  const sizeWrap = el('label', 'ae-field')
+  sizeWrap.append(document.createTextNode('MARKER SIZE'))
+  const markerSize = el('input') as HTMLInputElement
+  markerSize.name = 'markerSize'
+  markerSize.type = 'range'
+  markerSize.min = '0.35'
+  markerSize.max = '1.8'
+  markerSize.step = '0.05'
+  markerSize.value = '0.7'
+  sizeWrap.append(markerSize)
+  dialog.append(sizeWrap)
   const row = el('div', 'ae-row')
   const save = el('button', 'ae-btn', 'SAVE') as HTMLButtonElement
   save.type = 'submit'
@@ -148,7 +164,17 @@ export function buildShell(root: HTMLElement): Shell {
   settings.append(dialog)
 
   hud.append(top, layers, side, radarWrap, alerts, foot, track)
-  root.append(canvas, cross, hud, boot, settings, scan)
+  const info = el('div', 'ae-infocard')
+  info.hidden = true
+  const infoHead = el('header')
+  const infoTitle = el('strong', '', 'CONTACT')
+  const infoSpeed = el('button', 'ae-btn', 'KT') as HTMLButtonElement
+  infoSpeed.type = 'button'
+  infoSpeed.title = 'Toggle KT / MPH / KM/H'
+  infoHead.append(infoTitle, infoSpeed)
+  const infoBody = el('pre')
+  info.append(infoHead, infoBody)
+  root.append(canvas, cross, hud, info, boot, settings, scan)
 
   return {
     canvas,
@@ -180,6 +206,11 @@ export function buildShell(root: HTMLElement): Shell {
     settings,
     settingsForm: dialog,
     watchForm,
+    info,
+    infoHead,
+    infoTitle,
+    infoBody,
+    infoSpeed,
   }
 }
 

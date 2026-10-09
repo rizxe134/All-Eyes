@@ -1,5 +1,7 @@
+import { formatCard } from '../../core/cards'
 import type { AllEyesPlugin, Contact } from '../../core/types'
 import { getJson } from '../../net/http'
+import '../markers/sprites'
 import { parseLaunches } from './parse'
 
 const LAYER = 'launches'
@@ -24,20 +26,28 @@ export const launchPlugin: AllEyesPlugin = {
             const now = Date.now()
             const contacts: Contact[] = fixes.map((fix) => {
               const soon = fix.net > 0 && fix.net - now < 48 * 3600_000
+              const vehicle = fix.name.split('|')[0]?.trim() || fix.name
+              const card = [
+                { k: 'VEH', v: vehicle },
+                { k: 'PAD', v: fix.pad },
+                { k: 'NET', v: fix.net ? new Date(fix.net).toISOString().slice(0, 16) + 'Z' : '' },
+                { k: 'STAT', v: fix.status },
+              ]
               return {
                 id: `launch:${fix.id}`,
                 layerId: LAYER,
-                kind: 'launch',
+                kind: 'launch' as const,
                 lat: fix.lat,
                 lon: fix.lon,
                 altKm: 0,
                 heading: 0,
                 label: fix.name,
-                detail: `${fix.name}\n${fix.pad}\n${fix.status}\n${fix.net ? new Date(fix.net).toISOString().slice(0, 16) + 'Z' : ''}`,
-                brightness: soon ? 1 : 0.55,
-                shape: 'diamond',
-                scale: soon ? 1.5 : 1,
+                detail: formatCard(card),
+                brightness: soon ? 0.95 : 0.5,
+                shape: 'ico-launch',
+                scale: soon ? 1.1 : 0.85,
                 time: fix.net,
+                card,
               }
             })
             ctx.publish(LAYER, contacts)

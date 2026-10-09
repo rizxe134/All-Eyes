@@ -25,6 +25,33 @@ const NAV: Record<number, string> = {
   15: 'UNKNOWN',
 }
 
+export interface ShipMeta {
+  mmsi: number
+  name: string
+  callSign: string
+  destination: string
+  shipType: number
+}
+
+export function parseVessels(payload: unknown): ShipMeta[] {
+  if (!Array.isArray(payload)) return []
+  const out: ShipMeta[] = []
+  for (const row of payload) {
+    if (!row || typeof row !== 'object') continue
+    const rec = row as Record<string, unknown>
+    const mmsi = num(rec.mmsi)
+    if (mmsi == null) continue
+    out.push({
+      mmsi,
+      name: String(rec.name ?? '').trim(),
+      callSign: String(rec.callSign ?? rec.callsign ?? '').trim(),
+      destination: String(rec.destination ?? '').trim(),
+      shipType: num(rec.shipType) ?? 0,
+    })
+  }
+  return out
+}
+
 export function navLabel(code: number): string {
   return NAV[code] ?? `NAV ${code}`
 }

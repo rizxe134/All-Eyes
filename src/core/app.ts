@@ -2,7 +2,8 @@ import { AlertBoard } from './alerts'
 import { execute, formatHelp } from './command'
 import { SimClock } from './clock'
 import { EntityIndex } from './entities'
-import { formatLat, formatLon } from './geo'
+import { formatCard, nextSpeedUnit, speedUnitLabel, withSpeed } from './cards'
+import { clamp, formatLat, formatLon } from './geo'
 import { Globe } from './globe'
 import { PluginRegistry } from './registry'
 import { decodeShare, encodeShare } from './share'
@@ -77,6 +78,10 @@ export function boot(root: HTMLElement): void {
     enabled: new Map<string, boolean>(),
     faults: new Map<string, string>(),
     pendingTrack: null as string | null,
+    hoverId: null as string | null,
+    hoverX: 24,
+    hoverY: 24,
+    cardDragged: false,
     history: [] as string[],
     historyAt: -1,
     suggestAt: 0,
@@ -93,6 +98,11 @@ export function boot(root: HTMLElement): void {
     publish(layerId, contacts) {
       entities.set(layerId, contacts)
       globe.setMarkers(layerId, contacts.map(toMarker))
+    },
+    patch(id, partial) {
+      const next = entities.patch(id, partial)
+      if (next && (state.trackId === id || state.hoverId === id)) renderCard()
+      return
     },
     getPin: () => state.pin,
     onPin(cb) {
@@ -135,6 +145,7 @@ export function boot(root: HTMLElement): void {
 
   function setTrack(id: string | null) {
     state.trackId = id
+    state.cardDragged = false
     globe.setHighlight(id)
     globe.setFollow(null)
     const contact = id ? entities.get(id) : null
@@ -143,6 +154,7 @@ export function boot(root: HTMLElement): void {
     shell.track.textContent = contact ? `LOCK ${contact.label}` : ''
     for (const fn of trackListeners) fn(id)
     renderInspect()
+    renderCard()
   }
 
   function setLayer(id: string, on: boolean) {
@@ -177,13 +189,44 @@ export function boot(root: HTMLElement): void {
     }
   }
 
+  function cardBody(contact: { detail: string; card?: { k: string; v: string }[]; speedKt?: number }): string {
+    const unit = settings.get().speedUnit
+    if (contact.card?.length) return formatCard(withSpeed(contact.card, contact.speedKt, unit))
+    return contact.detail
+  }
+
   function renderInspect() {
     const contact = state.trackId ? entities.get(state.trackId) : null
     if (!contact) {
-      shell.inspect.textContent = 'CLICK A BLIP\nFOLLOW CAM LOCKS ON\nCLICK GROUND TO PIN'
+      shell.inspect.textContent = 'HOVER OR CLICK A MARKER\nCLICK PINS THE CARD'
       return
     }
-    shell.inspect.textContent = `${contact.detail}\n${formatLat(contact.lat)} ${formatLon(contact.lon)}`
+    shell.inspect.textContent = cardBody(contact)
+  }
+
+  function placeCard(x: number, y: number) {
+    const width = shell.info.offsetWidth || 200
+    const height = shell.info.offsetHeight || 160
+    const left = clamp(x, 8, Math.max(8, window.innerWidth - width - 8))
+    const top = clamp(y, 8, Math.max(8, window.innerHeight - height - 8))
+    shell.info.style.left = `${left}px`
+    shell.info.style.top = `${top}px`
+  }
+
+  function renderCard() {
+    const pinned = state.trackId ? entities.get(state.trackId) : null
+    const hovered = !pinned && state.hoverId ? entities.get(state.hoverId) : null
+    const contact = pinned ?? hovered
+    shell.infoSpeed.textContent = speedUnitLabel(settings.get().speedUnit)
+    if (!contact) {
+      shell.info.hidden = true
+      return
+    }
+    shell.info.hidden = false
+    shell.info.classList.toggle('is-pin', Boolean(pinned))
+    shell.infoTitle.textContent = pinned ? `LOCK ${contact.label}` : contact.label
+    shell.infoBody.textContent = cardBody(contact)
+    if (!pinned) placeCard(state.hoverX + 16, state.hoverY + 16)
   }
 
   function renderAlerts() {
@@ -298,6 +341,14 @@ export function boot(root: HTMLElement): void {
       shell.mute.classList.toggle('is-on', !mute)
       return mute
     },
+    setMarkerSize(scale) {
+      const markerSize = clamp(scale, 0.35, 1.8)
+      settings.update({ markerSize })
+      globe.setMarkerSize(markerSize)
+      const input = shell.settingsForm.elements.namedItem('markerSize') as HTMLInputElement | null
+      if (input) input.value = String(markerSize)
+    },
+    getMarkerSize: () => settings.get().markerSize,
     screenshot,
     copyLink,
     alerts,
@@ -404,6 +455,7 @@ export function boot(root: HTMLElement): void {
     ;(form.elements.namedItem('openskyId') as HTMLInputElement).value = current.openskyId
     ;(form.elements.namedItem('openskySecret') as HTMLInputElement).value = current.openskySecret
     ;(form.elements.namedItem('firmsKey') as HTMLInputElement).value = current.firmsKey
+    ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
     shell.settings.hidden = false
   })
   shell.settingsForm.addEventListener('submit', (event) => {
@@ -415,6 +467,8 @@ export function boot(root: HTMLElement): void {
       firmsKey: (form.elements.namedItem('firmsKey') as HTMLInputElement).value.trim(),
     })
     shell.settings.hidden = true
+    const size = Number((form.elements.namedItem('markerSize') as HTMLInputElement).value)
+    if (Number.isFinite(size)) commands.setMarkerSize(size)
     showOutput('KEYS STORED LOCALLY')
     audio.play('click')
   })
@@ -460,6 +514,40 @@ export function boot(root: HTMLElement): void {
     if (!hit) return
     shell.coords.textContent = `${formatLat(hit.lat)} ${formatLon(hit.lon)}`
   })
+  globe.onHover((hit) => {
+    state.hoverId = hit?.marker.id ?? null
+    if (hit) {
+      state.hoverX = hit.x
+      state.hoverY = hit.y
+    }
+    renderCard()
+  })
+  shell.infoSpeed.addEventListener('click', (event) => {
+    event.stopPropagation()
+    settings.update({ speedUnit: nextSpeedUnit(settings.get().speedUnit) })
+    renderInspect()
+    renderCard()
+  })
+  let draggingCard = false
+  let dragOx = 0
+  let dragOy = 0
+  shell.infoHead.addEventListener('pointerdown', (event) => {
+    if ((event.target as HTMLElement).closest('button')) return
+    draggingCard = true
+    state.cardDragged = true
+    dragOx = event.clientX - shell.info.offsetLeft
+    dragOy = event.clientY - shell.info.offsetTop
+    shell.infoHead.setPointerCapture(event.pointerId)
+  })
+  shell.infoHead.addEventListener('pointermove', (event) => {
+    if (!draggingCard) return
+    placeCard(event.clientX - dragOx, event.clientY - dragOy)
+  })
+  shell.infoHead.addEventListener('pointerup', () => { draggingCard = false })
+  const sizeInput = shell.settingsForm.elements.namedItem('markerSize') as HTMLInputElement
+  sizeInput.addEventListener('input', () => commands.setMarkerSize(Number(sizeInput.value)))
+  globe.setMarkerSize(settings.get().markerSize)
+  sizeInput.value = String(settings.get().markerSize)
 
   entities.subscribe(() => {
     shell.count.textContent = `${entities.count().toLocaleString()} CONTACTS`
@@ -478,6 +566,7 @@ export function boot(root: HTMLElement): void {
       }
     }
     renderInspect()
+    renderCard()
     scanWatches()
   })
 
@@ -501,6 +590,17 @@ export function boot(root: HTMLElement): void {
     shell.liveBtn.classList.toggle('is-on', live)
   }
   clock.subscribe(() => paintClock())
+  const followCard = () => {
+    if (state.trackId && !state.cardDragged && !shell.info.hidden) {
+      const contact = entities.get(state.trackId)
+      if (contact) {
+        const point = globe.project(contact.lat, contact.lon, contact.altKm)
+        if (point.visible) placeCard(point.x + 18, point.y + 18)
+      }
+    }
+    requestAnimationFrame(followCard)
+  }
+  requestAnimationFrame(followCard)
 
   for (const panel of registry.panels()) {
     const card = document.createElement('section')

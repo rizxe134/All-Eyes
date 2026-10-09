@@ -178,6 +178,23 @@ export const systemPlugin: AllEyesPlugin = {
       },
     },
     {
+      name: 'size',
+      usage: 'size <0.35-1.8|up|down>',
+      summary: 'Global marker size',
+      run(args, ctx) {
+        const current = ctx.getMarkerSize()
+        const arg = (args[0] ?? '').toLowerCase()
+        let next = current
+        if (!arg) return `SIZE ${current.toFixed(2)}`
+        if (arg === 'up') next = current + 0.1
+        else if (arg === 'down') next = current - 0.1
+        else next = Number(arg)
+        if (!Number.isFinite(next)) return 'USAGE: SIZE <0.35-1.8|UP|DOWN>'
+        ctx.setMarkerSize(next)
+        return `SIZE ${ctx.getMarkerSize().toFixed(2)}`
+      },
+    },
+    {
       name: 'mute',
       usage: 'mute',
       summary: 'Toggle 8-bit audio',

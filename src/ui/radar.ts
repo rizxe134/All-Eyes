@@ -65,7 +65,7 @@ export function startRadar(canvas: HTMLCanvasElement, label: HTMLElement, read: 
       const ang = ((brg - 90) * Math.PI) / 180
       const x = cx + Math.cos(ang) * rr
       const y = cy + Math.sin(ang) * rr
-      const dot = contact.kind === 'quake' || contact.kind === 'storm' ? 3.5 : 2
+      const dot = contact.kind === 'quake' || contact.kind === 'storm' ? 2.2 : 1.4
       ctx.fillStyle = `rgba(216, 255, 230, ${0.25 + trail * contact.brightness})`
       ctx.fillRect(x - dot / 2, y - dot / 2, dot, dot)
       shown += 1

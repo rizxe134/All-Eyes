@@ -101,7 +101,11 @@ Layers and panels receive `PluginContext`:
 
 Commands receive `CommandContext` with `flyTo`, `track`, `getTrackId`, `setLayer`, `findContact`, `searchPlace`, `setTimeMinutes`, `screenshot`, `copyLink`, and the same alerts and pin helpers.
 
-A `Contact` is one picked thing: id, lat, lon, altKm, heading, label, detail, brightness (0 to 1), shape (`chevron`, `diamond`, `ring`, `box`, `drop`), and scale.
+A `Contact` is one picked thing: id, lat, lon, altKm, heading, label, detail, brightness (0 to 1), shape, and scale. `shape` is a sprite id. Built-ins are `dot`, `chevron`, `diamond`, `ring`, `box`, and `drop`. Register more with `registerSprite(id, rows)` from `src/core/sprites.ts` (`#` is a lit pixel, `.` is empty, nose or bow in the first row). The globe draws them as instanced billboards, swaps in `dot` when zoomed out, and thins dense layers.
+
+Optional `card` is a list of `{ k, v }` rows for the hover card. Empty values are hidden. Set `speedKt` when the row labeled `SPD` should follow the KT / MPH / KM/H toggle. `formatCard` and `withSpeed` in `src/core/cards.ts` build the text.
+
+Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there and a sprite with the same id to teach the globe a new type.
 
 ## Rules
 
@@ -112,4 +116,6 @@ A `Contact` is one picked thing: id, lat, lon, altKm, heading, label, detail, br
 
 ## Commands worth knowing
 
-`help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `beacon`, `mute`, `shot`, `link`.
+`help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `beacon`, `size`, `mute`, `shot`, `link`.
+
+`size 0.7` (or `size up` / `size down`) matches the marker-size slider in CFG.

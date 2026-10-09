@@ -23,6 +23,8 @@ function fakeCtx(over: Partial<CommandContext> = {}): CommandContext {
     setTimeMinutes() {},
     getTimeMinutes: () => 0,
     toggleMute: () => true,
+    setMarkerSize() {},
+    getMarkerSize: () => 0.7,
     screenshot() {},
     copyLink: async () => 'http://local/#x',
     alerts: {

@@ -1,9 +1,11 @@
-import type { AllEyesPlugin, Contact, LayerContext, PluginContext } from '../../core/types'
+import { formatCard } from '../../core/cards'
+import type { AllEyesPlugin, CardField, Contact, LayerContext, PluginContext } from '../../core/types'
 import { getText } from '../../net/http'
 import { displayAltKm } from './alt'
 import { formatPass, windowsAbove } from './passes'
 import { parseTle, type SatFix } from './parse'
-import { buildSatrec, elevationDeg, orbitTrack, periodMinutes, propagateGeodetic } from './propagate'
+import { buildSatrec, elevationDeg, orbitTrack, periodMinutes, propagateGeodetic, speedKmS } from './propagate'
+import { satSprite } from './sprites'
 import type { SatRec } from 'satellite.js'
 
 interface LiveSat {
@@ -79,14 +81,49 @@ function sample<T>(list: T[], max: number): T[] {
   return out
 }
 
-function toContacts(sats: LiveSat[], layerId: string, when: Date): Contact[] {
+const passMemo = new Map<number, { at: number; lat: number; lon: number; text: string }>()
+let orbitOwned = false
+
+function firstPass(sat: LiveSat, lat: number, lon: number, start: number): string {
+  const hit = passMemo.get(sat.fix.norad)
+  if (hit && start - hit.at < 60_000 && Math.abs(hit.lat - lat) < 0.25 && Math.abs(hit.lon - lon) < 0.25) return hit.text
+  const samples: { t: number; el: number }[] = []
+  const end = start + 12 * 60 * 60 * 1000
+  for (let t = start; t <= end; t += 120_000) {
+    const el = elevationDeg(sat.satrec, lat, lon, new Date(t))
+    if (el != null) samples.push({ t, el })
+  }
+  const window = windowsAbove(samples, 10)[0]
+  const text = window ? formatPass(window) : 'NONE IN 12H'
+  passMemo.set(sat.fix.norad, { at: start, lat, lon, text })
+  return text
+}
+
+function satCard(sat: LiveSat, point: { altKm: number }, when: Date, pass: string): CardField[] {
+  const inc = (sat.satrec.inclo * 180) / Math.PI
+  const speed = speedKmS(sat.satrec, when)
+  return [
+    { k: 'NAME', v: sat.fix.name },
+    { k: 'ID', v: String(sat.fix.norad) },
+    { k: 'ALT', v: `${Math.round(point.altKm)} KM` },
+    { k: 'SPD', v: speed == null ? '' : `${speed.toFixed(2)} KM/S` },
+    { k: 'PER', v: `${Math.round(periodMinutes(sat.satrec))} MIN` },
+    { k: 'INC', v: `${inc.toFixed(1)}°` },
+    { k: 'PASS', v: pass },
+  ]
+}
+
+function toContacts(sats: LiveSat[], layerId: string, when: Date, focusId: string | null, pin: { lat: number; lon: number }): Contact[] {
   const out: Contact[] = []
   for (const sat of sats) {
     const point = propagateGeodetic(sat.satrec, when)
     if (!point) continue
     const station = sat.fix.group === 'stations'
+    const id = `${layerId}:${sat.fix.norad}`
+    const pass = focusId === id ? firstPass(sat, pin.lat, pin.lon, when.getTime()) : ''
+    const card = satCard(sat, point, when, pass)
     out.push({
-      id: `${layerId}:${sat.fix.norad}`,
+      id,
       layerId,
       kind: 'sat',
       lat: point.lat,
@@ -94,10 +131,11 @@ function toContacts(sats: LiveSat[], layerId: string, when: Date): Contact[] {
       altKm: displayAltKm(point.altKm),
       heading: 0,
       label: sat.fix.name,
-      detail: `${sat.fix.name}\nNORAD ${sat.fix.norad}\nTRUE ALT ${Math.round(point.altKm)} KM\nGROUP ${sat.fix.group.toUpperCase()}`,
-      brightness: station ? 1 : layerId === 'starlink' ? 0.4 : 0.62,
-      shape: 'diamond',
-      scale: station ? 1.2 : 0.72,
+      detail: formatCard(card),
+      brightness: station ? 1 : layerId === 'starlink' ? 0.34 : 0.55,
+      shape: satSprite(sat.fix.name, sat.fix.group),
+      scale: station ? 1.15 : layerId === 'starlink' ? 0.62 : 0.78,
+      card,
     })
   }
   return out
@@ -124,8 +162,10 @@ function trackedSat(getTrackId: () => string | null): LiveSat | null {
 
 function paintOrbit(ctx: PluginContext) {
   const id = ctx.getTrackId()
-  if (!id || (!id.startsWith('satellites:') && !id.startsWith('starlink:'))) {
-    ctx.globe.setOrbit(null)
+  const mine = !!id && (id.startsWith('satellites:') || id.startsWith('starlink:'))
+  if (!mine) {
+    if (orbitOwned && !id?.startsWith('air:')) ctx.globe.setOrbit(null)
+    orbitOwned = false
     return
   }
   const sat = findSat(id.split(':')[1] ?? '')
@@ -139,6 +179,7 @@ function paintOrbit(ctx: PluginContext) {
     lon: point.lon,
     altKm: displayAltKm(point.altKm),
   }))
+  orbitOwned = true
   ctx.globe.setOrbit(points)
 }
 
@@ -178,9 +219,11 @@ function makeLayer(id: string, label: string, description: string, defaultOn: bo
       let watchTimer = 0
       let on = false
       let loaded: LiveSat[] = []
+      let hoverId: string | null = null
 
       const publish = () => {
-        ctx.publish(id, toContacts(sample(loaded, cap), id, new Date(ctx.clock.now())))
+        const focus = ctx.getTrackId() || hoverId
+        ctx.publish(id, toContacts(sample(loaded, cap), id, new Date(ctx.clock.now()), focus, ctx.getPin()))
         if (extras) paintOrbit(ctx)
       }
 
@@ -200,6 +243,11 @@ function makeLayer(id: string, label: string, description: string, defaultOn: bo
       const offClock = ctx.clock.subscribe(() => { if (on) publish() })
       const offTrack = extras ? ctx.onTrack(() => { if (on) { paintOrbit(ctx); paintPasses(ctx) } }) : () => {}
       const offPin = extras ? ctx.onPin(() => { if (on) paintPasses(ctx) }) : () => {}
+      const offHover = ctx.globe.onHover((hit) => {
+        const next = hit?.marker.id?.startsWith(`${id}:`) ? hit.marker.id : null
+        if (next === hoverId) return
+        hoverId = next
+      })
 
       return {
         setEnabled(next: boolean) {
@@ -209,7 +257,10 @@ function makeLayer(id: string, label: string, description: string, defaultOn: bo
           window.clearInterval(watchTimer)
           if (!next) {
             ctx.publish(id, [])
-            if (extras) ctx.globe.setOrbit(null)
+            if (extras && orbitOwned) {
+              ctx.globe.setOrbit(null)
+              orbitOwned = false
+            }
             return
           }
           void tick()
@@ -228,6 +279,7 @@ function makeLayer(id: string, label: string, description: string, defaultOn: bo
           offClock()
           offTrack()
           offPin()
+          offHover()
           ctx.publish(id, [])
         },
       }

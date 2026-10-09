@@ -12,6 +12,21 @@ export class EntityIndex {
     for (const fn of this.listeners) fn()
   }
 
+  patch(id: string, partial: Partial<Contact>): Contact | null {
+    const current = this.byId.get(id)
+    if (!current) return null
+    const next = { ...current, ...partial, id: current.id, layerId: current.layerId }
+    this.byId.set(id, next)
+    const list = this.layers.get(current.layerId)
+    if (list) {
+      const index = list.findIndex((item) => item.id === id)
+      if (index >= 0) list[index] = next
+    }
+    const flatIndex = this.flat.findIndex((item) => item.id === id)
+    if (flatIndex >= 0) this.flat[flatIndex] = next
+    return next
+  }
+
   get(id: string): Contact | null {
     return this.byId.get(id) ?? null
   }

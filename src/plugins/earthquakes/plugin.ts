@@ -1,11 +1,20 @@
+import { ageLabel, formatCard } from '../../core/cards'
 import type { AllEyesPlugin, Contact, LayerContext } from '../../core/types'
 import { getJson } from '../../net/http'
+import '../markers/sprites'
 import { parseQuakes, type QuakeFix } from './parse'
 
 const LAYER = 'quakes'
 
-function toContact(fix: QuakeFix): Contact {
+function toContact(fix: QuakeFix, now: number): Contact {
   const mag = fix.mag
+  const card = [
+    { k: 'MAG', v: mag.toFixed(1) },
+    { k: 'DEP', v: `${fix.depthKm.toFixed(0)} KM` },
+    { k: 'TIME', v: new Date(fix.time).toISOString().slice(0, 16) + 'Z' },
+    { k: 'AGE', v: ageLabel(fix.time, now) },
+    { k: 'AT', v: fix.place },
+  ]
   return {
     id: `quake:${fix.id}`,
     layerId: LAYER,
@@ -15,12 +24,13 @@ function toContact(fix: QuakeFix): Contact {
     altKm: 0,
     heading: 0,
     label: `M${mag.toFixed(1)} ${fix.place}`,
-    detail: `M${mag.toFixed(1)}\n${fix.place}\nDEPTH ${fix.depthKm.toFixed(0)} KM\n${new Date(fix.time).toISOString().replace('.000', '')}`,
-    brightness: Math.min(1, 0.3 + mag / 8),
-    shape: 'ring',
-    scale: 0.9 + mag * 0.28,
+    detail: formatCard(card),
+    brightness: Math.min(1, 0.35 + mag / 9),
+    shape: 'ico-quake',
+    scale: 0.85 + Math.min(0.55, mag * 0.08),
     time: fix.time,
     mag,
+    card,
   }
 }
 
@@ -41,7 +51,7 @@ export const earthquakePlugin: AllEyesPlugin = {
 
         const publish = () => {
           const sim = ctx.clock.now()
-          ctx.publish(LAYER, fixes.filter((fix) => fix.time <= sim + 60_000 && fix.time >= sim - 8 * 86400_000).map(toContact))
+          ctx.publish(LAYER, fixes.filter((fix) => fix.time <= sim + 60_000 && fix.time >= sim - 8 * 86400_000).map((fix) => toContact(fix, sim)))
         }
 
         const tick = async () => {

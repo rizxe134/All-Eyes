@@ -2,7 +2,15 @@
 
 export type EntityKind = 'air' | 'ship' | 'sat' | 'quake' | 'storm' | 'event' | 'launch' | 'beacon'
 
-export type MarkerShape = 'chevron' | 'diamond' | 'ring' | 'box' | 'drop'
+/** Sprite id. Built-ins: dot, chevron, diamond, ring, box, drop. Plugins register more. */
+export type MarkerShape = string
+
+export type SpeedUnit = 'kt' | 'mph' | 'kmh'
+
+export interface CardField {
+  k: string
+  v: string
+}
 
 export interface Contact {
   id: string
@@ -21,6 +29,10 @@ export interface Contact {
   time?: number
   mag?: number
   callsign?: string
+  /** Compact rows for the hover card. Empty values are omitted when drawn. */
+  card?: CardField[]
+  /** Knots, so the card can retoggle KT / MPH / KM/H without a refetch. */
+  speedKt?: number
 }
 
 export interface Marker {
@@ -58,6 +70,7 @@ export interface GlobeApi {
   setRadarCanvas(canvas: HTMLCanvasElement | null): void
   setOrbit(points: GeoPoint[] | null): void
   setHighlight(id: string | null): void
+  setMarkerSize(scale: number): void
   flyTo(lat: number, lon: number, rangeKm?: number): void
   setView(lat: number, lon: number, rangeKm: number): void
   getView(): ViewState
@@ -66,6 +79,7 @@ export interface GlobeApi {
   canvas: HTMLCanvasElement
   onClick(cb: (hit: GlobeClick) => void): () => void
   onMove(cb: (hit: { lat: number; lon: number } | null) => void): () => void
+  onHover(cb: (hit: { marker: Marker; layerId: string; x: number; y: number } | null) => void): () => void
   onRelease(cb: () => void): () => void
 }
 
@@ -74,6 +88,9 @@ export interface Settings {
   openskyId: string
   openskySecret: string
   firmsKey: string
+  /** Multiplier for marker sprites. About 0.35 to 1.8. */
+  markerSize: number
+  speedUnit: SpeedUnit
 }
 
 export interface SettingsStore {
@@ -118,6 +135,8 @@ export interface PluginContext {
   settings: SettingsStore
   alerts: AlertBoard
   publish(layerId: string, contacts: Contact[]): void
+  /** Merge fields onto one contact without redrawing the whole layer. */
+  patch(id: string, partial: Partial<Contact>): void
   getPin(): { lat: number; lon: number }
   onPin(cb: (pin: { lat: number; lon: number }) => void): () => void
   getTrackId(): string | null
@@ -160,6 +179,8 @@ export interface CommandContext {
   setTimeMinutes(mins: number | 'live'): void
   getTimeMinutes(): number
   toggleMute(): boolean
+  setMarkerSize(scale: number): void
+  getMarkerSize(): number
   screenshot(): void
   copyLink(): Promise<string>
   alerts: AlertBoard

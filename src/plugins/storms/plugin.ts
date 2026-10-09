@@ -1,5 +1,7 @@
+import { formatCard } from '../../core/cards'
 import type { AllEyesPlugin, Contact } from '../../core/types'
 import { getJson } from '../../net/http'
+import '../markers/sprites'
 import { parseStorms } from './parse'
 
 const LAYER = 'storms'
@@ -21,20 +23,29 @@ export const stormPlugin: AllEyesPlugin = {
           if (!on || ctx.signal.aborted) return
           try {
             const fixes = parseStorms(await getJson('/api/nhc/storms', ctx.settings, ctx.signal))
-            const contacts: Contact[] = fixes.map((fix) => ({
-              id: `storm:${fix.id}`,
-              layerId: LAYER,
-              kind: 'storm',
-              lat: fix.lat,
-              lon: fix.lon,
-              altKm: 0,
-              heading: 0,
-              label: `${fix.name} ${fix.classification}`,
-              detail: `${fix.name}\n${fix.classification} ${fix.intensity}KT\nMOVE ${fix.movement}\nNHC`,
-              brightness: 1,
-              shape: 'ring',
-              scale: 2.4,
-            }))
+            const contacts: Contact[] = fixes.map((fix) => {
+              const card = [
+                { k: 'NAME', v: fix.name },
+                { k: 'CLS', v: fix.classification },
+                { k: 'WIND', v: fix.intensity ? `${fix.intensity} KT` : '' },
+                { k: 'MOVE', v: fix.movement },
+              ]
+              return {
+                id: `storm:${fix.id}`,
+                layerId: LAYER,
+                kind: 'storm' as const,
+                lat: fix.lat,
+                lon: fix.lon,
+                altKm: 0,
+                heading: 0,
+                label: `${fix.name} ${fix.classification}`,
+                detail: formatCard(card),
+                brightness: 0.95,
+                shape: 'ico-storm',
+                scale: 1.15,
+                card,
+              }
+            })
             ctx.publish(LAYER, contacts)
             ctx.log(LAYER, contacts.length ? '' : 'NO ACTIVE CYCLONES')
           } catch (err) {

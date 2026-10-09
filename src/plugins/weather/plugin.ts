@@ -129,4 +129,14 @@ export const weatherPlugin: AllEyesPlugin = {
       },
     },
   ],
+  panels: [
+    {
+      id: 'wx-radar',
+      title: 'RADAR',
+      mount(host) {
+        host.textContent = 'RAINVIEWER\nGLOBAL PRECIP\nDIM OVERLAY'
+        return () => {}
+      },
+    },
+  ],
 }

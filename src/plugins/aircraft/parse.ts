@@ -8,6 +8,12 @@ export interface AirFix {
   track: number
   speedKt: number
   onGround: boolean
+  typeCode: string
+  registration: string
+  squawk: string
+  vertFpm: number
+  seenMs: number
+  desc: string
 }
 
 function num(value: unknown): number | null {
@@ -42,6 +48,7 @@ export function parseOpenSky(payload: unknown): AirFix[] {
     if (lat == null || lon == null) continue
     const alt = num(row[13]) ?? num(row[7]) ?? 0
     const velocity = num(row[9]) ?? 0
+    const seen = num(row[4]) ?? 0
     out.push({
       icao: String(row[0] ?? '').trim().toLowerCase(),
       callsign: String(row[1] ?? '').trim(),
@@ -52,6 +59,12 @@ export function parseOpenSky(payload: unknown): AirFix[] {
       track: num(row[10]) ?? 0,
       speedKt: velocity * 1.94384,
       onGround: Boolean(row[8]),
+      typeCode: '',
+      registration: '',
+      squawk: String(row[14] ?? '').trim(),
+      vertFpm: (num(row[11]) ?? 0) * 196.85,
+      seenMs: seen > 1e12 ? seen : seen * 1000,
+      desc: '',
     })
   }
   return capAir(out, 8000)
@@ -71,16 +84,23 @@ export function parseAdsb(payload: unknown): AirFix[] {
     const altRaw = rec.alt_baro ?? rec.alt_geom
     const onGround = altRaw === 'ground'
     const feet = onGround ? 0 : (num(altRaw) ?? 0)
+    const seen = num(rec.seen) ?? 0
     out.push({
       icao: String(rec.hex ?? '').trim().toLowerCase(),
       callsign: String(rec.flight ?? '').trim(),
-      country: String(rec.t ?? rec.r ?? '').trim(),
+      country: '',
       lat,
       lon,
       altM: feet * 0.3048,
       track: num(rec.track) ?? 0,
       speedKt: num(rec.gs) ?? 0,
       onGround,
+      typeCode: String(rec.t ?? '').trim().toUpperCase(),
+      registration: String(rec.r ?? '').trim(),
+      squawk: String(rec.squawk ?? '').trim(),
+      vertFpm: num(rec.baro_rate) ?? 0,
+      seenMs: seen > 0 ? Date.now() - seen * 1000 : Date.now(),
+      desc: String(rec.desc ?? '').trim(),
     })
   }
   return out

@@ -1,5 +1,7 @@
+import { formatCard } from '../../core/cards'
 import type { AllEyesPlugin, Contact } from '../../core/types'
 import { getJson, getText } from '../../net/http'
+import { eventSprite } from '../markers/sprites'
 import { parseEonet, parseFirms } from './parse'
 
 const LAYER = 'events'
@@ -25,6 +27,11 @@ export const eventPlugin: AllEyesPlugin = {
           try {
             const events = parseEonet(await getJson('/api/eonet/events', ctx.settings, ctx.signal))
             for (const fix of events) {
+              const card = [
+                { k: 'NAME', v: fix.title },
+                { k: 'KIND', v: fix.category },
+                { k: 'TIME', v: fix.time ? new Date(fix.time).toISOString().slice(0, 16) + 'Z' : '' },
+              ]
               contacts.push({
                 id: `event:${fix.id}`,
                 layerId: LAYER,
@@ -34,11 +41,12 @@ export const eventPlugin: AllEyesPlugin = {
                 altKm: 0,
                 heading: 0,
                 label: fix.title,
-                detail: `${fix.title}\n${fix.category}\n${fix.time ? new Date(fix.time).toISOString().slice(0, 16) + 'Z' : 'EONET'}`,
-                brightness: /fire|volcano/i.test(fix.category) ? 0.95 : 0.6,
-                shape: 'drop',
-                scale: /volcano/i.test(fix.category) ? 1.3 : 0.9,
+                detail: formatCard(card),
+                brightness: /fire|volcano/i.test(fix.category) ? 0.85 : 0.5,
+                shape: eventSprite(fix.category),
+                scale: /volcano/i.test(fix.category) ? 1.05 : 0.85,
                 time: fix.time,
+                card,
               })
             }
           } catch (err) {
@@ -47,6 +55,11 @@ export const eventPlugin: AllEyesPlugin = {
           if (!firmsOff) try {
             const fires = parseFirms(await getText('/api/firms/hotspots', ctx.settings, ctx.signal))
             fires.forEach((fire, index) => {
+              const card = [
+                { k: 'KIND', v: 'WILDFIRE' },
+                { k: 'FRP', v: fire.frp.toFixed(1) },
+                { k: 'TIME', v: fire.when },
+              ]
               contacts.push({
                 id: `fire:${index}:${fire.lat.toFixed(2)}:${fire.lon.toFixed(2)}`,
                 layerId: LAYER,
@@ -56,10 +69,11 @@ export const eventPlugin: AllEyesPlugin = {
                 altKm: 0,
                 heading: 0,
                 label: `FIRE ${fire.frp.toFixed(0)}`,
-                detail: `FIRMS FRP ${fire.frp.toFixed(1)}\n${fire.when}`,
-                brightness: Math.min(1, 0.45 + fire.frp / 80),
-                shape: 'drop',
-                scale: 0.55,
+                detail: formatCard(card),
+                brightness: Math.min(0.9, 0.4 + fire.frp / 90),
+                shape: 'ico-fire',
+                scale: 0.62,
+                card,
               })
             })
           } catch {
