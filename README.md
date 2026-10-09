@@ -121,11 +121,11 @@ sudo apt install ./All-Eyes-1.1.0-Linux-x64.deb
 **Archive**
 
 1. Download `All-Eyes-1.1.0-Linux-x64.tar.gz`.
-2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.1.0-linux-x64` (lowercase "linux"):
+2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.1.0-Linux-x64`:
 
 ```bash
 tar -xzf All-Eyes-1.1.0-Linux-x64.tar.gz
-cd All-Eyes-1.1.0-linux-x64
+cd All-Eyes-1.1.0-Linux-x64
 ./all-eyes
 ```
 
