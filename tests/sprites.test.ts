@@ -6,6 +6,7 @@ import { airTypeTable, classifyAir } from '../src/plugins/aircraft/types'
 import { eventSprite } from '../src/plugins/markers/sprites'
 import { satSprite } from '../src/plugins/satellites/sprites'
 import { classifyShip, flagFromMmsi } from '../src/plugins/ships/sprites'
+import '../src/plugins/glyphs'
 
 describe('aircraft type models', () => {
   it('maps families and keeps Airbus distinct from Boeing', () => {
@@ -39,10 +40,13 @@ describe('aircraft type models', () => {
       expect(meshes.has(glyph.sprite), glyph.sprite).toBe(true)
       expect(spriteRows(glyph.sprite).some((row) => row.includes('#'))).toBe(true)
     }
-    for (const id of ['sat-station', 'sat-comms', 'ship-cargo', 'ship-sail', 'ico-storm', 'ico-quake', 'ico-launch']) {
+    for (const id of ['sat-station', 'sat-comms', 'ship-cargo', 'ship-sail', 'ico-storm', 'ico-quake', 'ico-launch', 'sel-ring']) {
       expect(sprites.has(id), id).toBe(true)
-      expect(meshes.has(id), id).toBe(true)
+      if (id !== 'sel-ring') expect(meshes.has(id), id).toBe(true)
     }
+    const lit = spriteRows('air-a320').join('').split('').filter((cell) => cell === '#').length
+    expect(lit).toBeGreaterThan(80)
+    expect(classifyAir('C700')).toMatchObject({ sprite: 'air-biz', name: 'Cessna Citation Longitude' })
   })
 
   it('has a mesh for every mapped family', () => {

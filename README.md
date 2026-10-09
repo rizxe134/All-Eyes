@@ -2,13 +2,13 @@
 
 A live "see the whole world" console. The globe fills the window, the interface is green phosphor and 8-bit, and the feeds run with no API keys.
 
-## What's new in 1.2.0
+## What's new in 1.3.0
 
-- Contacts on the globe are tiny pixel sprites again, one per aircraft family, satellite class, ship type, and weather icon. They point along their heading, stay small enough to leave the Earth visible, and turn into dots when you zoom out. **CFG** still has the marker size slider. `size 0.7`, `size up`, and `size down` do the same thing.
-- The 3D model lives in a **MODEL VIEWER** panel at the top right. Hover or follow a contact and that panel shows a larger green model of the same type, turning on a pad, with the info card under it. Helicopter rotors spin. With nothing selected it shows a slow wireframe globe and `NO CONTACT SELECTED`. **HIDE** collapses it. `viewer`, `viewer on`, and `viewer off` do the same thing.
-- Cards still cover callsign, registration, type, operator, route when the feed has it, altitude, speed, vertical rate, heading, squawk, position, and age, plus satellite, ship, storm, quake, and launch fields. The **KT** button cycles knots, mph, and km/h.
+- Aircraft on the globe are solid top-down silhouettes, one shape per family (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet). They point along their heading and stay small. Ships, satellites, and weather icons use the same filled style. Zoomed out they are still dots. **CFG** and `size` still scale them.
+- Click a plane for the left flight panel: callsign, type-code badge, photo when a free source has one, operator, origin and destination, altitude, speed, track, and squawk. The selected plane is brighter, with a ring, a solid line for where it has been, and a dashed line toward the destination when that airport is known. **3D VIEW** opens the top-right model viewer. **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** sit on the panel. A collapsible graph draws the speed and altitude this contact has already reported.
+- Fields the feeds do not have stay `NOT AVAILABLE`. Airspeeds computed from ground speed are marked `EST`. Nothing is invented.
 
-1.1.0 and 1.0.0 are still on the releases page.
+1.2.0, 1.1.0, and 1.0.0 are still on the releases page.
 
 ## Run
 
@@ -29,23 +29,23 @@ Apple menu, then **About This Mac**: Chip is Apple M1 or later for Apple Silicon
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.2.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
-| Intel | `All-Eyes-1.2.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
+| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.3.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
+| Intel | `All-Eyes-1.3.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
 
 ### Windows
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Windows, recommended | `All-Eyes-1.2.0-Windows-x64-Installer.exe` | Installer |
-| 64-bit Windows, no install | `All-Eyes-1.2.0-Windows-x64-Portable.exe` | Portable exe |
+| 64-bit Windows, recommended | `All-Eyes-1.3.0-Windows-x64-Installer.exe` | Installer |
+| 64-bit Windows, no install | `All-Eyes-1.3.0-Windows-x64-Portable.exe` | Portable exe |
 
 ### Linux
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Linux, recommended | `All-Eyes-1.2.0-Linux-x64.AppImage` | AppImage |
-| Debian or Ubuntu | `All-Eyes-1.2.0-Linux-x64.deb` | Debian package |
-| Any 64-bit Linux | `All-Eyes-1.2.0-Linux-x64.tar.gz` | Archive |
+| 64-bit Linux, recommended | `All-Eyes-1.3.0-Linux-x64.AppImage` | AppImage |
+| Debian or Ubuntu | `All-Eyes-1.3.0-Linux-x64.deb` | Debian package |
+| Any 64-bit Linux | `All-Eyes-1.3.0-Linux-x64.tar.gz` | Archive |
 
 ## How to install
 
@@ -55,7 +55,7 @@ Open the section for your computer. The desktop builds are unsigned, so the firs
 <summary>macOS</summary>
 
 1. Click the Apple menu, then **About This Mac**.
-2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-1.2.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-1.2.0-macOS-Intel-x64.zip`.
+2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-1.3.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-1.3.0-macOS-Intel-x64.zip`.
 3. Double-click the zip. macOS unpacks it and shows `All Eyes.app`.
 4. Drag `All Eyes.app` into **Applications**.
 5. First launch: right-click `All Eyes.app`, choose **Open**, then **Open** again. macOS says it cannot verify the developer. That warning is expected, because the app is unsigned.
@@ -71,11 +71,11 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 <details>
 <summary>Windows</summary>
 
-1. Download `All-Eyes-1.2.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-1.2.0-Windows-x64-Portable.exe` if you do not want to install.
+1. Download `All-Eyes-1.3.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-1.3.0-Windows-x64-Portable.exe` if you do not want to install.
 2. Double-click the file you downloaded.
 3. If you see **Windows protected your PC**, choose **More info**, then **Run anyway**. That warning is expected, because the app is unsigned.
 4. Installer: step through the setup. It adds an **All Eyes** shortcut to the Start menu and the desktop. Open the app from either shortcut.
-5. Portable: nothing is installed. Double-click `All-Eyes-1.2.0-Windows-x64-Portable.exe` each time you want the globe.
+5. Portable: nothing is installed. Double-click `All-Eyes-1.3.0-Windows-x64-Portable.exe` each time you want the globe.
 
 </details>
 
@@ -84,12 +84,12 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 
 **AppImage (any distro)**
 
-1. Download `All-Eyes-1.2.0-Linux-x64.AppImage`.
+1. Download `All-Eyes-1.3.0-Linux-x64.AppImage`.
 2. In that folder, run:
 
 ```bash
-chmod +x All-Eyes-1.2.0-Linux-x64.AppImage
-./All-Eyes-1.2.0-Linux-x64.AppImage
+chmod +x All-Eyes-1.3.0-Linux-x64.AppImage
+./All-Eyes-1.3.0-Linux-x64.AppImage
 ```
 
 Or right-click the file, choose **Properties**, turn on **Allow executing file as a program**, and double-click it.
@@ -103,28 +103,28 @@ sudo apt install libfuse2
 Or skip FUSE and run:
 
 ```bash
-./All-Eyes-1.2.0-Linux-x64.AppImage --appimage-extract-and-run
+./All-Eyes-1.3.0-Linux-x64.AppImage --appimage-extract-and-run
 ```
 
 **Debian or Ubuntu package**
 
-1. Download `All-Eyes-1.2.0-Linux-x64.deb`.
+1. Download `All-Eyes-1.3.0-Linux-x64.deb`.
 2. In that folder, run:
 
 ```bash
-sudo apt install ./All-Eyes-1.2.0-Linux-x64.deb
+sudo apt install ./All-Eyes-1.3.0-Linux-x64.deb
 ```
 
 3. Open **All Eyes** from the applications menu. The package name is `all-eyes`. The program file is `/opt/All Eyes/all-eyes`.
 
 **Archive**
 
-1. Download `All-Eyes-1.2.0-Linux-x64.tar.gz`.
-2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.2.0-Linux-x64`:
+1. Download `All-Eyes-1.3.0-Linux-x64.tar.gz`.
+2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.3.0-Linux-x64`:
 
 ```bash
-tar -xzf All-Eyes-1.2.0-Linux-x64.tar.gz
-cd All-Eyes-1.2.0-Linux-x64
+tar -xzf All-Eyes-1.3.0-Linux-x64.tar.gz
+cd All-Eyes-1.3.0-Linux-x64
 ./all-eyes
 ```
 
@@ -164,7 +164,7 @@ Layers, panels, and commands are plugins. Copy `src/plugins/example`, then add o
 
 Keyless upstreams, reached through the local `/api` proxy:
 
-- OpenSky Network, with [adsb.lol](https://adsb.lol) as a regional fallback and [adsbdb](https://adsbdb.com) for type and operator when the state vector has no type code
+- OpenSky Network, with [adsb.lol](https://adsb.lol) as a regional fallback, [adsbdb](https://adsbdb.com) for type, registration, operator, and route, and [PlaneSpotters.net](https://www.planespotters.net) public photos by ICAO24 hex when that site has one
 - [CelesTrak](https://celestrak.org) TLEs
 - USGS earthquake feeds
 - [RainViewer](https://www.rainviewer.com) radar

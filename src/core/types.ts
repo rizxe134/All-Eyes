@@ -72,6 +72,10 @@ export interface GlobeApi {
   setMarkers(layerId: string, markers: Marker[]): void
   setRadarCanvas(canvas: HTMLCanvasElement | null): void
   setOrbit(points: GeoPoint[] | null): void
+  /** Solid track behind a selected aircraft. */
+  setHistory(points: GeoPoint[] | null): void
+  /** Dashed path ahead of a selected aircraft. */
+  setRoute(points: GeoPoint[] | null): void
   setHighlight(id: string | null): void
   setMarkerSize(scale: number): void
   flyTo(lat: number, lon: number, rangeKm?: number): void

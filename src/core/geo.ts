@@ -105,6 +105,28 @@ export function distanceKm(lat1: number, lon1: number, lat2: number, lon2: numbe
   return 2 * r * Math.asin(Math.min(1, Math.sqrt(a)))
 }
 
+/** Points along the great circle, including both ends. */
+export function greatCircle(lat1: number, lon1: number, lat2: number, lon2: number, steps = 24): { lat: number; lon: number }[] {
+  const a = latLonToVec(lat1, lon1)
+  const b = latLonToVec(lat2, lon2)
+  const omega = Math.acos(Math.max(-1, Math.min(1, dot(a, b))))
+  const out: { lat: number; lon: number }[] = []
+  const count = Math.max(2, steps)
+  for (let i = 0; i < count; i++) {
+    const t = i / (count - 1)
+    let v: Vec3
+    if (omega < 1e-4) v = a
+    else {
+      const s = Math.sin(omega)
+      const k1 = Math.sin((1 - t) * omega) / s
+      const k2 = Math.sin(t * omega) / s
+      v = { x: a.x * k1 + b.x * k2, y: a.y * k1 + b.y * k2, z: a.z * k1 + b.z * k2 }
+    }
+    out.push(vecToLatLon(v))
+  }
+  return out
+}
+
 /** Degrees clockwise from north. */
 export function bearingDeg(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const p1 = (lat1 * Math.PI) / 180

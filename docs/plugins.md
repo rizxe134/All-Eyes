@@ -105,7 +105,11 @@ A `Contact` is one picked thing: id, lat, lon, altKm, heading, pitch, label, det
 
 ## Sprite and viewer model
 
-The globe draws a tiny heading-rotated pixel sprite. Zoomed out (past about 2400 km) it draws a dot. Dense areas keep the brightest contact in each cell. The marker-size slider and `size` scale every sprite.
+The globe draws a heading-rotated filled silhouette. Aircraft families (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet) each have their own solid top-down shape. Ships, satellites, and weather icons use the same filled style. Zoomed out (past about 2400 km) every contact is a dot. Dense areas keep the brightest contact in each cell. The marker-size slider and `size` scale every marker. A selected aircraft is brighter and gets a ring, a solid history line behind it, and a dashed line ahead when the destination coordinates are known.
+
+`GlobeApi.setHistory` draws that solid trail. `GlobeApi.setRoute` draws the dashed leg. `setOrbit` is still the satellite ground track and does not clear the aircraft lines.
+
+Clicking an aircraft opens the left flight panel: callsign, type-code badge, photo when PlaneSpotters has one, operator, origin and destination, and the speed and altitude grid. Estimated airspeeds are labeled `EST`. Missing fields stay `NOT AVAILABLE`. **3D VIEW** opens the model viewer. **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** sit on the bottom bar. The collapsible speed and altitude graph uses samples the aircraft layer already keeps in memory.
 
 The same `shape` id selects the mesh in the top-right model viewer. Hover or follow a contact and that panel shows the low-poly model on a turntable, with the card underneath. `pitch` tilts aircraft. Helicopter rotors and propellers spin in the viewer. An empty selection shows a rotating wireframe globe and `NO CONTACT SELECTED`. `viewer`, `viewer on`, and `viewer off` collapse the panel.
 
@@ -116,7 +120,7 @@ Give a plugin both:
 
 Optional `card` is a list of `{ k, v }` rows. Empty values are hidden. Set `speedKt` when the row labeled `SPD` should follow the KT / MPH / KM/H toggle. `formatCard` and `withSpeed` in `src/core/cards.ts` build the text. The viewer shows those rows. If the viewer is hidden, the same text follows the pointer.
 
-Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there, the pixels in `src/plugins/aircraft/sprites.ts`, and a mesh with the same id in `src/core/models.ts`.
+Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there, a filled silhouette in `src/core/silhouettes.ts` (installed from `src/plugins/glyphs.ts` after the pixel modules), and a mesh with the same id in `src/core/models.ts`. The pixel modules remain as the fallback art; the silhouette pass overwrites those ids at startup.
 
 ## Rules
 

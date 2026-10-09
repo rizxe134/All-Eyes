@@ -14,6 +14,12 @@ export interface AirFix {
   vertFpm: number
   seenMs: number
   desc: string
+  /** Feet. Null when the feed did not send that altitude. */
+  altBaroFt: number | null
+  altGpsFt: number | null
+  tasKt: number | null
+  iasKt: number | null
+  mach: number | null
 }
 
 function num(value: unknown): number | null {
@@ -46,7 +52,9 @@ export function parseOpenSky(payload: unknown): AirFix[] {
     const lon = num(row[5])
     const lat = num(row[6])
     if (lat == null || lon == null) continue
-    const alt = num(row[13]) ?? num(row[7]) ?? 0
+    const baro = num(row[7])
+    const geo = num(row[13])
+    const alt = geo ?? baro ?? 0
     const velocity = num(row[9]) ?? 0
     const seen = num(row[4]) ?? 0
     out.push({
@@ -65,6 +73,11 @@ export function parseOpenSky(payload: unknown): AirFix[] {
       vertFpm: (num(row[11]) ?? 0) * 196.85,
       seenMs: seen > 1e12 ? seen : seen * 1000,
       desc: '',
+      altBaroFt: baro == null ? null : baro * 3.28084,
+      altGpsFt: geo == null ? null : geo * 3.28084,
+      tasKt: null,
+      iasKt: null,
+      mach: null,
     })
   }
   return capAir(out, 8000)
@@ -81,9 +94,12 @@ export function parseAdsb(payload: unknown): AirFix[] {
     const lat = num(rec.lat)
     const lon = num(rec.lon)
     if (lat == null || lon == null) continue
-    const altRaw = rec.alt_baro ?? rec.alt_geom
-    const onGround = altRaw === 'ground'
-    const feet = onGround ? 0 : (num(altRaw) ?? 0)
+    const baroRaw = rec.alt_baro
+    const gpsRaw = rec.alt_geom
+    const onGround = baroRaw === 'ground' || gpsRaw === 'ground'
+    const baroFt = onGround ? 0 : num(baroRaw)
+    const gpsFt = onGround ? 0 : num(gpsRaw)
+    const feet = baroFt ?? gpsFt ?? 0
     const seen = num(rec.seen) ?? 0
     out.push({
       icao: String(rec.hex ?? '').trim().toLowerCase(),
@@ -101,6 +117,11 @@ export function parseAdsb(payload: unknown): AirFix[] {
       vertFpm: num(rec.baro_rate) ?? 0,
       seenMs: seen > 0 ? Date.now() - seen * 1000 : Date.now(),
       desc: String(rec.desc ?? '').trim(),
+      altBaroFt: baroFt,
+      altGpsFt: gpsFt,
+      tasKt: num(rec.tas),
+      iasKt: num(rec.ias),
+      mach: num(rec.mach),
     })
   }
   return out

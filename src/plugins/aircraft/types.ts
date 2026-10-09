@@ -99,6 +99,8 @@ const EXACT: Record<string, AirGlyph> = {
   GLF5: { sprite: 'air-biz', name: 'Gulfstream V', family: 'Business jet' },
   GLF6: { sprite: 'air-biz', name: 'Gulfstream G650', family: 'Business jet' },
   E55P: { sprite: 'air-biz', name: 'Phenom 300', family: 'Business jet' },
+  C700: { sprite: 'air-biz', name: 'Cessna Citation Longitude', family: 'Business jet' },
+  C68A: { sprite: 'air-biz', name: 'Cessna Citation Latitude', family: 'Business jet' },
   MD11: { sprite: 'air-cargo', name: 'MD-11', family: 'Cargo' },
   DC10: { sprite: 'air-cargo', name: 'DC-10', family: 'Cargo' },
   A306: { sprite: 'air-cargo', name: 'Airbus A300-600', family: 'Cargo' },

@@ -1,3 +1,4 @@
+import './glyphs'
 import { aircraftPlugin } from './aircraft/plugin'
 import { earthquakePlugin } from './earthquakes/plugin'
 import { eventPlugin } from './events/plugin'

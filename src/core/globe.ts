@@ -220,6 +220,8 @@ export class Globe implements GlobeApi {
   private mats = new Map<string, THREE.MeshBasicMaterial>()
   private aspects = new Map<string, number>()
   private orbit = new THREE.Group()
+  private history = new THREE.Group()
+  private route = new THREE.Group()
   private raycaster = new THREE.Raycaster()
   private pointer = new THREE.Vector2()
   private view: ViewState = { lat: 14, lon: 12, rangeKm: 9800 }
@@ -319,6 +321,8 @@ export class Globe implements GlobeApi {
     this.radarMesh.visible = false
     this.scene.add(this.radarMesh)
     this.scene.add(this.orbit)
+    this.scene.add(this.history)
+    this.scene.add(this.route)
     this.addStars()
     this.loadTextures()
     this.resize()
@@ -353,31 +357,53 @@ export class Globe implements GlobeApi {
   }
 
   setOrbit(points: GeoPoint[] | null): void {
-    for (const child of this.orbit.children) {
-      const line = child as THREE.LineSegments
+    this.drawPath(this.orbit, points, false, 0x3dff7a, 0.38)
+  }
+
+  setHistory(points: GeoPoint[] | null): void {
+    this.drawPath(this.history, points, false, 0xb6ffd0, 0.92)
+  }
+
+  setRoute(points: GeoPoint[] | null): void {
+    this.drawPath(this.route, points, true, 0xd8ffe8, 0.85)
+  }
+
+  private drawPath(group: THREE.Group, points: GeoPoint[] | null, dashed: boolean, color: number, opacity: number) {
+    for (const child of group.children) {
+      const line = child as THREE.Line
       line.geometry.dispose()
+      const mat = line.material
+      if (!Array.isArray(mat)) mat.dispose()
     }
-    this.orbit.clear()
+    group.clear()
     if (!points || points.length < 2) return
-    const segs: number[] = []
+    let chunk: number[] = []
     const prev = new THREE.Vector3()
     const cur = new THREE.Vector3()
     let hasPrev = false
+    const flush = () => {
+      if (chunk.length < 6) {
+        chunk = []
+        return
+      }
+      const geo = new THREE.BufferGeometry()
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(chunk, 3))
+      const mat = dashed
+        ? new THREE.LineDashedMaterial({ color, dashSize: 0.85, gapSize: 0.5, transparent: true, opacity, toneMapped: false })
+        : new THREE.LineBasicMaterial({ color, transparent: true, opacity, toneMapped: false })
+      const line = new THREE.Line(geo, mat)
+      if (dashed) line.computeLineDistances()
+      group.add(line)
+      chunk = []
+    }
     for (const point of points) {
       this.place(cur, point.lat, point.lon, point.altKm, 0.8)
-      if (hasPrev && prev.distanceTo(cur) < R * 0.5) {
-        segs.push(prev.x, prev.y, prev.z, cur.x, cur.y, cur.z)
-      }
+      if (hasPrev && prev.distanceTo(cur) >= R * 0.45) flush()
+      chunk.push(cur.x, cur.y, cur.z)
       prev.copy(cur)
       hasPrev = true
     }
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(segs, 3))
-    const line = new THREE.LineSegments(
-      geo,
-      new THREE.LineBasicMaterial({ color: 0x3dff7a, transparent: true, opacity: 0.38, toneMapped: false }),
-    )
-    this.orbit.add(line)
+    flush()
   }
 
   setHighlight(id: string | null): void {
@@ -611,8 +637,10 @@ export class Globe implements GlobeApi {
       map: baked.texture,
       color: 0xffffff,
       transparent: true,
-      alphaTest: 0.45,
+      alphaTest: 0.4,
       depthWrite: false,
+      // The heading basis can face either way. Both sides stay drawn; depth hides the far hemisphere.
+      side: THREE.DoubleSide,
       toneMapped: false,
     })
     this.mats.set(id, mat)
@@ -649,6 +677,12 @@ export class Globe implements GlobeApi {
         const list = grouped.get(sprite) ?? []
         list.push({ layerId, marker })
         grouped.set(sprite, list)
+        const hot = marker.id === this.highlightId || marker.id === this.hoverId
+        if (hot && sprite.startsWith('air-')) {
+          const ring = grouped.get('sel-ring') ?? []
+          ring.push({ layerId, marker })
+          grouped.set('sel-ring', ring)
+        }
       }
     }
     for (const [id, pool] of this.pools) {
@@ -707,25 +741,27 @@ export class Globe implements GlobeApi {
     const dist = this.camera.position.length()
     const height = this.canvas.clientHeight || 800
     const tan = Math.tan((38 * Math.PI) / 360)
-    const pixels = range > 2400 ? 3.8 : range > 900 ? 9 : 16
-    const world = clamp((pixels * dist * tan) / (height * 0.5), 0.035, 1.6) * this.markerSize
     for (const pool of this.pools.values()) {
       const mesh = pool.mesh
       if (!mesh || !mesh.visible) continue
+      const airy = pool.id.startsWith('air-')
+      const ring = pool.id === 'sel-ring'
+      const pixels = range > 2400 ? 4.2 : range > 900 ? (ring ? 28 : airy ? 20 : 11) : (ring ? 40 : airy ? 30 : 16)
+      const world = clamp((pixels * dist * tan) / (height * 0.5), 0.04, 2.4) * this.markerSize
       const pulseBase = pool.id === 'ico-quake' || pool.id === 'ico-storm'
       for (let i = 0; i < pool.items.length; i++) {
         const marker = pool.items[i]!.marker
         const hot = marker.id === this.highlightId || marker.id === this.hoverId
         const pulse = pulseBase ? 1 + Math.sin(now / 280 + i) * 0.08 : 1
-        const scale = world * marker.scale * pulse * (hot ? 1.55 : 1)
-        this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.22)
+        const scale = world * marker.scale * pulse * (ring ? 1 : hot ? 1.35 : 1)
+        this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.35)
         this.orient(marker.lat, marker.lon, marker.heading || 0, scale)
         this.scratch.right.multiplyScalar(pool.aspect)
         this.scratch.matrix.makeBasis(this.scratch.right, this.scratch.forward, this.scratch.up)
         this.scratch.matrix.setPosition(this.scratch.pos)
         mesh.setMatrixAt(i, this.scratch.matrix)
         const b = clamp(marker.brightness * (hot ? 1 : 0.78), 0.22, 1)
-        this.scratch.color.setRGB(hot ? 0.78 : 0.05 + b * 0.16, hot ? 1 : 0.28 + b * 0.5, hot ? 0.62 : 0.1 + b * 0.16)
+        this.scratch.color.setRGB(hot ? 0.92 : 0.15 + b * 0.55, hot ? 1 : 0.55 + b * 0.45, hot ? 0.78 : 0.2 + b * 0.25)
         mesh.setColorAt(i, this.scratch.color)
       }
       mesh.instanceMatrix.needsUpdate = true

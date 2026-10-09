@@ -228,6 +228,30 @@ async function route(req, url) {
     })
   }
 
+  if (path === '/api/adsbdb/callsign') {
+    const cs = (url.searchParams.get('cs') || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (!/^[A-Z0-9]{3,8}$/.test(cs)) return jsonError(400, 'bad callsign')
+    return upstream(`https://api.adsbdb.com/v0/callsign/${cs}`, {
+      ttl: 6 * 60 * 60 * 1000,
+      timeout: 8000,
+      key: `adsbdbcs:${cs}`,
+    })
+  }
+
+  if (path === '/api/spot') {
+    const hex = (url.searchParams.get('hex') || '').toLowerCase()
+    if (!/^[0-9a-f]{6}$/.test(hex)) return jsonError(400, 'bad hex')
+    return upstream(`https://api.planespotters.net/pub/photos/hex/${hex}`, {
+      ttl: 24 * 60 * 60 * 1000,
+      timeout: 8000,
+      key: `spot:${hex}`,
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'AllEyes/1.3 (+https://github.com/rizxe134/All-Eyes)',
+      },
+    })
+  }
+
   if (path === '/api/ais/locations') {
     return upstream('https://meri.digitraffic.fi/api/ais/v1/locations', {
       ttl: 20000,

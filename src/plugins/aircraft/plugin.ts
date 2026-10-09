@@ -2,7 +2,8 @@ import { ageLabel, formatCard, withSpeed } from '../../core/cards'
 import type { AllEyesPlugin, CardField, Contact, LayerContext, SpeedUnit } from '../../core/types'
 import { getJson } from '../../net/http'
 import { pitchDeg } from '../../core/models'
-import { parseAdsbDb, readAirCache, writeAirCache, type AirMeta } from './lookup'
+import { routeAhead } from './detail'
+import { mergeAirMeta, parseAdsbDb, parseAdsbRoute, parseSpotters, readAirCache, writeAirCache, type AirMeta } from './lookup'
 import { capAir, displayAirAltKm, parseAdsb, parseOpenSky, type AirFix } from './parse'
 import './sprites'
 import { classifyAir } from './types'
@@ -33,6 +34,33 @@ interface Sample extends AirFix {
 
 const airMeta = readAirCache()
 const looked = new Set<string>()
+const lookedRoute = new Set<string>()
+const lookedPhoto = new Set<string>()
+const trails = new Map<string, Sample[]>()
+let showAhead = true
+let repaintTrail = () => {}
+
+export function airTrail(icao: string): readonly Sample[] {
+  return trails.get(icao) ?? []
+}
+
+export function airFixNow(icao: string): AirFix | null {
+  const row = trails.get(icao)
+  return row?.[row.length - 1] ?? null
+}
+
+export function airMetaFor(icao: string): AirMeta | undefined {
+  return airMeta.get(icao)
+}
+
+export function setAirAhead(on: boolean): void {
+  showAhead = on
+  repaintTrail()
+}
+
+export function airAheadOn(): boolean {
+  return showAhead
+}
 
 export function airFields(fix: AirFix, extra: AirMeta | undefined, now = Date.now()): CardField[] {
   const code = extra?.type || fix.typeCode
@@ -111,7 +139,6 @@ export const aircraftPlugin: AllEyesPlugin = {
       create(ctx) {
         let timer = 0
         let on = false
-        const trails = new Map<string, Sample[]>()
         let latest: AirFix[] = []
         const cursor = { i: 0 }
 
@@ -136,7 +163,6 @@ export const aircraftPlugin: AllEyesPlugin = {
           return out
         }
 
-        let orbitOwned = false
         const publish = () => {
           const sim = ctx.clock.now()
           const live = Math.abs(sim - Date.now()) < 20_000
@@ -149,33 +175,68 @@ export const aircraftPlugin: AllEyesPlugin = {
         const paintTrail = () => {
           const id = ctx.getTrackId()
           if (!id?.startsWith('air:')) {
-            if (orbitOwned) {
-              ctx.globe.setOrbit(null)
-              orbitOwned = false
-            }
+            ctx.globe.setHistory(null)
+            ctx.globe.setRoute(null)
             return
           }
-          const row = trails.get(id.slice(4)) ?? []
-          if (row.length < 2) return
-          orbitOwned = true
-          ctx.globe.setOrbit(row.map((sample) => ({
+          const hex = id.slice(4)
+          const row = trails.get(hex) ?? []
+          const alt = (sample: Sample) => displayAirAltKm(sample.altM, sample.onGround)
+          ctx.globe.setHistory(row.length < 2 ? null : row.map((sample) => ({
             lat: sample.lat,
             lon: sample.lon,
-            altKm: displayAirAltKm(sample.altM, sample.onGround),
+            altKm: alt(sample),
           })))
+          const fix = row[row.length - 1]
+          const ahead = showAhead && fix ? routeAhead(fix.lat, fix.lon, airMeta.get(hex)) : null
+          const height = fix ? alt(fix) : 8
+          ctx.globe.setRoute(ahead ? ahead.map((point) => ({ ...point, altKm: height })) : null)
+        }
+        repaintTrail = paintTrail
+
+        const storeMeta = (hex: string, extra: Partial<AirMeta>) => {
+          airMeta.set(hex, mergeAirMeta(airMeta.get(hex), extra))
+          writeAirCache(airMeta)
+          if (on) publish()
         }
 
         const enrich = async (hex: string) => {
-          if (!/^[0-9a-f]{6}$/.test(hex) || looked.has(hex) || airMeta.has(hex)) return
+          if (!/^[0-9a-f]{6}$/.test(hex) || looked.has(hex)) return
+          if (airMeta.get(hex)?.type || airMeta.get(hex)?.registration) return
           looked.add(hex)
           try {
             const meta = parseAdsbDb(await getJson(`/api/adsbdb?hex=${hex}`, ctx.settings, ctx.signal))
             if (!meta) return
-            airMeta.set(hex, meta)
-            writeAirCache(airMeta)
-            if (on) publish()
+            storeMeta(hex, meta)
           } catch {
             looked.delete(hex)
+          }
+        }
+
+        const enrichRoute = async (hex: string, callsign: string) => {
+          const cs = callsign.trim().toUpperCase()
+          if (!/^[A-Z0-9]{3,8}$/.test(cs) || lookedRoute.has(hex)) return
+          if (airMeta.get(hex)?.origin && airMeta.get(hex)?.destination) return
+          lookedRoute.add(hex)
+          try {
+            const route = parseAdsbRoute(await getJson(`/api/adsbdb/callsign?cs=${encodeURIComponent(cs)}`, ctx.settings, ctx.signal))
+            if (!route) return
+            storeMeta(hex, route)
+          } catch {
+            lookedRoute.delete(hex)
+          }
+        }
+
+        const enrichPhoto = async (hex: string) => {
+          if (!/^[0-9a-f]{6}$/.test(hex) || lookedPhoto.has(hex)) return
+          if (airMeta.get(hex)?.photoCredit?.includes('PlaneSpotters')) return
+          lookedPhoto.add(hex)
+          try {
+            const photo = parseSpotters(await getJson(`/api/spot?hex=${hex}`, ctx.settings, ctx.signal))
+            if (!photo) return
+            storeMeta(hex, photo)
+          } catch {
+            lookedPhoto.delete(hex)
           }
         }
 
@@ -206,8 +267,17 @@ export const aircraftPlugin: AllEyesPlugin = {
             /* fall through to regional ads-b */
           }
           try {
-            latest = await loadAdsb(ctx, cursor)
-            remember(latest, Date.now())
+            const incoming = await loadAdsb(ctx, cursor)
+            const now = Date.now()
+            const merged = new Map<string, AirFix>()
+            for (const fix of latest) merged.set(fix.icao, fix)
+            for (const fix of incoming) merged.set(fix.icao, fix)
+            remember(incoming, now)
+            const fresh = [...merged.values()].filter((fix) => {
+              const last = trails.get(fix.icao)?.at(-1)?.t ?? now
+              return now - last < 4 * 60 * 1000
+            })
+            latest = capAir(fresh, 8000)
             ctx.log(LAYER, latest.length ? '' : 'AIR FEED EMPTY')
           } catch (err) {
             ctx.log(LAYER, err instanceof Error ? err.message : 'AIR FEED FAULT')
@@ -218,7 +288,13 @@ export const aircraftPlugin: AllEyesPlugin = {
 
         const offClock = ctx.clock.subscribe(() => { if (on) publish() })
         const offTrack = ctx.onTrack((id) => {
-          if (id?.startsWith('air:')) void enrich(id.slice(4))
+          if (id?.startsWith('air:')) {
+            const hex = id.slice(4)
+            const fix = trails.get(hex)?.at(-1)
+            void enrich(hex)
+            void enrichRoute(hex, fix?.callsign ?? '')
+            void enrichPhoto(hex)
+          }
           if (on) paintTrail()
         })
         const offHover = ctx.globe.onHover((hit) => {

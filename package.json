@@ -1,7 +1,7 @@
 {
   "name": "all-eyes",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "All Eyes — a live green 8-bit intelligence globe for the browser, Mac, Windows, and Linux.",
   "license": "MIT",
   "type": "module",

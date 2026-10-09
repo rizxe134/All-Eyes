@@ -15,6 +15,9 @@ import { getJson } from '../net/http'
 import { buildShell } from '../ui/shell'
 import { startRadar } from '../ui/radar'
 import { mountViewer } from '../ui/viewer'
+import { mountFlightPanel } from '../ui/flight-panel'
+import { flightText, formatFlight } from '../plugins/aircraft/detail'
+import { airAheadOn, airFixNow, airMetaFor, airTrail, setAirAhead } from '../plugins/aircraft/plugin'
 
 const LAYER_KEY = 'alleyes.layers.v1'
 const VIEWER_KEY = 'alleyes.viewer.v1'
@@ -72,6 +75,8 @@ export function boot(root: HTMLElement): void {
   const shell = buildShell(root)
   const viewer = mountViewer()
   shell.right.prepend(viewer.root)
+  const flight = mountFlightPanel()
+  shell.layers.parentElement?.append(flight.root)
   const globe = new Globe(shell.canvas, () => clock.now())
   const registry = new PluginRegistry()
   for (const plugin of builtinPlugins) registry.register(plugin)
@@ -86,6 +91,7 @@ export function boot(root: HTMLElement): void {
     hoverX: 24,
     hoverY: 24,
     cardDragged: false,
+    following: false,
     history: [] as string[],
     historyAt: -1,
     suggestAt: 0,
@@ -105,7 +111,10 @@ export function boot(root: HTMLElement): void {
     },
     patch(id, partial) {
       const next = entities.patch(id, partial)
-      if (next && (state.trackId === id || state.hoverId === id)) renderCard()
+      if (next && (state.trackId === id || state.hoverId === id)) {
+        renderCard()
+        if (state.trackId === id) renderFlight()
+      }
       return
     },
     getPin: () => state.pin,
@@ -150,15 +159,20 @@ export function boot(root: HTMLElement): void {
   function setTrack(id: string | null) {
     state.trackId = id
     state.cardDragged = false
+    state.following = false
     globe.setHighlight(id)
     globe.setFollow(null)
     const contact = id ? entities.get(id) : null
-    if (contact) globe.setFollow({ lat: contact.lat, lon: contact.lon, altKm: contact.altKm })
+    if (contact) {
+      state.following = true
+      globe.setFollow({ lat: contact.lat, lon: contact.lon, altKm: contact.altKm })
+    }
     shell.track.hidden = !contact
     shell.track.textContent = contact ? `LOCK ${contact.label}` : ''
     for (const fn of trackListeners) fn(id)
     renderInspect()
     renderCard()
+    renderFlight()
   }
 
   function setLayer(id: string, on: boolean) {
@@ -240,7 +254,8 @@ export function boot(root: HTMLElement): void {
     const locked = Boolean(pinned && contact.id === pinned.id)
     viewer.title.textContent = locked ? `LOCK ${contact.label}` : contact.label
     viewer.card.textContent = cardBody(contact)
-    if (viewer.isOpen()) {
+    const airDock = Boolean(pinned && pinned.kind === 'air' && contact.id === pinned.id)
+    if (viewer.isOpen() || airDock) {
       shell.info.hidden = true
       return
     }
@@ -249,6 +264,26 @@ export function boot(root: HTMLElement): void {
     shell.infoTitle.textContent = viewer.title.textContent
     shell.infoBody.textContent = viewer.card.textContent
     if (!locked) placeCard(state.hoverX + 16, state.hoverY + 16)
+  }
+
+  function renderFlight() {
+    const hud = shell.layers.parentElement
+    const hex = state.trackId?.startsWith('air:') ? state.trackId.slice(4) : ''
+    const fix = hex ? airFixNow(hex) : null
+    if (!hex || !fix) {
+      flight.setView(null)
+      flight.setGraph([])
+      hud?.classList.remove('is-flight')
+      return
+    }
+    const view = formatFlight(fix, airMetaFor(hex), settings.get().speedUnit)
+    flight.setView(view)
+    flight.setRouteOn(airAheadOn())
+    flight.setGraph(airTrail(hex).map((sample) => ({
+      altFt: sample.altBaroFt ?? sample.altGpsFt ?? sample.altM * 3.28084,
+      gsKt: sample.speedKt,
+    })))
+    hud?.classList.add('is-flight')
   }
 
   function renderAlerts() {
@@ -541,7 +576,10 @@ export function boot(root: HTMLElement): void {
     setPin(hit.lat, hit.lon)
     audio.play('click')
   })
-  globe.onRelease(() => setTrack(null))
+  globe.onRelease(() => {
+    state.following = false
+    globe.setFollow(null)
+  })
   globe.onMove((hit) => {
     if (!hit) return
     shell.coords.textContent = `${formatLat(hit.lat)} ${formatLon(hit.lon)}`
@@ -558,7 +596,47 @@ export function boot(root: HTMLElement): void {
     settings.update({ speedUnit: nextSpeedUnit(settings.get().speedUnit) })
     renderInspect()
     renderCard()
+    renderFlight()
   }
+  flight.onClose(() => setTrack(null))
+  flight.onView3d(() => {
+    commands.setViewer(true)
+    audio.play('click')
+  })
+  flight.onRoute(() => {
+    setAirAhead(!airAheadOn())
+    flight.setRouteOn(airAheadOn())
+    audio.play('click')
+  })
+  flight.onFollow(() => {
+    const contact = state.trackId ? entities.get(state.trackId) : null
+    if (!contact) return
+    state.following = true
+    globe.setFollow({ lat: contact.lat, lon: contact.lon, altKm: contact.altKm })
+    audio.play('lock')
+  })
+  flight.onShare(() => {
+    void copyLink().then((url) => showOutput(`LINK ${url}`))
+  })
+  flight.onCopy(() => {
+    const hex = state.trackId?.startsWith('air:') ? state.trackId.slice(4) : ''
+    const fix = hex ? airFixNow(hex) : null
+    if (!fix) return
+    const text = flightText(formatFlight(fix, airMetaFor(hex), settings.get().speedUnit))
+    void navigator.clipboard.writeText(text).catch(() => undefined)
+    showOutput('DETAILS COPIED')
+    audio.play('click')
+  })
+  flight.onWatch(() => {
+    const hex = state.trackId?.startsWith('air:') ? state.trackId.slice(4) : ''
+    const fix = hex ? airFixNow(hex) : null
+    const value = (fix?.callsign || fix?.registration || hex).toUpperCase()
+    if (!value) return
+    alerts.add({ id: `flight:${value}:${Date.now()}`, kind: 'flight', value })
+    showOutput(`WATCH FLIGHT ${value}`)
+    audio.play('click')
+  })
+  flight.onSpeed(cycleSpeed)
   shell.infoSpeed.addEventListener('click', (event) => {
     event.stopPropagation()
     cycleSpeed()
@@ -604,7 +682,7 @@ export function boot(root: HTMLElement): void {
     if (state.trackId) {
       const contact = entities.get(state.trackId)
       if (contact) {
-        globe.setFollow({ lat: contact.lat, lon: contact.lon, altKm: contact.altKm })
+        if (state.following) globe.setFollow({ lat: contact.lat, lon: contact.lon, altKm: contact.altKm })
         shell.track.textContent = `LOCK ${contact.label}`
       }
     } else if (state.pendingTrack) {
@@ -616,6 +694,7 @@ export function boot(root: HTMLElement): void {
     }
     renderInspect()
     renderCard()
+    renderFlight()
     scanWatches()
   })
 
