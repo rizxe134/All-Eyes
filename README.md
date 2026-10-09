@@ -4,9 +4,9 @@ A live "see the whole world" console. The globe fills the window, the interface 
 
 ## What's new in 1.1.0
 
-- Aircraft use a small top-down sprite for the type family (Airbus and Boeing narrowbodies, four-engine and twin widebodies, regional jets, turboprops, light props, helicopters, fighters, business jets, cargo). The type code comes from the feed, or from a cached [adsbdb](https://adsbdb.com) lookup of the ICAO24 hex. The mapping table is `src/plugins/aircraft/types.ts`.
+- Aircraft are small 3D models for the type family (Airbus and Boeing narrowbodies, four-engine and twin widebodies, regional jets, turboprops, light props, helicopters, fighters, business jets, cargo). They point along their heading and tilt with vertical rate. Helicopter rotors and propellers spin. The type code comes from the feed, or from a cached [adsbdb](https://adsbdb.com) lookup of the ICAO24 hex. The mapping table is `src/plugins/aircraft/types.ts`.
 - Hover any contact for a compact card. Click to pin and follow; drag the card by its title. Cards cover callsign, registration, type, operator, route when the feed has it, altitude, speed, vertical rate, heading, squawk, position, and age. The **KT** button cycles knots, mph, and km/h.
-- Satellites, ships, storms, quakes, events, and launches use their own small icons and cards (NORAD and next pass, MMSI and flag, storm wind, quake magnitude and depth, launch vehicle and pad).
+- Satellites, ships, storms, quakes, events, and launches use their own small 3D models and cards (NORAD and next pass, MMSI and flag, storm wind, quake magnitude and depth, launch vehicle and pad). Satellites spin slowly.
 - Markers stay small, shrink to dots when zoomed out, thin out where they pile up, and grow only while hovered or followed. **CFG** has a marker size slider. `size 0.7`, `size up`, and `size down` do the same thing.
 
 1.0.0 is still on the releases page.

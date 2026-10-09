@@ -1,7 +1,7 @@
 /**
  * ICAO type-code to silhouette.
  * Add a row to EXACT, or a prefix rule, to teach the globe a new type.
- * Sprites are registered in ./sprites.ts under the same ids.
+ * Model ids match the meshes in src/core/models.ts. Add a row to teach the globe a new type.
  */
 
 export interface AirGlyph {

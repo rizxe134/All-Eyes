@@ -1,9 +1,9 @@
 import { ageLabel, formatCard, withSpeed } from '../../core/cards'
 import type { AllEyesPlugin, CardField, Contact, LayerContext, SpeedUnit } from '../../core/types'
 import { getJson } from '../../net/http'
+import { pitchDeg } from '../../core/models'
 import { parseAdsbDb, readAirCache, writeAirCache, type AirMeta } from './lookup'
 import { capAir, displayAirAltKm, parseAdsb, parseOpenSky, type AirFix } from './parse'
-import './sprites'
 import { classifyAir } from './types'
 
 const LAYER = 'aircraft'
@@ -69,6 +69,7 @@ function toContact(fix: AirFix, unit: SpeedUnit): Contact {
     lon: fix.lon,
     altKm: displayAirAltKm(fix.altM, fix.onGround),
     heading: fix.track,
+    pitch: pitchDeg(fix.vertFpm, fix.speedKt),
     label,
     detail: formatCard(card),
     brightness: fix.onGround ? 0.32 : 0.5 + Math.min(0.4, fix.altM / 12000),

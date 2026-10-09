@@ -101,11 +101,11 @@ Layers and panels receive `PluginContext`:
 
 Commands receive `CommandContext` with `flyTo`, `track`, `getTrackId`, `setLayer`, `findContact`, `searchPlace`, `setTimeMinutes`, `screenshot`, `copyLink`, and the same alerts and pin helpers.
 
-A `Contact` is one picked thing: id, lat, lon, altKm, heading, label, detail, brightness (0 to 1), shape, and scale. `shape` is a sprite id. Built-ins are `dot`, `chevron`, `diamond`, `ring`, `box`, and `drop`. Register more with `registerSprite(id, rows)` from `src/core/sprites.ts` (`#` is a lit pixel, `.` is empty, nose or bow in the first row). The globe draws them as instanced billboards, swaps in `dot` when zoomed out, and thins dense layers.
+A `Contact` is one picked thing: id, lat, lon, altKm, heading, pitch, label, detail, brightness (0 to 1), shape, and scale. `shape` is a model id from `src/core/models.ts`. Built-ins are `dot`, `chevron`, `diamond`, `ring`, `box`, and `drop`. The globe draws a low-poly mesh in green, oriented to heading and tilted by `pitch`. Zoomed out, and past the nearest 200 contacts, it draws a dot instead. Helicopter rotors and propeller discs spin. Satellites yaw slowly.
 
 Optional `card` is a list of `{ k, v }` rows for the hover card. Empty values are hidden. Set `speedKt` when the row labeled `SPD` should follow the KT / MPH / KM/H toggle. `formatCard` and `withSpeed` in `src/core/cards.ts` build the text.
 
-Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there and a sprite with the same id to teach the globe a new type.
+Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there and a mesh with the same id in `src/core/models.ts` to teach the globe a new type.
 
 ## Rules
 

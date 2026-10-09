@@ -1,7 +1,6 @@
 import { ageLabel, formatCard } from '../../core/cards'
 import type { AllEyesPlugin, Contact, LayerContext } from '../../core/types'
 import { getJson } from '../../net/http'
-import '../markers/sprites'
 import { parseQuakes, type QuakeFix } from './parse'
 
 const LAYER = 'quakes'

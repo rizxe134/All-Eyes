@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { knownSprites } from '../src/core/sprites'
-import '../src/plugins/aircraft/sprites'
+import { markerParts, modelIds, pitchDeg } from '../src/core/models'
 import { airTypeTable, classifyAir } from '../src/plugins/aircraft/types'
 import { eventSprite } from '../src/plugins/markers/sprites'
 import { satSprite } from '../src/plugins/satellites/sprites'
 import { classifyShip, flagFromMmsi } from '../src/plugins/ships/sprites'
 
-describe('aircraft type sprites', () => {
+describe('aircraft type models', () => {
   it('maps families and keeps Airbus distinct from Boeing', () => {
     expect(classifyAir('A320')).toMatchObject({ sprite: 'air-a320', name: 'Airbus A320' })
     expect(classifyAir('A20N').sprite).toBe('air-a320')
@@ -30,13 +29,23 @@ describe('aircraft type sprites', () => {
     expect(classifyAir('A320').sprite).not.toBe(classifyAir('B738').sprite)
   })
 
-  it('registers a sprite for every mapped family', () => {
-    const ids = new Set(knownSprites())
+  it('has a mesh for every mapped family', () => {
+    const ids = new Set(modelIds())
     for (const glyph of Object.values(airTypeTable())) {
       expect(ids.has(glyph.sprite)).toBe(true)
+      for (const part of markerParts(glyph.sprite)) expect(ids.has(part.id)).toBe(true)
     }
     expect(ids.has('air-unk')).toBe(true)
     expect(ids.has('dot')).toBe(true)
+    expect(markerParts('air-heli').map((part) => part.spin)).toEqual(['none', 'rotor'])
+    expect(markerParts('sat-station')[0]?.spin).toBe('yaw')
+  })
+
+  it('tilts the nose with climb rate', () => {
+    expect(pitchDeg(0, 250)).toBe(0)
+    expect(pitchDeg(2000, 250)).toBeGreaterThan(4)
+    expect(pitchDeg(-2000, 250)).toBeLessThan(-4)
+    expect(pitchDeg(8000, 80)).toBeLessThanOrEqual(16)
   })
 })
 

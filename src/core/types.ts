@@ -2,7 +2,7 @@
 
 export type EntityKind = 'air' | 'ship' | 'sat' | 'quake' | 'storm' | 'event' | 'launch' | 'beacon'
 
-/** Sprite id. Built-ins: dot, chevron, diamond, ring, box, drop. Plugins register more. */
+/** Model id. Built-ins include dot, chevron, diamond, ring, box, and drop. Families live in src/core/models.ts. */
 export type MarkerShape = string
 
 export type SpeedUnit = 'kt' | 'mph' | 'kmh'
@@ -20,6 +20,8 @@ export interface Contact {
   lon: number
   altKm: number
   heading: number
+  /** Nose-up degrees. Aircraft use vertical rate. */
+  pitch?: number
   label: string
   detail: string
   /** 0..1 phosphor brightness. Hierarchy uses brightness, not hue. */
@@ -41,6 +43,7 @@ export interface Marker {
   lon: number
   altKm: number
   heading: number
+  pitch: number
   brightness: number
   shape: MarkerShape
   scale: number
@@ -88,7 +91,7 @@ export interface Settings {
   openskyId: string
   openskySecret: string
   firmsKey: string
-  /** Multiplier for marker sprites. About 0.35 to 1.8. */
+  /** Multiplier for marker models. About 0.35 to 1.8. */
   markerSize: number
   speedUnit: SpeedUnit
 }
@@ -213,6 +216,7 @@ export function toMarker(contact: Contact): Marker {
     lon: contact.lon,
     altKm: contact.altKm,
     heading: contact.heading,
+    pitch: contact.pitch ?? 0,
     brightness: contact.brightness,
     shape: contact.shape,
     scale: contact.scale,

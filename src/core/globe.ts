@@ -8,7 +8,7 @@ import {
   vecToLatLon,
   type Vec3,
 } from './geo'
-import { spriteRows } from './sprites'
+import { markerGeometry, markerParts, type ModelSpin } from './models'
 import type { GeoPoint, GlobeApi, GlobeClick, Marker, ViewState } from './types'
 
 const R = 100
@@ -23,7 +23,7 @@ interface Pool {
   mesh: THREE.InstancedMesh | null
   capacity: number
   items: DrawItem[]
-  aspect: number
+  spin: ModelSpin
 }
 
 interface Flight {
@@ -138,37 +138,7 @@ void main() {
 }
 `
 
-const plane = new THREE.PlaneGeometry(1, 1)
-
-function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number } {
-  const rows = spriteRows(id)
-  const height = Math.max(1, rows.length)
-  const width = Math.max(1, rows[0]?.length ?? 1)
-  const pixel = 4
-  const canvas = document.createElement('canvas')
-  canvas.width = width * pixel
-  canvas.height = height * pixel
-  const ctx = canvas.getContext('2d')
-  if (ctx) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    for (let y = 0; y < height; y++) {
-      const row = rows[y] ?? ''
-      for (let x = 0; x < width; x++) {
-        const ch = row[x]
-        if (!ch || ch === '.' || ch === ' ') continue
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(x * pixel, y * pixel, pixel, pixel)
-      }
-    }
-  }
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.magFilter = THREE.NearestFilter
-  texture.minFilter = THREE.NearestFilter
-  texture.generateMipmaps = false
-  texture.colorSpace = THREE.NoColorSpace
-  texture.needsUpdate = true
-  return { texture, aspect: width / height }
-}
+const MODEL_CAP = 200
 
 function graticule(): THREE.LineSegments {
   const positions: number[] = []
@@ -217,8 +187,7 @@ export class Globe implements GlobeApi {
   private atmosUniforms: { uCam: { value: THREE.Vector3 }; uSun: { value: THREE.Vector3 } }
   private layers = new Map<string, Marker[]>()
   private pools = new Map<string, Pool>()
-  private mats = new Map<string, THREE.MeshBasicMaterial>()
-  private aspects = new Map<string, number>()
+  private markerMat: THREE.MeshLambertMaterial
   private orbit = new THREE.Group()
   private raycaster = new THREE.Raycaster()
   private pointer = new THREE.Vector2()
@@ -231,6 +200,8 @@ export class Globe implements GlobeApi {
   private markerSize = 0.7
   private bucket = -1
   private lodRange = 0
+  private lodLat = 0
+  private lodLon = 0
   private dirty = true
   private dragging = false
   private moved = 0
@@ -319,6 +290,17 @@ export class Globe implements GlobeApi {
     this.radarMesh.visible = false
     this.scene.add(this.radarMesh)
     this.scene.add(this.orbit)
+    this.markerMat = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      emissive: 0x083318,
+      emissiveIntensity: 0.55,
+      flatShading: true,
+      toneMapped: false,
+    })
+    const hemi = new THREE.HemisphereLight(0xd8ffe8, 0x02140a, 0.85)
+    const sun = new THREE.DirectionalLight(0xf4fff8, 1.35)
+    sun.position.set(4, 2, 6)
+    this.scene.add(hemi, sun)
     this.addStars()
     this.loadTextures()
     this.resize()
@@ -513,7 +495,7 @@ export class Globe implements GlobeApi {
     out.set(-radius * sinPhi * Math.cos(theta), radius * Math.cos(phi), radius * sinPhi * Math.sin(theta))
   }
 
-  private orient(lat: number, lon: number, heading: number, scale: number) {
+  private orient(lat: number, lon: number, heading: number, scale: number, pitch: number, spin: ModelSpin, spinAngle: number) {
     const phi = ((90 - lat) * Math.PI) / 180
     const theta = ((lon + 180) * Math.PI) / 180
     const sinPhi = Math.sin(phi)
@@ -557,9 +539,42 @@ export class Globe implements GlobeApi {
     const h = (heading * Math.PI) / 180
     const c = Math.cos(h)
     const s = Math.sin(h)
-    this.scratch.right.set(ex * c - nx * s, ey * c - ny * s, ez * c - nz * s).multiplyScalar(scale)
-    this.scratch.forward.set(nx * c + ex * s, ny * c + ey * s, nz * c + ez * s).multiplyScalar(scale)
-    this.scratch.up.set(ux, uy, uz).multiplyScalar(scale)
+    this.scratch.right.set(ex * c - nx * s, ey * c - ny * s, ez * c - nz * s)
+    this.scratch.forward.set(nx * c + ex * s, ny * c + ey * s, nz * c + ez * s)
+    this.scratch.up.set(ux, uy, uz)
+    if (pitch) this.spinAround(this.scratch.right, (pitch * Math.PI) / 180)
+    if (spin !== 'none' && spinAngle) {
+      const axis = spin === 'prop' ? this.scratch.forward : this.scratch.up
+      this.spinAround(axis, spinAngle)
+    }
+    this.scratch.right.multiplyScalar(scale)
+    this.scratch.forward.multiplyScalar(scale)
+    this.scratch.up.multiplyScalar(scale)
+  }
+
+  private spinAround(axis: THREE.Vector3, angle: number) {
+    const c = Math.cos(angle)
+    const s = Math.sin(angle)
+    const ax = axis.x
+    const ay = axis.y
+    const az = axis.z
+    const apply = (v: THREE.Vector3) => {
+      const vx = v.x
+      const vy = v.y
+      const vz = v.z
+      const cx = ay * vz - az * vy
+      const cy = az * vx - ax * vz
+      const cz = ax * vy - ay * vx
+      const dot = ax * vx + ay * vy + az * vz
+      v.set(
+        vx * c + cx * s + ax * dot * (1 - c),
+        vy * c + cy * s + ay * dot * (1 - c),
+        vz * c + cz * s + az * dot * (1 - c),
+      )
+    }
+    apply(this.scratch.right)
+    apply(this.scratch.forward)
+    apply(this.scratch.up)
   }
 
   private frame = () => {
@@ -602,33 +617,20 @@ export class Globe implements GlobeApi {
     this.camera.lookAt(target)
   }
 
-  private spriteMaterial(id: string): THREE.MeshBasicMaterial {
-    const hit = this.mats.get(id)
-    if (hit) return hit
-    const baked = bakeSprite(id)
-    this.aspects.set(id, baked.aspect)
-    const mat = new THREE.MeshBasicMaterial({
-      map: baked.texture,
-      color: 0xffffff,
-      transparent: true,
-      alphaTest: 0.4,
-      depthWrite: false,
-      toneMapped: false,
-    })
-    this.mats.set(id, mat)
-    return mat
-  }
-
-  private drawSprite(marker: Marker): string {
-    const hot = marker.id === this.highlightId || marker.id === this.hoverId
-    if (!hot && this.view.rangeKm > 2800) return 'dot'
-    return marker.shape || 'dot'
+  private viewDist2(marker: Marker): number {
+    const dLat = marker.lat - this.view.lat
+    let dLon = marker.lon - this.view.lon
+    if (dLon > 180) dLon -= 360
+    if (dLon < -180) dLon += 360
+    const cos = Math.cos((this.view.lat * Math.PI) / 180)
+    return dLat * dLat + dLon * cos * dLon * cos
   }
 
   private rebuildPools() {
     const range = this.view.rangeKm
     const cell = range > 1100 ? clamp(range / 4200, 0.18, 5) : 0
-    const grouped = new Map<string, DrawItem[]>()
+    const models = range <= 2400
+    const kept: DrawItem[] = []
     for (const [layerId, markers] of this.layers) {
       const declutter = cell > 0 && markers.length > 48
       const picked = new Map<string, Marker>()
@@ -644,11 +646,23 @@ export class Globe implements GlobeApi {
         if (!prev || marker.brightness > prev.brightness) picked.set(key, marker)
       }
       for (const marker of picked.values()) extras.push(marker)
-      for (const marker of extras) {
-        const sprite = this.drawSprite(marker)
-        const list = grouped.get(sprite) ?? []
-        list.push({ layerId, marker })
-        grouped.set(sprite, list)
+      for (const marker of extras) kept.push({ layerId, marker })
+    }
+    const near = new Set<string>()
+    if (models) {
+      const ranked = kept
+        .filter((item) => item.marker.id !== this.highlightId && item.marker.id !== this.hoverId)
+        .sort((a, b) => this.viewDist2(a.marker) - this.viewDist2(b.marker))
+      for (let i = 0; i < ranked.length && i < MODEL_CAP; i++) near.add(ranked[i]!.marker.id)
+    }
+    const grouped = new Map<string, DrawItem[]>()
+    for (const item of kept) {
+      const hot = item.marker.id === this.highlightId || item.marker.id === this.hoverId
+      const shape = hot || near.has(item.marker.id) ? (item.marker.shape || 'dot') : 'dot'
+      for (const part of markerParts(shape)) {
+        const list = grouped.get(part.id) ?? []
+        list.push(item)
+        grouped.set(part.id, list)
       }
     }
     for (const [id, pool] of this.pools) {
@@ -660,14 +674,17 @@ export class Globe implements GlobeApi {
     for (const [id, items] of grouped) {
       let pool = this.pools.get(id)
       if (!pool) {
-        pool = { id, mesh: null, capacity: 0, items: [], aspect: 1 }
+        const part = markerParts(id)[0]
+        pool = { id, mesh: null, capacity: 0, items: [], spin: part?.spin ?? 'none' }
         this.pools.set(id, pool)
       }
       pool.items = items
       this.ensurePool(pool, items.length)
     }
-    this.bucket = range > 2800 ? 2 : range > 1100 ? 1 : 0
+    this.bucket = range > 2400 ? 2 : range > 1100 ? 1 : 0
     this.lodRange = range
+    this.lodLat = this.view.lat
+    this.lodLon = this.view.lon
   }
 
   private ensurePool(pool: Pool, count: number) {
@@ -684,8 +701,8 @@ export class Globe implements GlobeApi {
       this.scene.remove(pool.mesh)
       pool.mesh.dispose()
     }
-    const capacity = Math.max(64, 2 ** Math.ceil(Math.log2(count)))
-    const mesh = new THREE.InstancedMesh(plane, this.spriteMaterial(pool.id), capacity)
+    const capacity = Math.max(32, 2 ** Math.ceil(Math.log2(count)))
+    const mesh = new THREE.InstancedMesh(markerGeometry(pool.id), this.markerMat, capacity)
     mesh.count = count
     mesh.frustumCulled = false
     mesh.renderOrder = 3
@@ -693,34 +710,45 @@ export class Globe implements GlobeApi {
     this.scene.add(mesh)
     pool.mesh = mesh
     pool.capacity = capacity
-    pool.aspect = this.aspects.get(pool.id) ?? 1
   }
 
   private writeMarkers(now: number) {
     const range = this.view.rangeKm
-    const bucket = range > 2800 ? 2 : range > 1100 ? 1 : 0
-    const drift = bucket === 0 ? 0 : bucket === 1 ? 180 : 700
-    if (this.dirty || bucket !== this.bucket || Math.abs(range - this.lodRange) > drift) {
+    const bucket = range > 2400 ? 2 : range > 1100 ? 1 : 0
+    const drift = bucket === 2 ? 700 : bucket === 1 ? 160 : 40
+    const cos = Math.cos((this.view.lat * Math.PI) / 180)
+    let dLon = this.view.lon - this.lodLon
+    if (dLon > 180) dLon -= 360
+    if (dLon < -180) dLon += 360
+    const moved = Math.hypot(this.view.lat - this.lodLat, dLon * cos)
+    const step = Math.max(0.12, range / 7000)
+    if (this.dirty || bucket !== this.bucket || Math.abs(range - this.lodRange) > drift || moved > step) {
       this.rebuildPools()
       this.dirty = false
     }
     const dist = this.camera.position.length()
     const height = this.canvas.clientHeight || 800
     const tan = Math.tan((38 * Math.PI) / 360)
-    const pixels = range > 2800 ? 4.6 : 20
-    const world = clamp((pixels * dist * tan) / (height * 0.5), 0.05, 3.2) * this.markerSize
+    const seconds = now / 1000
     for (const pool of this.pools.values()) {
       const mesh = pool.mesh
       if (!mesh || !mesh.visible) continue
+      const dot = pool.id === 'dot'
+      const pixels = dot ? 4.2 : range > 1600 ? 13 : range > 550 ? 28 : 52
+      const world = clamp((pixels * dist * tan) / (height * 0.5), 0.04, 4.2) * this.markerSize
       const pulseBase = pool.id === 'ico-quake' || pool.id === 'ico-storm'
+      const spinAngle = pool.spin === 'rotor' || pool.spin === 'prop'
+        ? seconds * 9
+        : pool.spin === 'yaw'
+          ? seconds * 0.45
+          : 0
       for (let i = 0; i < pool.items.length; i++) {
         const marker = pool.items[i]!.marker
         const hot = marker.id === this.highlightId || marker.id === this.hoverId
         const pulse = pulseBase ? 1 + Math.sin(now / 280 + i) * 0.08 : 1
         const scale = world * marker.scale * pulse * (hot ? 1.85 : 1)
-        this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.28)
-        this.orient(marker.lat, marker.lon, marker.heading || 0, scale)
-        this.scratch.right.multiplyScalar(pool.aspect)
+        this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.35)
+        this.orient(marker.lat, marker.lon, marker.heading || 0, scale, marker.pitch || 0, pool.spin, spinAngle)
         this.scratch.matrix.makeBasis(this.scratch.right, this.scratch.forward, this.scratch.up)
         this.scratch.matrix.setPosition(this.scratch.pos)
         mesh.setMatrixAt(i, this.scratch.matrix)

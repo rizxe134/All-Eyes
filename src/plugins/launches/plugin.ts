@@ -1,7 +1,6 @@
 import { formatCard } from '../../core/cards'
 import type { AllEyesPlugin, Contact } from '../../core/types'
 import { getJson } from '../../net/http'
-import '../markers/sprites'
 import { parseLaunches } from './parse'
 
 const LAYER = 'launches'
