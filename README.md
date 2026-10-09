@@ -136,7 +136,7 @@ cd All-Eyes-1.3.0-Linux-x64
 
 1. Press `/` to open the command line.
 2. Try `fly tokyo`, `pass iss`, `size 0.8`, or `help`.
-3. Hover a marker. The top-right viewer shows its 3D model and card. Click to follow. The **KT** button switches speed units. `viewer off` hides the panel.
+3. Hover a marker. The top-right viewer shows its 3D model and card. Click a plane to open the flight panel and follow it. Drag the globe to look around without closing the panel. The **KT** button switches speed units. `viewer off` hides the model viewer.
 4. Click **CFG** to add an optional OpenSky or NASA FIRMS key, or to set marker size. The globe runs with none of the keys set.
 
 Drag the globe to look around. Click empty ground to drop the follow lock and set the pin.
