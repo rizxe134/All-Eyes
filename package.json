@@ -1,0 +1,59 @@
+{
+  "name": "all-eyes",
+  "private": true,
+  "version": "1.0.0",
+  "description": "All Eyes — a live green 8-bit intelligence globe for the browser and Mac.",
+  "license": "MIT",
+  "type": "module",
+  "main": "electron/main.mjs",
+  "author": "All Eyes contributors",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "desktop": "npm run build && electron .",
+    "dist:mac": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac zip --arm64 --x64 --publish never",
+    "icon": "node scripts/make-icon.mjs"
+  },
+  "dependencies": {
+    "satellite.js": "^5.0.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "electron": "33.4.11",
+    "electron-builder": "25.1.8",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  },
+  "build": {
+    "appId": "app.alleyes.console",
+    "productName": "All Eyes",
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "server/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false,
+      "target": [
+        "zip"
+      ]
+    }
+  }
+}

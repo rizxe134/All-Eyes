@@ -1,0 +1,5 @@
+Press Start 2P and VT323 are distributed under the SIL Open Font License, Version 1.1.
+They are not covered by the MIT license of the All Eyes source code.
+Copyright 2012 The Press Start 2P Project Authors, with Reserved Font Name "Press Start 2P".
+Copyright 2011 The VT323 Project Authors, with Reserved Font Name "VT323".
+Full license: https://openfontlicense.org
