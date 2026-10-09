@@ -1,6 +1,6 @@
 # Contributing
 
-All Eyes is an original app. Do not paste modules, shaders, or large blocks from gods-eye-view or from earlier copies of this repository. Use those projects only as a hint for ideas and for which public datasets exist.
+All Eyes is an original app. Do not paste modules, shaders, or large blocks from earlier copies of this repository. Use those projects only as a hint for ideas and for which public datasets exist.
 
 ## Setup
 
