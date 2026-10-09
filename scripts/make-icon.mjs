@@ -65,8 +65,41 @@ function eye(x, y, size) {
   return [2, 18, 10]
 }
 
-mkdirSync('build', { recursive: true })
+function ico(images) {
+  const count = images.length
+  const header = Buffer.alloc(6)
+  header.writeUInt16LE(0, 0)
+  header.writeUInt16LE(1, 2)
+  header.writeUInt16LE(count, 4)
+  const entries = Buffer.alloc(16 * count)
+  const parts = [header, entries]
+  let offset = 6 + entries.length
+  for (let i = 0; i < count; i++) {
+    const { size, png: bytes } = images[i]
+    const at = i * 16
+    const dim = size >= 256 ? 0 : size
+    entries[at] = dim
+    entries[at + 1] = dim
+    entries.writeUInt16LE(1, at + 4)
+    entries.writeUInt16LE(32, at + 6)
+    entries.writeUInt32LE(bytes.length, at + 8)
+    entries.writeUInt32LE(offset, at + 12)
+    offset += bytes.length
+    parts.push(bytes)
+  }
+  return Buffer.concat(parts)
+}
+
+const sizes = [16, 24, 32, 48, 64, 128, 256, 512]
+mkdirSync('build/icons', { recursive: true })
 mkdirSync('public', { recursive: true })
-writeFileSync('build/icon.png', png(512, eye))
-writeFileSync('public/favicon.png', png(32, eye))
-console.log('wrote build/icon.png and public/favicon.png')
+const pngs = new Map(sizes.map((size) => [size, png(size, eye)]))
+for (const size of sizes) writeFileSync(`build/icons/${size}x${size}.png`, pngs.get(size))
+writeFileSync('build/icon.png', pngs.get(512))
+writeFileSync(
+  'build/icon.ico',
+  ico([16, 24, 32, 48, 64, 128, 256].map((size) => ({ size, png: pngs.get(size) }))),
+)
+writeFileSync('public/favicon.png', pngs.get(32))
+writeFileSync('public/icon.png', pngs.get(256))
+console.log('wrote build/icon.png, build/icon.ico, build/icons/*, public/favicon.png, public/icon.png')

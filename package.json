@@ -2,7 +2,7 @@
   "name": "all-eyes",
   "private": true,
   "version": "1.0.0",
-  "description": "All Eyes — a live green 8-bit intelligence globe for the browser and Mac.",
+  "description": "All Eyes — a live green 8-bit intelligence globe for the browser, Mac, Windows, and Linux.",
   "license": "MIT",
   "type": "module",
   "main": "electron/main.mjs",
@@ -17,6 +17,9 @@
     "test": "vitest run",
     "desktop": "npm run build && electron .",
     "dist:mac": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac zip --arm64 --x64 --publish never",
+    "dist:win": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never",
+    "dist:linux": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --linux --x64 --publish never",
+    "dist:all": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac zip --arm64 --x64 --win --x64 --linux --x64 --publish never",
     "icon": "node scripts/make-icon.mjs"
   },
   "dependencies": {
@@ -53,6 +56,48 @@
       "hardenedRuntime": false,
       "target": [
         "zip"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "All-Eyes-${version}-win-${arch}-setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "All-Eyes-${version}-win-${arch}-portable.${ext}"
+    },
+    "linux": {
+      "icon": "build/icons",
+      "category": "Utility",
+      "maintainer": "All Eyes contributors",
+      "synopsis": "Live green 8-bit intelligence globe",
+      "artifactName": "All-Eyes-${version}-linux-${arch}.${ext}",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "tar.gz",
+          "arch": ["x64"]
+        }
       ]
     }
   }

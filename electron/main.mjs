@@ -78,6 +78,7 @@ async function open() {
     minHeight: 640,
     backgroundColor: '#010a06',
     title: 'All Eyes',
+    icon: path.join(dist, 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,

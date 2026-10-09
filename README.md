@@ -15,19 +15,50 @@ Open http://127.0.0.1:4173. `npm run build` then `npm run preview` serves the pr
 
 No keys are required. Aircraft, satellites, earthquakes, weather radar, Baltic ships, tropical cyclones, natural events, and upcoming launches come from public feeds. Optional keys live in [.env.example](.env.example) or the in-app **CFG** panel. They are never hardcoded.
 
-## Mac app
+## Desktop apps
+
+Each script builds the web app, then writes installers into `release/`. The app starts a local server and opens the globe. You do not start a terminal yourself. `npm run dist:all` builds Mac, Windows, and Linux in one pass.
+
+### Mac
 
 ```bash
 npm run dist:mac
 ```
 
-That builds the web app and writes unsigned arm64 and x64 zips of `All Eyes.app` into `release/`. The app starts a local server and opens the globe. You do not start a terminal yourself.
-
-macOS Gatekeeper will block the unsigned app the first time. Right-click `All Eyes.app`, choose **Open**, then **Open** again. Or:
+Unsigned arm64 and x64 zips of `All Eyes.app`. macOS Gatekeeper will block the app the first time. Right-click `All Eyes.app`, choose **Open**, then **Open** again. Or:
 
 ```bash
 xattr -dr com.apple.quarantine "/path/to/All Eyes.app"
 ```
+
+### Windows
+
+```bash
+npm run dist:win
+```
+
+Unsigned x64 files: `All-Eyes-1.0.0-win-x64-setup.exe` (NSIS installer) and `All-Eyes-1.0.0-win-x64-portable.exe` (no install). Windows SmartScreen will warn because the app is unsigned. Choose **More info**, then **Run anyway**.
+
+### Linux
+
+```bash
+npm run dist:linux
+```
+
+x64 AppImage, `.deb`, and `.tar.gz`:
+
+- `All-Eyes-1.0.0-linux-x86_64.AppImage`
+- `All-Eyes-1.0.0-linux-amd64.deb`
+- `All-Eyes-1.0.0-linux-x64.tar.gz`
+
+Make the AppImage executable, then run it:
+
+```bash
+chmod +x All-Eyes-1.0.0-linux-x86_64.AppImage
+./All-Eyes-1.0.0-linux-x86_64.AppImage
+```
+
+Install the Debian package with `sudo apt install ./All-Eyes-1.0.0-linux-amd64.deb`. The tar.gz unpacks to a directory you can run directly.
 
 ## What you can do
 
