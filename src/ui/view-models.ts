@@ -69,6 +69,7 @@ const NAMES: Record<string, string> = {
   'ship-sail': 'sailing vessel',
   'ship-unk': 'ship',
   'sat-station': 'space station',
+  'sat-scope': 'space telescope',
   'sat-comms': 'communications satellite',
   'sat-debris': 'debris',
 }

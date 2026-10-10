@@ -9,15 +9,14 @@ import {
   type Vec3,
 } from './geo'
 import { declutterCellDeg, declutterMarkers, markerScreenPx } from './markers'
-import { chooseHit } from './pick'
+import { chooseHit, hitRadiusPx, layerPriority } from './pick'
 import { MARKER_MAX, MARKER_DEFAULT, MARKER_MIN } from './settings'
 import { spriteRows } from './sprites'
-import type { GeoPoint, GlobeApi, GlobeClick, GlobeTheme, Marker, ViewState } from './types'
+import type { GeoPoint, GlobeApi, GlobeClick, GlobeTheme, Marker, OrbitTrack, ViewState } from './types'
 
 const R = 100
 /** Silhouettes only once the view is close enough that contacts are separated. */
 const SPRITE_RANGE = 640
-const HIT_PX = 12
 
 interface DrawItem {
   layerId: string
@@ -402,7 +401,21 @@ export class Globe implements GlobeApi {
   }
 
   setOrbit(points: GeoPoint[] | null): void {
-    this.drawPath(this.orbit, points, false, 0x3dff7a, 0.38)
+    this.setOrbitTracks(points && points.length > 1 ? [{ points, color: 0x3dff7a, opacity: 0.38 }] : null)
+  }
+
+  setOrbitTracks(tracks: OrbitTrack[] | null): void {
+    for (const child of this.orbit.children) {
+      const line = child as THREE.Line
+      line.geometry.dispose()
+      const mat = line.material
+      if (!Array.isArray(mat)) mat.dispose()
+    }
+    this.orbit.clear()
+    if (!tracks) return
+    for (const track of tracks) {
+      this.drawPath(this.orbit, track.points, Boolean(track.dashed), track.color, track.opacity, false)
+    }
   }
 
   setHistory(points: GeoPoint[] | null): void {
@@ -413,14 +426,16 @@ export class Globe implements GlobeApi {
     this.drawPath(this.route, points, true, 0xd8ffe8, 0.85)
   }
 
-  private drawPath(group: THREE.Group, points: GeoPoint[] | null, dashed: boolean, color: number, opacity: number) {
-    for (const child of group.children) {
-      const line = child as THREE.Line
-      line.geometry.dispose()
-      const mat = line.material
-      if (!Array.isArray(mat)) mat.dispose()
+  private drawPath(group: THREE.Group, points: GeoPoint[] | null, dashed: boolean, color: number, opacity: number, replace = true) {
+    if (replace) {
+      for (const child of group.children) {
+        const line = child as THREE.Line
+        line.geometry.dispose()
+        const mat = line.material
+        if (!Array.isArray(mat)) mat.dispose()
+      }
+      group.clear()
     }
-    group.clear()
     if (!points || points.length < 2) return
     let chunk: number[] = []
     const prev = new THREE.Vector3()
@@ -438,7 +453,9 @@ export class Globe implements GlobeApi {
         : new THREE.LineBasicMaterial({ color, transparent: true, opacity, toneMapped: false })
       const line = new THREE.Line(geo, mat)
       if (dashed) line.computeLineDistances()
+      line.renderOrder = 6
       group.add(line)
+      if (!replace) group.add(this.orbitRibbon(chunk, color, opacity, dashed))
       chunk = []
     }
     for (const point of points) {
@@ -449,6 +466,57 @@ export class Globe implements GlobeApi {
       hasPrev = true
     }
     flush()
+  }
+
+  /** WebGL line width is always one pixel, so the orbit is a ribbon a few pixels wide. */
+  private orbitRibbon(flat: number[], color: number, opacity: number, dashed: boolean): THREE.Mesh {
+    const pts: THREE.Vector3[] = []
+    for (let i = 0; i < flat.length; i += 3) pts.push(new THREE.Vector3(flat[i]!, flat[i + 1]!, flat[i + 2]!))
+    const dist = Math.max(1, this.camera.position.length() - R)
+    const worldPerPx = (2 * dist * Math.tan((38 * Math.PI) / 360)) / (this.canvas.clientHeight || 800)
+    const width = clamp(worldPerPx * 14, 0.15, 3)
+    const positions: number[] = []
+    const indices: number[] = []
+    const runs: number[][] = []
+    if (!dashed) runs.push(pts.map((_, i) => i))
+    else {
+      for (let i = 0; i < pts.length - 1; i += 2) runs.push([i, i + 1])
+    }
+    for (const run of runs) {
+      if (run.length < 2) continue
+      const base = positions.length / 3
+      run.forEach((i, n) => {
+        const prev = pts[Math.max(0, i - 1)]!
+        const next = pts[Math.min(pts.length - 1, i + 1)]!
+        const point = pts[i]!
+        const side = new THREE.Vector3().crossVectors(next.clone().sub(prev), point.clone().normalize())
+        if (side.lengthSq() < 1e-8) side.set(0, 1, 0)
+        side.normalize().multiplyScalar(width)
+        const lift = point.clone().normalize().multiplyScalar(0.45)
+        const a = point.clone().add(side).add(lift)
+        const b = point.clone().sub(side).add(lift)
+        positions.push(a.x, a.y, a.z, b.x, b.y, b.z)
+        if (n > 0) {
+          const o = base + (n - 1) * 2
+          indices.push(o, o + 1, o + 2, o + 1, o + 3, o + 2)
+        }
+      })
+    }
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+    if (indices.length) geo.setIndex(indices)
+    const mat = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      depthTest: true,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    })
+    const mesh = new THREE.Mesh(geo, mat)
+    mesh.renderOrder = 6
+    return mesh
   }
 
   setHighlight(id: string | null): void {
@@ -740,7 +808,7 @@ export class Globe implements GlobeApi {
         const list = grouped.get(sprite) ?? []
         list.push({ layerId, marker })
         grouped.set(sprite, list)
-        if (marker.id === this.highlightId && (sprite.startsWith('air-') || sprite === 'dot')) {
+        if (marker.id === this.highlightId) {
           const ring = grouped.get('sel-ring') ?? []
           ring.push({ layerId, marker })
           grouped.set('sel-ring', ring)
@@ -833,6 +901,11 @@ export class Globe implements GlobeApi {
     }
   }
 
+  private pointerRadius(event: PointerEvent): number {
+    const coarse = event.pointerType === 'touch' || window.matchMedia('(pointer: coarse)').matches
+    return hitRadiusPx(coarse)
+  }
+
   private ndc(event: PointerEvent) {
     const rect = this.canvas.getBoundingClientRect()
     this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
@@ -848,12 +921,12 @@ export class Globe implements GlobeApi {
     return vecToLatLon({ x: hit.point.x, y: hit.point.y, z: hit.point.z })
   }
 
-  private collectHits(event: PointerEvent): { marker: Marker; layerId: string; id: string; d: number }[] {
+  private collectHits(event: PointerEvent): { marker: Marker; layerId: string; id: string; d: number; priority: number }[] {
     const rect = this.canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
     const camN = this.camera.position.clone().normalize()
-    const hits: { marker: Marker; layerId: string; id: string; d: number }[] = []
+    const hits: { marker: Marker; layerId: string; id: string; d: number; priority: number }[] = []
     for (const pool of this.pools.values()) {
       if (pool.id === 'sel-ring') continue
       for (const item of pool.items) {
@@ -864,7 +937,9 @@ export class Globe implements GlobeApi {
         const projected = this.project(marker.lat, marker.lon, marker.altKm)
         if (!projected.visible) continue
         const d = Math.hypot(projected.x - x, projected.y - y)
-        if (d <= HIT_PX) hits.push({ marker, layerId: item.layerId, id: marker.id, d })
+        if (d <= this.pointerRadius(event)) {
+          hits.push({ marker, layerId: item.layerId, id: marker.id, d, priority: layerPriority(item.layerId) })
+        }
       }
     }
     return hits
@@ -905,6 +980,7 @@ export class Globe implements GlobeApi {
         this.hoverId = id
         this.dirty = true
       }
+      this.canvas.style.cursor = picked ? 'pointer' : ''
       if (picked) {
         const rect = this.canvas.getBoundingClientRect()
         for (const fn of this.hoverers) {

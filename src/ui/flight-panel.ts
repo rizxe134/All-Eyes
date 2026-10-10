@@ -4,7 +4,7 @@ import { emptyPhoto, requestPhoto, settlePhoto, showPlaceholder, type PhotoFrame
 export interface FlightPanel {
   root: HTMLElement
   setView(view: FlightView | null): void
-  setGraph(samples: { altFt: number; gsKt: number }[]): void
+  setGraph(samples: { altFt: number; gsKt: number }[], note?: string): void
   setRouteOn(on: boolean): void
   onClose(cb: () => void): void
   onView3d(cb: () => void): void
@@ -242,6 +242,21 @@ export function mountFlightPanel(): FlightPanel {
     title.textContent = view.callsign
     badge.textContent = view.typeCode
     operator.textContent = view.operator
+    routeBtn.textContent = view.routeLabel || 'ROUTE'
+    graphSum.textContent = view.graphTitle || 'SPEED & ALTITUDE GRAPH'
+    const slots = view.times ?? [
+      { k: 'SCHED', v: 'NOT AVAILABLE' },
+      { k: 'ACTUAL', v: 'NOT AVAILABLE' },
+      { k: 'EST', v: 'NOT AVAILABLE' },
+    ]
+    const timeRows = [...times.children]
+    slots.slice(0, 3).forEach((slot, index) => {
+      const row = timeRows[index]
+      if (!row) return
+      const labels = row.querySelectorAll('span')
+      if (labels[0]) labels[0].textContent = slot.k
+      if (labels[1]) labels[1].textContent = slot.v
+    })
     fromCode.textContent = view.originCode
     fromCity.textContent = view.originCity
     toCode.textContent = view.destCode
@@ -253,7 +268,7 @@ export function mountFlightPanel(): FlightPanel {
     for (const row of view.rows) {
       const dt = el('dt', '', row.k)
       const dd = el('dd', '', row.v)
-      if (row.k === 'GROUND SPEED') {
+      if (row.k === 'GROUND SPEED' || row.k === 'SPEED') {
         const speed = el('button', 'ae-btn', 'UNIT') as HTMLButtonElement
         speed.type = 'button'
         speed.title = 'Toggle KT / MPH / KM/H'
@@ -277,8 +292,8 @@ export function mountFlightPanel(): FlightPanel {
   return {
     root,
     setView: paint,
-    setGraph(samples) {
-      drawGraph(graph, graphNote, samples)
+    setGraph(samples, note?: string) {
+      drawGraph(graph, graphNote, samples, note)
     },
     setRouteOn(on) {
       routeBtn.classList.toggle('is-on', on)
@@ -300,7 +315,7 @@ function action(label: string) {
   return button
 }
 
-function drawGraph(canvas: HTMLCanvasElement, note: HTMLElement, samples: { altFt: number; gsKt: number }[]) {
+function drawGraph(canvas: HTMLCanvasElement, note: HTMLElement, samples: { altFt: number; gsKt: number }[], caption?: string) {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   const w = canvas.width
@@ -315,7 +330,7 @@ function drawGraph(canvas: HTMLCanvasElement, note: HTMLElement, samples: { altF
     note.textContent = 'NOT ENOUGH HISTORY'
     return
   }
-  note.textContent = 'ALT  BRIGHT    GS  DIM'
+  note.textContent = caption || 'ALT  BRIGHT    GS  DIM'
   const alts = samples.map((sample) => sample.altFt)
   const speeds = samples.map((sample) => sample.gsKt)
   const plot = (values: number[], color: string) => {

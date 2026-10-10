@@ -367,6 +367,19 @@ export function buildStation(): THREE.Group {
   return root
 }
 
+export function buildScope(): THREE.Group {
+  const root = new THREE.Group()
+  const tube = solid(new THREE.CylinderGeometry(0.08, 0.11, 0.95, 12), metal)
+  tube.rotation.x = Math.PI / 2
+  const aperture = solid(new THREE.CylinderGeometry(0.26, 0.22, 0.08, 16), new THREE.MeshStandardMaterial({ color: 0xb7c4d4, metalness: 0.8, roughness: 0.2 }))
+  aperture.rotation.x = Math.PI / 2
+  aperture.position.z = 0.28
+  const panel = solid(new THREE.BoxGeometry(0.72, 0.02, 0.22), solar)
+  panel.position.y = 0.18
+  root.add(tube, aperture, panel)
+  return root
+}
+
 export function buildCommsSat(): THREE.Group {
   const root = new THREE.Group()
   const bus = solid(new THREE.BoxGeometry(0.28, 0.22, 0.28), gold)
@@ -454,6 +467,7 @@ export function buildProcedural(id: string): THREE.Group {
   if (id === 'air-heli') return buildHelicopter()
   if (id.startsWith('ship-')) return buildShip(id)
   if (id === 'sat-station') return buildStation()
+  if (id === 'sat-scope') return buildScope()
   if (id === 'sat-comms') return buildCommsSat()
   if (id === 'sat-debris') return buildDebris()
   if (id.startsWith('ico-') || id === 'dot' || id === 'chevron' || id === 'diamond' || id === 'ring' || id === 'box' || id === 'drop') {

@@ -1,285 +1,222 @@
-import { formatCard } from '../../core/cards'
-import type { AllEyesPlugin, CardField, Contact, LayerContext, PluginContext } from '../../core/types'
-import { getText } from '../../net/http'
+import { inView } from '../aircraft/feed'
+import type { AllEyesPlugin, Contact, LayerContext, PluginContext } from '../../core/types'
+import { getJson } from '../../net/http'
 import { displayAltKm } from './alt'
+import { catalogCount, catalogFault, catalogReady, catalogSat, ensureCatalog, ensurePlace, findCatalog, placeOf, satsIn, stepPropagation } from './catalog'
+import { hoverTrack, readSatcat, satGraph, satTracks, shapeFor, storeSatPhoto } from './detail'
+
+export { formatSat, onSatDetail } from './detail'
+import type { SatGroup } from './elements'
 import { formatPass, windowsAbove } from './passes'
-import { parseTle, type SatFix } from './parse'
-import { buildSatrec, elevationDeg, orbitTrack, periodMinutes, propagateGeodetic, speedKmS } from './propagate'
-import { satSprite } from './sprites'
-import type { SatRec } from 'satellite.js'
+import { elevationDeg } from './propagate'
+import { nasaQuery, parseNasa } from './photo'
+import { locateShip } from '../ships/plugin'
 
-interface LiveSat {
-  fix: SatFix
-  satrec: SatRec
+export function findSat(query: string) {
+  const sat = findCatalog(query)
+  if (!sat) return null
+  return { fix: sat, satrec: sat.satrec }
 }
 
-const cache = new Map<string, LiveSat[]>()
-const inflight = new Map<string, Promise<LiveSat[]>>()
-let passHost: HTMLElement | null = null
-
-const ALIAS: Record<string, RegExp> = {
-  iss: /ISS \(ZARYA\)/i,
-  tiangong: /TIANHE|TIANGONG/i,
-  css: /TIANHE/i,
-  hubble: /HST|HUBBLE/i,
+const LAYER_OF: Record<SatGroup, string> = {
+  stations: 'stations',
+  gnss: 'gnss',
+  weather: 'wxsat',
+  science: 'science',
+  geo: 'geo',
+  active: 'satellites',
+  starlink: 'starlink',
 }
 
-function allSats(): LiveSat[] {
-  return [...cache.values()].flat()
-}
-
-export function findSat(query: string): LiveSat | null {
-  const q = query.trim().toLowerCase()
-  if (!q) return null
-  const alias = ALIAS[q]
-  const pool = allSats()
-  if (alias) {
-    const named = pool.find((sat) => alias.test(sat.fix.name))
-    if (named) return named
-  }
-  const norad = Number(q)
-  if (Number.isFinite(norad)) {
-    const byId = pool.find((sat) => sat.fix.norad === norad)
-    if (byId) return byId
-  }
-  return (
-    pool.find((sat) => sat.fix.name.toLowerCase() === q) ??
-    pool.find((sat) => sat.fix.name.toLowerCase().includes(q)) ??
-    null
-  )
-}
-
-async function loadGroup(ctx: LayerContext, group: string): Promise<LiveSat[]> {
-  const hit = cache.get(group)
-  if (hit) return hit
-  let job = inflight.get(group)
-  if (!job) {
-    job = getText(`/api/celestrak?group=${encodeURIComponent(group)}`, ctx.settings, ctx.signal)
-      .then((text) => {
-        const live: LiveSat[] = []
-        for (const fix of parseTle(text, group)) {
-          const satrec = buildSatrec(fix)
-          if (satrec) live.push({ fix, satrec })
-        }
-        cache.set(group, live)
-        return live
-      })
-      .finally(() => inflight.delete(group))
-    inflight.set(group, job)
-  }
-  return job
-}
-
-function sample<T>(list: T[], max: number): T[] {
-  if (list.length <= max) return list
-  const step = list.length / max
-  const out: T[] = []
-  for (let i = 0; i < max; i++) {
-    const item = list[Math.floor(i * step)]
-    if (item) out.push(item)
-  }
-  return out
-}
-
-const passMemo = new Map<number, { at: number; lat: number; lon: number; text: string }>()
+const enabled = new Set<SatGroup>()
+let shared: PluginContext | null = null
+let timer = 0
+let users = 0
+let orbitOn = true
 let orbitOwned = false
+let hoverNorad: number | null = null
+const photoTried = new Set<number>()
+const satcatTried = new Set<number>()
 
-function firstPass(sat: LiveSat, lat: number, lon: number, start: number): string {
-  const hit = passMemo.get(sat.fix.norad)
-  if (hit && start - hit.at < 60_000 && Math.abs(hit.lat - lat) < 0.25 && Math.abs(hit.lon - lon) < 0.25) return hit.text
-  const samples: { t: number; el: number }[] = []
-  const end = start + 12 * 60 * 60 * 1000
-  for (let t = start; t <= end; t += 120_000) {
-    const el = elevationDeg(sat.satrec, lat, lon, new Date(t))
-    if (el != null) samples.push({ t, el })
-  }
-  const window = windowsAbove(samples, 10)[0]
-  const text = window ? formatPass(window) : 'NONE IN 12H'
-  passMemo.set(sat.fix.norad, { at: start, lat, lon, text })
-  return text
+export function satTrackOn(): boolean {
+  return orbitOn
 }
 
-function satCard(sat: LiveSat, point: { altKm: number }, when: Date, pass: string): CardField[] {
-  const inc = (sat.satrec.inclo * 180) / Math.PI
-  const speed = speedKmS(sat.satrec, when)
-  return [
-    { k: 'NAME', v: sat.fix.name },
-    { k: 'ID', v: String(sat.fix.norad) },
-    { k: 'ALT', v: `${Math.round(point.altKm)} KM` },
-    { k: 'SPD', v: speed == null ? '' : `${speed.toFixed(2)} KM/S` },
-    { k: 'PER', v: `${Math.round(periodMinutes(sat.satrec))} MIN` },
-    { k: 'INC', v: `${inc.toFixed(1)}°` },
-    { k: 'PASS', v: pass },
-  ]
+export function toggleSatTrack(): boolean {
+  orbitOn = !orbitOn
+  return orbitOn
 }
 
-function toContacts(sats: LiveSat[], layerId: string, when: Date, focusId: string | null, pin: { lat: number; lon: number }): Contact[] {
+export function locateSat(query: string): { norad: number; name: string; lat: number; lon: number; layerId: string } | null {
+  const sat = findCatalog(query)
+  if (!sat) return null
+  const place = ensurePlace(sat.norad)
+  if (!place) return null
+  return { norad: sat.norad, name: sat.name, lat: place.lat, lon: place.lon, layerId: LAYER_OF[sat.group] }
+}
+
+function focusNorad(): number | null {
+  const id = shared?.getTrackId() ?? null
+  if (!id) return hoverNorad
+  const norad = Number(id.split(':')[1])
+  if (!Number.isFinite(norad) || !catalogSat(norad)) return hoverNorad
+  return norad
+}
+
+function toContact(group: SatGroup, layerId: string): Contact[] {
   const out: Contact[] = []
-  for (const sat of sats) {
-    const point = propagateGeodetic(sat.satrec, when)
-    if (!point) continue
-    const station = sat.fix.group === 'stations'
-    const id = `${layerId}:${sat.fix.norad}`
-    const pass = focusId === id ? firstPass(sat, pin.lat, pin.lon, when.getTime()) : ''
-    const card = satCard(sat, point, when, pass)
+  for (const sat of satsIn(group)) {
+    const place = placeOf(sat.norad)
+    if (!place) continue
+    const shape = shapeFor(sat.norad)
     out.push({
-      id,
+      id: `sat:${sat.norad}`,
       layerId,
       kind: 'sat',
-      lat: point.lat,
-      lon: point.lon,
-      altKm: displayAltKm(point.altKm),
+      lat: place.lat,
+      lon: place.lon,
+      altKm: displayAltKm(place.altKm),
       heading: 0,
-      label: sat.fix.name,
-      detail: formatCard(card),
-      brightness: station ? 1 : layerId === 'starlink' ? 0.34 : 0.55,
-      shape: satSprite(sat.fix.name, sat.fix.group),
-      scale: station ? 1.15 : layerId === 'starlink' ? 0.62 : 0.78,
-      card,
+      label: sat.name,
+      callsign: sat.name,
+      detail: sat.name,
+      brightness: group === 'stations' ? 1 : group === 'starlink' ? 0.32 : 0.58,
+      shape,
+      scale: group === 'stations' ? 1.05 : group === 'starlink' ? 0.5 : 0.7,
+      card: [
+        { k: 'NAME', v: sat.name },
+        { k: 'ID', v: String(sat.norad) },
+        { k: 'ALT', v: `${Math.round(place.altKm)} KM` },
+      ],
     })
   }
   return out
 }
 
-function predict(sat: LiveSat, lat: number, lon: number, start: number): string {
-  const samples: { t: number; el: number }[] = []
-  const end = start + 12 * 60 * 60 * 1000
-  for (let t = start; t <= end; t += 60_000) {
-    const el = elevationDeg(sat.satrec, lat, lon, new Date(t))
-    if (el != null) samples.push({ t, el })
+function publishAll() {
+  const ctx = shared
+  if (!ctx) return
+  for (const group of enabled) ctx.publish(LAYER_OF[group], toContact(group, LAYER_OF[group]))
+  const view = ctx.globe.getView()
+  let loaded = 0
+  let visible = 0
+  for (const group of enabled) {
+    for (const sat of satsIn(group)) {
+      const place = placeOf(sat.norad)
+      if (!place) continue
+      loaded += 1
+      if (inView(place.lat, place.lon, view.lat, view.lon, view.rangeKm)) visible += 1
+    }
   }
-  const windows = windowsAbove(samples, 10).slice(0, 4)
-  if (!windows.length) return `${sat.fix.name}\nNO PASS ABOVE 10° IN 12H`
-  return [sat.fix.name, ...windows.map(formatPass)].join('\n')
+  const state = catalogFault() && catalogCount() === 0 ? 'OFFLINE' : catalogReady() ? 'OK' : 'PARTIAL'
+  const gap = state !== 'OK' && visible === 0 ? ' · FEED COVERAGE LIMIT' : ''
+  ctx.status?.('satellites', `SATS ${loaded} LOADED · ${visible} VIEW · CELESTRAK ${state}${gap}`)
+  ctx.log('satellites', state === 'OFFLINE' ? 'TLE FEED OFFLINE' : '')
 }
 
-function trackedSat(getTrackId: () => string | null): LiveSat | null {
-  const id = getTrackId()
-  if (!id) return findSat('iss')
-  const norad = Number(id.split(':')[1])
-  return (Number.isFinite(norad) ? findSat(String(norad)) : null) ?? findSat('iss')
-}
-
-function paintOrbit(ctx: PluginContext) {
-  const id = ctx.getTrackId()
-  const mine = !!id && (id.startsWith('satellites:') || id.startsWith('starlink:'))
-  if (!mine) {
-    if (orbitOwned && !id?.startsWith('air:')) ctx.globe.setOrbit(null)
-    orbitOwned = false
+function paintOrbit() {
+  const ctx = shared
+  if (!ctx) return
+  const selected = ctx.getTrackId()
+  const selectedNorad = selected ? Number(selected.split(':')[1]) : NaN
+  const showSelected = orbitOn && Number.isFinite(selectedNorad) && catalogSat(selectedNorad)
+  if (showSelected) {
+    const tracks = satTracks(selectedNorad)
+    orbitOwned = true
+    ctx.globe.setOrbitTracks(tracks ? [
+      { points: tracks.past, color: 0xb6ffd0, opacity: 0.95 },
+      { points: tracks.future, dashed: true, color: 0xf4fff8, opacity: 1 },
+      { points: tracks.ring, color: 0x3dff7a, opacity: 0.9 },
+    ] : null)
     return
   }
-  const sat = findSat(id.split(':')[1] ?? '')
-  if (!sat) {
-    ctx.globe.setOrbit(null)
+  if (hoverNorad != null && hoverNorad !== selectedNorad) {
+    const trail = hoverTrack(hoverNorad)
+    orbitOwned = true
+    ctx.globe.setOrbitTracks(trail.length > 1 ? [{ points: trail, dashed: true, color: 0x7dffb0, opacity: 0.7 }] : null)
     return
   }
-  const minutes = Math.min(periodMinutes(sat.satrec), 180)
-  const points = orbitTrack(sat.satrec, ctx.clock.now(), minutes, 96).map((point) => ({
-    lat: point.lat,
-    lon: point.lon,
-    altKm: displayAltKm(point.altKm),
-  }))
-  orbitOwned = true
-  ctx.globe.setOrbit(points)
+  if (orbitOwned) ctx.globe.setOrbitTracks(null)
+  orbitOwned = false
 }
 
-function paintPasses(ctx: PluginContext) {
-  if (!passHost) return
-  const sat = trackedSat(() => ctx.getTrackId())
-  if (!sat) {
-    passHost.textContent = 'WAITING FOR TLES'
-    return
+function arm(ctx: PluginContext) {
+  shared = ctx
+  bindHover(ctx)
+  users += 1
+  if (users !== 1) return
+  void ensureCatalog(ctx.settings, undefined).then(() => publishAll()).catch(() => publishAll())
+  let ticks = 0
+  timer = window.setInterval(() => {
+    ticks += 1
+    if (!catalogReady() && ticks % 80 === 0) void ensureCatalog(ctx.settings).then(() => publishAll()).catch(() => publishAll())
+    stepPropagation(new Date(ctx.clock.now()), focusNorad(), 350, (group) => enabled.has(group))
+    publishAll()
+    paintOrbit()
+    if (ticks % 60 === 0) checkPasses(ctx)
+  }, 450)
+}
+
+function disarm() {
+  users = Math.max(0, users - 1)
+  if (users > 0) return
+  window.clearInterval(timer)
+  timer = 0
+  if (orbitOwned) shared?.globe.setOrbitTracks(null)
+  orbitOwned = false
+}
+
+async function enrich(norad: number, ctx: PluginContext) {
+  if (!satcatTried.has(norad)) {
+    satcatTried.add(norad)
+    try {
+      readSatcat(await getJson(`/api/satcat?cat=${norad}`, ctx.settings, undefined), norad)
+    } catch {
+      /* the panel keeps NOT AVAILABLE */
+    }
   }
-  const pin = ctx.getPin()
-  passHost.textContent = predict(sat, pin.lat, pin.lon, ctx.clock.now())
-}
-
-function checkPassWatches(ctx: PluginContext) {
-  const pin = ctx.getPin()
-  const now = new Date()
-  for (const rule of ctx.alerts.rules) {
-    if (rule.kind !== 'pass') continue
-    const sat = findSat(rule.value)
-    if (!sat) continue
-    const el = elevationDeg(sat.satrec, pin.lat, pin.lon, now)
-    if (el != null && el >= 10) {
-      ctx.alerts.raise(`pass:${rule.id}:${sat.fix.norad}`, `PASS ${sat.fix.name}`, `ELEV ${el.toFixed(0)}° OVER PIN`)
+  const sat = catalogSat(norad)
+  const query = sat ? nasaQuery(sat.name) : null
+  if (query && !photoTried.has(norad)) {
+    photoTried.add(norad)
+    try {
+      const body = await getJson(`/api/nasa?q=${encodeURIComponent(query.q)}`, ctx.settings, undefined)
+      storeSatPhoto(norad, parseNasa(body, query.required))
+    } catch {
+      storeSatPhoto(norad, null)
     }
   }
 }
 
-function makeLayer(id: string, label: string, description: string, defaultOn: boolean, wanted: string[], cap: number, extras: boolean) {
+function makeLayer(group: SatGroup, id: string, label: string, description: string, defaultOn: boolean) {
   return {
     id,
     label,
     description,
     defaultOn,
     create(ctx: LayerContext) {
-      let timer = 0
-      let watchTimer = 0
       let on = false
-      let loaded: LiveSat[] = []
-      let hoverId: string | null = null
-
-      const publish = () => {
-        const focus = ctx.getTrackId() || hoverId
-        ctx.publish(id, toContacts(sample(loaded, cap), id, new Date(ctx.clock.now()), focus, ctx.getPin()))
-        if (extras) paintOrbit(ctx)
-      }
-
-      const tick = async () => {
-        if (!on || ctx.signal.aborted) return
-        try {
-          const groups = await Promise.all(wanted.map((group) => loadGroup(ctx, group)))
-          loaded = groups.flat()
-          ctx.log(id, loaded.length ? '' : 'NO TLES')
-        } catch (err) {
-          ctx.log(id, err instanceof Error ? err.message : 'TLE FAULT')
-        }
-        publish()
-        if (extras) paintPasses(ctx)
-      }
-
-      const offClock = ctx.clock.subscribe(() => { if (on) publish() })
-      const offTrack = extras ? ctx.onTrack(() => { if (on) { paintOrbit(ctx); paintPasses(ctx) } }) : () => {}
-      const offPin = extras ? ctx.onPin(() => { if (on) paintPasses(ctx) }) : () => {}
-      const offHover = ctx.globe.onHover((hit) => {
-        const next = hit?.marker.id?.startsWith(`${id}:`) ? hit.marker.id : null
-        if (next === hoverId) return
-        hoverId = next
-      })
-
       return {
         setEnabled(next: boolean) {
           if (next === on) return
           on = next
-          window.clearInterval(timer)
-          window.clearInterval(watchTimer)
           if (!next) {
+            enabled.delete(group)
             ctx.publish(id, [])
-            if (extras && orbitOwned) {
-              ctx.globe.setOrbit(null)
-              orbitOwned = false
-            }
+            disarm()
+            publishAll()
             return
           }
-          void tick()
-          timer = window.setInterval(() => publish(), 1000)
-          if (extras) {
-            watchTimer = window.setInterval(() => {
-              checkPassWatches(ctx)
-              paintPasses(ctx)
-            }, 30000)
-          }
+          enabled.add(group)
+          arm(ctx)
+          publishAll()
         },
         dispose() {
-          on = false
-          window.clearInterval(timer)
-          window.clearInterval(watchTimer)
-          offClock()
-          offTrack()
-          offPin()
-          offHover()
+          if (on) {
+            on = false
+            enabled.delete(group)
+            disarm()
+          }
           ctx.publish(id, [])
         },
       }
@@ -287,53 +224,146 @@ function makeLayer(id: string, label: string, description: string, defaultOn: bo
   }
 }
 
+let hoverBound = false
+
+function bindHover(ctx: PluginContext) {
+  if (hoverBound) return
+  hoverBound = true
+  ctx.globe.onHover((hit) => {
+    const id = hit?.marker.id ?? ''
+    const norad = id.startsWith('sat:') ? Number(id.slice(4)) : NaN
+    const next = Number.isFinite(norad) ? norad : null
+    if (next === hoverNorad) return
+    hoverNorad = next
+    paintOrbit()
+  })
+  ctx.onTrack((id) => {
+    const norad = id?.startsWith('sat:') ? Number(id.slice(4)) : NaN
+    if (Number.isFinite(norad)) void enrich(norad, ctx)
+    paintOrbit()
+  })
+}
+
+export function satSeries(norad: number) {
+  return satGraph(norad)
+}
+
 export const satellitePlugin: AllEyesPlugin = {
   id: 'satellites',
   name: 'Satellites',
-  version: '1.0.0',
+  version: '1.5.0',
   layers: [
-    makeLayer(
-      'satellites',
-      'SATS',
-      'Stations, bright visual objects, weather birds, and GNSS. High orbits are pulled inward.',
-      true,
-      ['stations', 'visual', 'weather', 'gps-ops'],
-      2500,
-      true,
-    ),
-    makeLayer(
-      'starlink',
-      'STAR',
-      'A sampled Starlink shell. Off until you arm it.',
-      false,
-      ['starlink'],
-      1200,
-      false,
-    ),
+    makeLayer('stations', 'stations', 'STN', 'Crewed stations from the public CelesTrak catalog.', true),
+    makeLayer('gnss', 'gnss', 'GNSS', 'GPS, Galileo, GLONASS, and BeiDou.', true),
+    makeLayer('weather', 'wxsat', 'WXS', 'Weather satellites.', true),
+    makeLayer('science', 'science', 'SCI', 'Science missions, including Hubble when it is in the catalog.', true),
+    makeLayer('geo', 'geo', 'GEO', 'Geostationary satellites, drawn in a halo above the earth.', true),
+    makeLayer('active', 'satellites', 'SATS', 'The rest of the public active catalog. No stride cap.', true),
+    makeLayer('starlink', 'starlink', 'STAR', 'The full Starlink shell. Off until you arm it.', false),
   ],
   panels: [
     {
       id: 'passes',
       title: 'PASSES',
-      mount(host) {
-        passHost = host
-        host.textContent = 'PIN A SPOT, THEN PASS ISS'
-        return () => { passHost = null }
+      mount(host, ctx) {
+        bindHover(ctx)
+        const paint = () => {
+          const id = ctx.getTrackId()
+          const query = id?.startsWith('sat:') ? id.slice(4) : 'iss'
+          const sat = findSat(query)
+          if (!sat) {
+            host.textContent = catalogReady() ? 'NO TLE' : 'LOADING CATALOG'
+            return
+          }
+          const pin = ctx.getPin()
+          host.textContent = predict(sat.satrec, sat.fix.name, pin.lat, pin.lon, ctx.clock.now())
+        }
+        const off = ctx.onTrack(paint)
+        const timer = window.setInterval(paint, 30_000)
+        paint()
+        return () => {
+          window.clearInterval(timer)
+          off()
+        }
       },
     },
   ],
   commands: [
+    {
+      name: 'sat',
+      usage: 'sat <name or norad>',
+      summary: 'Find a satellite and lock it',
+      run(args, ctx) {
+        const hit = locateSat(args.join(' '))
+        if (!hit) return catalogReady() ? 'NO SATELLITE' : 'CATALOG STILL LOADING'
+        ctx.setLayer(hit.layerId, true)
+        ctx.flyTo(hit.lat, hit.lon, 900)
+        ctx.track(`sat:${hit.norad}`)
+        return `SAT ${hit.name}`
+      },
+    },
+    {
+      name: 'find',
+      usage: 'find <name, norad, or mmsi>',
+      summary: 'Lock a satellite or a ship',
+      run(args, ctx) {
+        const query = args.join(' ').trim()
+        const sat = locateSat(query)
+        if (sat) {
+          ctx.setLayer(sat.layerId, true)
+          ctx.flyTo(sat.lat, sat.lon, 900)
+          ctx.track(`sat:${sat.norad}`)
+          return `SAT ${sat.name}`
+        }
+        const ship = locateShip(query)
+        if (ship) {
+          ctx.setLayer('ships', true)
+          ctx.flyTo(ship.lat, ship.lon, 80)
+          ctx.track(`ship:${ship.mmsi}`)
+          return `SHIP ${ship.name}`
+        }
+        const contact = ctx.findContact(query)
+        if (!contact) return 'NOT FOUND'
+        ctx.flyTo(contact.lat, contact.lon, 400)
+        ctx.track(contact.id)
+        return contact.label
+      },
+    },
     {
       name: 'pass',
       usage: 'pass [name]',
       summary: 'Predict satellite passes over the pin',
       run(args, ctx) {
         const query = args.join(' ').trim()
-        const sat = query ? findSat(query) : trackedSat(() => ctx.getTrackId()) ?? findSat('iss')
-        if (!sat) return 'NO TLE LOADED. ARM SATS AND WAIT.'
+        const sat = query ? findSat(query) : findSat(String(focusNorad() ?? '')) ?? findSat('iss')
+        if (!sat) return catalogReady() ? 'NO SATELLITE' : 'CATALOG STILL LOADING'
         const pin = ctx.getPin()
-        return predict(sat, pin.lat, pin.lon, Date.now() + ctx.getTimeMinutes() * 60_000)
+        return predict(sat.satrec, sat.fix.name, pin.lat, pin.lon, Date.now() + ctx.getTimeMinutes() * 60_000)
       },
     },
   ],
+}
+
+function checkPasses(ctx: PluginContext) {
+  const pin = ctx.getPin()
+  const now = new Date(ctx.clock.now())
+  for (const rule of ctx.alerts.rules) {
+    if (rule.kind !== 'pass') continue
+    const sat = findCatalog(rule.value)
+    if (!sat) continue
+    const el = elevationDeg(sat.satrec, pin.lat, pin.lon, now)
+    if (el != null && el >= 10) ctx.alerts.raise(`pass:${rule.id}:${sat.norad}`, `PASS ${sat.name}`, `ELEV ${el.toFixed(0)}° OVER PIN`)
+  }
+}
+
+function predict(satrec: import('satellite.js').SatRec, name: string, lat: number, lon: number, start: number): string {
+  const samples: { t: number; el: number }[] = []
+  const end = start + 12 * 60 * 60 * 1000
+  for (let t = start; t <= end; t += 60_000) {
+    const el = elevationDeg(satrec, lat, lon, new Date(t))
+    if (el != null) samples.push({ t, el })
+  }
+  const windows = windowsAbove(samples, 10).slice(0, 4)
+  if (!windows.length) return `${name}\nNO PASS ABOVE 10° IN 12H`
+  return [name, ...windows.map(formatPass)].join('\n')
 }

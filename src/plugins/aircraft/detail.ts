@@ -33,6 +33,9 @@ export interface FlightView {
   photoUrl: string
   photoLink: string
   photoCredit: string
+  times?: { k: string; v: string }[]
+  graphTitle?: string
+  routeLabel?: string
 }
 
 const AIRPORTS: Record<string, { city: string; lat: number; lon: number }> = {

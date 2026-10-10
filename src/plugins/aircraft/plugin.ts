@@ -207,13 +207,18 @@ export const aircraftPlugin: AllEyesPlugin = {
           paintTrail()
         }
 
+        let trailOwned = false
         const paintTrail = () => {
           const id = ctx.getTrackId()
           if (!id?.startsWith('air:')) {
-            ctx.globe.setHistory(null)
-            ctx.globe.setRoute(null)
+            if (trailOwned) {
+              ctx.globe.setHistory(null)
+              ctx.globe.setRoute(null)
+              trailOwned = false
+            }
             return
           }
+          trailOwned = true
           const hex = id.slice(4)
           const row = trails.get(hex) ?? []
           const alt = (sample: Sample) => displayAirAltKm(sample.altM, sample.onGround)

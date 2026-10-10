@@ -4,6 +4,9 @@ export interface Shell {
   live: HTMLElement
   count: HTMLElement
   feed: HTMLElement
+  ships: HTMLElement
+  sats: HTMLElement
+  tip: HTMLElement
   coords: HTMLElement
   layers: HTMLElement
   inspect: HTMLElement
@@ -55,7 +58,11 @@ export function buildShell(root: HTMLElement): Shell {
   const live = el('div', 'ae-live')
   live.append(el('span', 'ae-dot'), el('span', 'ae-live-label', 'LIVE'))
   const count = el('div', 'ae-count', '0 CONTACTS')
+  const feeds = el('div', 'ae-feeds')
   const feed = el('div', 'ae-feed is-off', 'AIR 0 LOADED · 0 VIEW · —')
+  const ships = el('div', 'ae-feed is-off', 'SHIPS 0 LOADED · 0 VIEW · —')
+  const sats = el('div', 'ae-feed is-off', 'SATS 0 LOADED · 0 VIEW · —')
+  feeds.append(feed, ships, sats)
   const coords = el('div', 'ae-coords', '')
   const actions = el('div', 'ae-top-actions')
   const mute = el('button', 'ae-btn', 'SND') as HTMLButtonElement
@@ -67,7 +74,7 @@ export function buildShell(root: HTMLElement): Shell {
   link.type = 'button'
   cfg.type = 'button'
   actions.append(mute, shot, link, cfg)
-  top.append(brand, clock, live, count, feed, coords, actions)
+  top.append(brand, clock, live, count, feeds, coords, actions)
 
   const layers = el('aside', 'ae-layers')
   const right = el('div', 'ae-right')
@@ -130,8 +137,10 @@ export function buildShell(root: HTMLElement): Shell {
   form.append(gt, prompt)
   foot.append(scrubRow, output, suggest, form)
 
-  const track = el('div', 'ae-track', 'LOCK')
+  const track = el('button', 'ae-track', 'LOCK') as HTMLButtonElement
+  track.type = 'button'
   track.hidden = true
+  track.title = 'Clear the lock'
   const cross = el('div', 'ae-cross')
   const scan = el('div', 'ae-scan')
   const boot = el('div', 'ae-boot')
@@ -147,6 +156,7 @@ export function buildShell(root: HTMLElement): Shell {
   dialog.append(field('OpenSky client id', 'openskyId', 'text'))
   dialog.append(field('OpenSky client secret', 'openskySecret', 'password'))
   dialog.append(field('NASA FIRMS map key', 'firmsKey', 'password'))
+  dialog.append(field('AISStream key (global ships)', 'aisstreamKey', 'password'))
   const sizeWrap = el('label', 'ae-field')
   sizeWrap.append(document.createTextNode('MARKER SIZE'))
   const markerSize = el('input') as HTMLInputElement
@@ -204,7 +214,9 @@ export function buildShell(root: HTMLElement): Shell {
   const infoBody = el('pre')
   info.append(infoHead, infoBody)
   const globeCrt = el('div', 'ae-globe-crt')
-  root.append(canvas, globeCrt, cross, hud, info, boot, settings, scan)
+  const tip = el('div', 'ae-tip', '')
+  tip.hidden = true
+  root.append(canvas, globeCrt, cross, hud, info, tip, boot, settings, scan)
 
   return {
     canvas,
@@ -212,6 +224,9 @@ export function buildShell(root: HTMLElement): Shell {
     live,
     count,
     feed,
+    ships,
+    sats,
+    tip,
     coords,
     layers,
     inspect,

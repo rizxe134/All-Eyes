@@ -18,6 +18,8 @@ import { mountViewer } from '../ui/viewer'
 import { mountFlightPanel } from '../ui/flight-panel'
 import { flightText, formatFlight } from '../plugins/aircraft/detail'
 import { airAheadOn, airFixNow, airMetaFor, airTrail, setAirAhead } from '../plugins/aircraft/plugin'
+import { formatShip, onShipDetail, shipDetailText, shipMeta, shipNow, shipTrackOn, shipTrail, toggleShipTrack } from '../plugins/ships/plugin'
+import { formatSat, onSatDetail, satSeries, satTrackOn, toggleSatTrack } from '../plugins/satellites/plugin'
 
 const LAYER_KEY = 'alleyes.layers.v1'
 const VIEWER_KEY = 'alleyes.viewer.v1'
@@ -133,10 +135,11 @@ export function boot(root: HTMLElement): void {
       renderLayers()
     },
     status(layerId, message) {
-      if (layerId !== 'aircraft') return
-      shell.feed.textContent = message
-      shell.feed.classList.toggle('is-off', message.includes('OFFLINE') || message.includes('COVERAGE LIMIT') || message.includes('—'))
-      shell.feed.classList.toggle('is-rate', message.includes('RATE-LIMITED') || message.includes('PARTIAL'))
+      const node = layerId === 'ships' ? shell.ships : layerId === 'satellites' ? shell.sats : layerId === 'aircraft' ? shell.feed : null
+      if (!node) return
+      node.textContent = message
+      node.classList.toggle('is-off', message.includes('OFFLINE') || message.includes('COVERAGE LIMIT') || message.includes('—'))
+      node.classList.toggle('is-rate', message.includes('RATE-LIMITED') || message.includes('PARTIAL'))
     },
   }
 
@@ -268,8 +271,9 @@ export function boot(root: HTMLElement): void {
     const locked = Boolean(pinned && contact.id === pinned.id)
     viewer.title.textContent = locked ? `LOCK ${contact.label}` : contact.label
     viewer.card.textContent = cardBody(contact)
-    const airDock = Boolean(pinned && pinned.kind === 'air' && contact.id === pinned.id)
-    if (viewer.isOpen() || airDock) {
+    const docked = Boolean(pinned && contact.id === pinned.id && (pinned.kind === 'air' || pinned.kind === 'ship' || pinned.kind === 'sat'))
+    const hovering = Boolean(state.hoverId && contact.id === state.hoverId && (!pinned || pinned.id !== contact.id))
+    if (viewer.isOpen() || docked || hovering) {
       shell.info.hidden = true
       return
     }
@@ -282,22 +286,57 @@ export function boot(root: HTMLElement): void {
 
   function renderFlight() {
     const hud = shell.layers.parentElement
-    const hex = state.trackId?.startsWith('air:') ? state.trackId.slice(4) : ''
-    const fix = hex ? airFixNow(hex) : null
-    if (!hex || !fix) {
-      flight.setView(null)
-      flight.setGraph([])
-      hud?.classList.remove('is-flight')
+    const id = state.trackId
+    const unit = settings.get().speedUnit
+    if (id?.startsWith('air:')) {
+      const hex = id.slice(4)
+      const fix = airFixNow(hex)
+      if (!fix) {
+        flight.setView(null)
+        flight.setGraph([])
+        hud?.classList.remove('is-flight')
+        return
+      }
+      flight.setView(formatFlight(fix, airMetaFor(hex), unit))
+      flight.setRouteOn(airAheadOn())
+      flight.setGraph(airTrail(hex).map((sample) => ({
+        altFt: sample.altBaroFt ?? sample.altGpsFt ?? sample.altM * 3.28084,
+        gsKt: sample.speedKt,
+      })))
+      hud?.classList.add('is-flight')
       return
     }
-    const view = formatFlight(fix, airMetaFor(hex), settings.get().speedUnit)
-    flight.setView(view)
-    flight.setRouteOn(airAheadOn())
-    flight.setGraph(airTrail(hex).map((sample) => ({
-      altFt: sample.altBaroFt ?? sample.altGpsFt ?? sample.altM * 3.28084,
-      gsKt: sample.speedKt,
-    })))
-    hud?.classList.add('is-flight')
+    if (id?.startsWith('ship:')) {
+      const ship = shipNow(Number(id.slice(5)))
+      if (!ship) {
+        flight.setView(null)
+        flight.setGraph([])
+        hud?.classList.remove('is-flight')
+        return
+      }
+      flight.setView(formatShip(ship, shipMeta(ship.mmsi), unit))
+      flight.setRouteOn(shipTrackOn())
+      flight.setGraph(shipTrail(ship.mmsi).map((sample) => ({ altFt: sample.cog, gsKt: sample.sog })), 'CSE  BRIGHT    SPD  DIM')
+      hud?.classList.add('is-flight')
+      return
+    }
+    if (id?.startsWith('sat:')) {
+      const view = formatSat(Number(id.slice(4)), state.pin)
+      if (!view) {
+        flight.setView(null)
+        flight.setGraph([])
+        hud?.classList.remove('is-flight')
+        return
+      }
+      flight.setView(view)
+      flight.setRouteOn(satTrackOn())
+      flight.setGraph(satSeries(Number(id.slice(4))), 'ALT  BRIGHT    SPD  DIM  PROPAGATED')
+      hud?.classList.add('is-flight')
+      return
+    }
+    flight.setView(null)
+    flight.setGraph([])
+    hud?.classList.remove('is-flight')
   }
 
   function renderAlerts() {
@@ -559,6 +598,7 @@ export function boot(root: HTMLElement): void {
     ;(form.elements.namedItem('openskyId') as HTMLInputElement).value = current.openskyId
     ;(form.elements.namedItem('openskySecret') as HTMLInputElement).value = current.openskySecret
     ;(form.elements.namedItem('firmsKey') as HTMLInputElement).value = current.firmsKey
+    ;(form.elements.namedItem('aisstreamKey') as HTMLInputElement).value = current.aisstreamKey
     ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
     ;(form.elements.namedItem('crt') as HTMLInputElement).value = String(current.crt)
     ;(form.elements.namedItem('theme') as HTMLSelectElement).value = current.theme
@@ -571,6 +611,7 @@ export function boot(root: HTMLElement): void {
       openskyId: (form.elements.namedItem('openskyId') as HTMLInputElement).value.trim(),
       openskySecret: (form.elements.namedItem('openskySecret') as HTMLInputElement).value.trim(),
       firmsKey: (form.elements.namedItem('firmsKey') as HTMLInputElement).value.trim(),
+      aisstreamKey: (form.elements.namedItem('aisstreamKey') as HTMLInputElement).value.trim(),
     })
     shell.settings.hidden = true
     const size = Number((form.elements.namedItem('markerSize') as HTMLInputElement).value)
@@ -597,6 +638,8 @@ export function boot(root: HTMLElement): void {
       shell.prompt.focus()
     } else if (event.key === 'Escape') {
       shell.settings.hidden = true
+      const menuOpen = document.querySelector('.ae-flight-menu:not([hidden])')
+      if (!menuOpen && !typing) setTrack(null)
     } else if (!typing && (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
       const view = globe.getView()
       const step = 4 * (view.rangeKm / 10000)
@@ -632,6 +675,15 @@ export function boot(root: HTMLElement): void {
       state.hoverX = hit.x
       state.hoverY = hit.y
     }
+    const contact = state.hoverId ? entities.get(state.hoverId) : null
+    if (hit && contact) {
+      shell.tip.hidden = false
+      shell.tip.textContent = contact.callsign || contact.label
+      shell.tip.style.left = `${hit.x + 14}px`
+      shell.tip.style.top = `${hit.y + 14}px`
+    } else {
+      shell.tip.hidden = true
+    }
     renderCard()
   })
   const cycleSpeed = () => {
@@ -646,8 +698,14 @@ export function boot(root: HTMLElement): void {
     audio.play('click')
   })
   flight.onRoute(() => {
-    setAirAhead(!airAheadOn())
-    flight.setRouteOn(airAheadOn())
+    const id = state.trackId
+    if (id?.startsWith('ship:')) flight.setRouteOn(toggleShipTrack())
+    else if (id?.startsWith('sat:')) flight.setRouteOn(toggleSatTrack())
+    else {
+      setAirAhead(!airAheadOn())
+      flight.setRouteOn(airAheadOn())
+    }
+    renderFlight()
     audio.play('click')
   })
   flight.onFollow(() => {
@@ -661,16 +719,42 @@ export function boot(root: HTMLElement): void {
     void copyLink().then((url) => showOutput(`LINK ${url}`))
   })
   flight.onCopy(() => {
-    const hex = state.trackId?.startsWith('air:') ? state.trackId.slice(4) : ''
-    const fix = hex ? airFixNow(hex) : null
-    if (!fix) return
-    const text = flightText(formatFlight(fix, airMetaFor(hex), settings.get().speedUnit))
+    const id = state.trackId
+    let text = ''
+    if (id?.startsWith('air:')) {
+      const hex = id.slice(4)
+      const fix = airFixNow(hex)
+      if (!fix) return
+      text = flightText(formatFlight(fix, airMetaFor(hex), settings.get().speedUnit))
+    } else if (id?.startsWith('ship:')) {
+      const ship = shipNow(Number(id.slice(5)))
+      if (!ship) return
+      text = shipDetailText(formatShip(ship, shipMeta(ship.mmsi), settings.get().speedUnit))
+    } else if (id?.startsWith('sat:')) {
+      const view = formatSat(Number(id.slice(4)), state.pin)
+      if (!view) return
+      text = [view.callsign, ...view.rows.map((row: { k: string; v: string }) => `${row.k}  ${row.v}`)].join('\n')
+    }
+    if (!text) return
     void navigator.clipboard.writeText(text).catch(() => undefined)
     showOutput('DETAILS COPIED')
     audio.play('click')
   })
   flight.onWatch(() => {
-    const hex = state.trackId?.startsWith('air:') ? state.trackId.slice(4) : ''
+    const id = state.trackId
+    if (id?.startsWith('sat:')) {
+      const view = formatSat(Number(id.slice(4)), state.pin)
+      const value = view?.callsign || id.slice(4)
+      alerts.add({ id: `pass:${value}:${Date.now()}`, kind: 'pass', value })
+      showOutput(`WATCH PASS ${value}`)
+      audio.play('click')
+      return
+    }
+    if (id?.startsWith('ship:')) {
+      showOutput('SHIP WATCH NOT AVAILABLE')
+      return
+    }
+    const hex = id?.startsWith('air:') ? id.slice(4) : ''
     const fix = hex ? airFixNow(hex) : null
     const value = (fix?.callsign || fix?.registration || hex).toUpperCase()
     if (!value) return
@@ -678,6 +762,9 @@ export function boot(root: HTMLElement): void {
     showOutput(`WATCH FLIGHT ${value}`)
     audio.play('click')
   })
+  shell.track.addEventListener('click', () => setTrack(null))
+  onShipDetail(() => renderFlight())
+  onSatDetail(() => renderFlight())
   flight.onSpeed(cycleSpeed)
   shell.infoSpeed.addEventListener('click', (event) => {
     event.stopPropagation()

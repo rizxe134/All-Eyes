@@ -71,10 +71,19 @@ export interface GlobeClick {
   layerId: string | null
 }
 
+export interface OrbitTrack {
+  points: GeoPoint[]
+  dashed?: boolean
+  color: number
+  opacity: number
+}
+
 export interface GlobeApi {
   setMarkers(layerId: string, markers: Marker[]): void
   setRadarCanvas(canvas: HTMLCanvasElement | null): void
   setOrbit(points: GeoPoint[] | null): void
+  /** Several styled paths in the orbit group. Null clears them. */
+  setOrbitTracks(tracks: OrbitTrack[] | null): void
   /** Solid track behind a selected aircraft. */
   setHistory(points: GeoPoint[] | null): void
   /** Dashed path ahead of a selected aircraft. */
@@ -99,6 +108,8 @@ export interface Settings {
   openskyId: string
   openskySecret: string
   firmsKey: string
+  /** Optional AISStream key. Empty keeps the keyless regional feeds. */
+  aisstreamKey: string
   /** Multiplier for globe sprites. About 0.2 to 1.6. Default is small. */
   markerSize: number
   theme: GlobeTheme

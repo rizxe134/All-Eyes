@@ -56,6 +56,16 @@ picture('sat-science', `
 ..#.#.#..
 `)
 
+picture('sat-scope', `
+....#....
+...###...
+..#####..
+.#######.
+....#....
+...#.#...
+..#...#..
+`)
+
 picture('sat-debris', `
 .#...#...
 ...#.#...
@@ -71,6 +81,7 @@ export function satSprite(name: string, group: string): string {
   if (group === 'gps-ops' || /GPS|NAVSTAR|GALILEO|BEIDOU|GLONASS/.test(text)) return 'sat-nav'
   if (group === 'weather' || /NOAA|GOES|METOP|HIMAWARI|FENGYUN/.test(text)) return 'sat-wx'
   if (/DEBRIS|\bDEB\b|R\/B|OBJECT [A-Z]/.test(text)) return 'sat-debris'
-  if (group === 'science' || /HST|HUBBLE|CHANDRA|FERMI|SWIFT|XMM/.test(text)) return 'sat-science'
+  if (/HST|HUBBLE/.test(text)) return 'sat-scope'
+  if (group === 'science' || /CHANDRA|FERMI|SWIFT|XMM/.test(text)) return 'sat-science'
   return 'sat-comms'
 }

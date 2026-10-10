@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 
-const UA = 'AllEyes/1.4.2 (local educational globe)'
+const UA = 'AllEyes/1.5.0 (local educational globe)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -14,6 +14,7 @@ const CELESTRAK_GROUPS = new Set([
   'iridium-NEXT',
   'noaa',
   'resource',
+  'active',
 ])
 
 const USGS_FEEDS = new Set(['2.5_day', '4.5_week', 'all_day'])
@@ -224,9 +225,60 @@ async function route(req, url) {
     if (!CELESTRAK_GROUPS.has(group)) return jsonError(400, 'unknown satellite group')
     const target = `https://celestrak.org/NORAD/elements/gp.php?GROUP=${encodeURIComponent(group)}&FORMAT=tle`
     return upstream(target, {
-      ttl: 2 * 60 * 60 * 1000,
+      ttl: 6 * 60 * 60 * 1000,
       headers: { accept: 'text/plain' },
-      timeout: 20000,
+      timeout: group === 'active' ? 60000 : 20000,
+    })
+  }
+
+  if (path === '/api/satcat') {
+    const cat = Number(url.searchParams.get('cat'))
+    if (!Number.isInteger(cat) || cat < 1 || cat > 999999) return jsonError(400, 'bad norad')
+    return upstream(`https://celestrak.org/satcat/records.php?CATNR=${cat}&FORMAT=json`, {
+      ttl: 24 * 60 * 60 * 1000,
+      timeout: 12000,
+      key: `satcat:${cat}`,
+    })
+  }
+
+  if (path === '/api/nasa') {
+    const q = (url.searchParams.get('q') || '').trim().slice(0, 80)
+    if (q.length < 3) return jsonError(400, 'bad query')
+    return upstream(`https://images-api.nasa.gov/search?q=${encodeURIComponent(q)}&media_type=image`, {
+      ttl: 24 * 60 * 60 * 1000,
+      timeout: 12000,
+      key: `nasa:${q.toLowerCase()}`,
+    })
+  }
+
+  if (path === '/api/commons') {
+    const q = (url.searchParams.get('q') || '').trim().slice(0, 80)
+    if (q.length < 3) return jsonError(400, 'bad query')
+    const target = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=3&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=640&gsrsearch=' + encodeURIComponent(q)
+    return upstream(target, {
+      ttl: 24 * 60 * 60 * 1000,
+      timeout: 12000,
+      key: `commons:${q.toLowerCase()}`,
+      headers: { accept: 'application/json', 'user-agent': UA },
+    })
+  }
+
+  if (path === '/api/ais/box') {
+    const south = Number(url.searchParams.get('south'))
+    const west = Number(url.searchParams.get('west'))
+    const north = Number(url.searchParams.get('north'))
+    const east = Number(url.searchParams.get('east'))
+    if (![south, west, north, east].every((n) => Number.isFinite(n))) return jsonError(400, 'bad box')
+    let width = east - west
+    if (width < 0) width += 360
+    const area = Math.abs(north - south) * width
+    if (area <= 0 || area > 100) return jsonError(400, 'box too large')
+    const bbox = `${south},${west},${north},${east}`
+    return upstream(`https://ais.openwaters.io/v1/vessels?bbox=${encodeURIComponent(bbox)}&max_age=12h&max_age_moving=45m&kind=vessel`, {
+      ttl: 20000,
+      timeout: 15000,
+      key: `aisbox:${bbox}`,
+      headers: { accept: 'application/json', 'user-agent': `${UA} (+https://github.com/rizxe134/All-Eyes)` },
     })
   }
 

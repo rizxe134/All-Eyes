@@ -43,8 +43,8 @@ export async function getJson(url: string, settings: SettingsStore, parent?: Abo
   }
 }
 
-export async function getText(url: string, settings: SettingsStore, parent?: AbortSignal): Promise<string> {
-  const linked = linkTimeout(parent, 20000)
+export async function getText(url: string, settings: SettingsStore, parent?: AbortSignal, timeoutMs = 20000): Promise<string> {
+  const linked = linkTimeout(parent, timeoutMs)
   try {
     const res = await fetch(url, { signal: linked.signal, headers: authHeaders(url, settings) })
     if (!res.ok) throw new Error(`${res.status} ${url}`)

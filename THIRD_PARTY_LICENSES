@@ -73,7 +73,10 @@ work, MIT, All Eyes contributors:
 
 - air-b747, air-rj, air-prop, air-light, air-fighter, air-biz, air-cargo, air-unk
 - ship-cargo, ship-tanker, ship-pax, ship-fish, ship-mil, ship-tug, ship-sail, ship-unk
-- sat-station, sat-comms, sat-debris
+- sat-station, sat-scope, sat-comms, sat-debris
+  ISS and Tiangong use sat-station. Hubble uses sat-scope. Starlink uses sat-comms.
+  GPS and the other navigation birds use the NASA CYGNSS mesh (sat-nav).
+  Weather birds use the NASA Aqua mesh (sat-wx).
 - weather and abstract markers (storm, quake, launch, fire, volcano, and the plain marker)
 
 Not used

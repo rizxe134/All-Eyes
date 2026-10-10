@@ -18,7 +18,8 @@ export function formatHelp(registry: PluginRegistry): string {
 export async function execute(line: string, registry: PluginRegistry, ctx: CommandContext): Promise<string> {
   const parts = tokenize(line.trim())
   if (!parts.length) return ''
-  const name = parts[0]?.toLowerCase() ?? ''
+  const raw = parts[0]?.toLowerCase() ?? ''
+  const name = raw.startsWith('/') ? raw.slice(1) : raw
   if (name === 'help') return formatHelp(registry)
   const command = registry.command(name)
   if (!command) return `NO SUCH VERB "${name.toUpperCase()}". TYPE HELP.`

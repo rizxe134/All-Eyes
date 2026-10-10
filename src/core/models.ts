@@ -315,6 +315,14 @@ function shipSail(): THREE.BufferGeometry {
   ])
 }
 
+function satScope(): THREE.BufferGeometry {
+  return fuse([
+    part(0.12, 0.7, 0.12, 0, 0, 0),
+    part(0.42, 0.08, 0.42, 0, 0.22, 0),
+    part(0.55, 0.04, 0.08, 0, -0.05, 0.16),
+  ])
+}
+
 function storm(): THREE.BufferGeometry {
   const bits: THREE.BufferGeometry[] = []
   for (let i = 0; i < 6; i++) {
@@ -371,6 +379,7 @@ const builders: Record<string, () => THREE.BufferGeometry> = {
   'sat-wx': satWx,
   'sat-comms': satComms,
   'sat-science': satScience,
+  'sat-scope': satScope,
   'sat-debris': satDebris,
   'ship-cargo': shipCargo,
   'ship-tanker': shipTanker,
