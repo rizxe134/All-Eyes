@@ -35,6 +35,12 @@ registerSprite('dot', glyph(`
 ####
 `))
 
+registerSprite('dot-gnd', glyph(`
+###
+###
+###
+`))
+
 registerSprite('chevron', glyph(`
 ....#....
 ...###...

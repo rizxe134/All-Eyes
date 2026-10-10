@@ -80,12 +80,13 @@ export function parseOpenSky(payload: unknown): AirFix[] {
       mach: null,
     })
   }
-  return capAir(out, 8000)
+  return out
 }
 
 export function parseAdsb(payload: unknown): AirFix[] {
   if (!payload || typeof payload !== 'object') return []
-  const list = (payload as { ac?: unknown }).ac
+  const body = payload as { ac?: unknown; aircraft?: unknown }
+  const list = body.ac ?? body.aircraft
   if (!Array.isArray(list)) return []
   const out: AirFix[] = []
   for (const row of list) {

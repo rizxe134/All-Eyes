@@ -162,7 +162,7 @@ function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number 
   const width = Math.max(1, rows[0]?.length ?? 1)
   const pixel = 4
   // Far dots are a solid block. A 1 px halo rounds a 2 px speck down to nothing.
-  const pad = id === 'dot' ? 0 : 1
+  const pad = id.startsWith('dot') ? 0 : 1
   const canvas = document.createElement('canvas')
   canvas.width = width * pixel + pad * 2
   canvas.height = height * pixel + pad * 2
@@ -198,6 +198,7 @@ function markerTint(id: string, lift: number): [number, number, number] {
   if (id === 'ico-quake' || id === 'ico-fire' || id === 'ico-launch') return [lift, lift * 0.84, lift * 0.38]
   if (id === 'ico-storm') return [lift * 0.5, lift, lift]
   if (id === 'sel-ring') return [lift, lift, lift * 0.9]
+  if (id === 'air-gnd' || id === 'dot-gnd') return [lift, lift * 0.72, lift * 0.28]
   return [lift * 0.9, lift, lift * 0.92]
 }
 
@@ -720,7 +721,8 @@ export class Globe implements GlobeApi {
   }
 
   private drawSprite(marker: Marker): string {
-    if (this.view.rangeKm > SPRITE_RANGE) return 'dot'
+    const ground = marker.shape === 'air-gnd'
+    if (this.view.rangeKm > SPRITE_RANGE) return ground ? 'dot-gnd' : 'dot'
     return marker.shape || 'dot'
   }
 

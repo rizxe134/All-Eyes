@@ -135,8 +135,8 @@ export function boot(root: HTMLElement): void {
     status(layerId, message) {
       if (layerId !== 'aircraft') return
       shell.feed.textContent = message
-      shell.feed.classList.toggle('is-off', message.includes('OFFLINE') || message.includes('—'))
-      shell.feed.classList.toggle('is-rate', message.includes('RATE-LIMITED'))
+      shell.feed.classList.toggle('is-off', message.includes('OFFLINE') || message.includes('COVERAGE LIMIT') || message.includes('—'))
+      shell.feed.classList.toggle('is-rate', message.includes('RATE-LIMITED') || message.includes('PARTIAL'))
     },
   }
 

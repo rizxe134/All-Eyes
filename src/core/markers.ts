@@ -7,10 +7,17 @@ export interface DeclutterItem {
   brightness: number
 }
 
-/** Degrees per cell. Zero means no thinning. */
+/**
+ * Degrees per cell. Zero means show every contact.
+ * The cell is about one marker-width of ground, so thinning only stacks dots that
+ * already overlap on screen. An airport view is never thinned.
+ */
 export function declutterCellDeg(rangeKm: number): number {
-  if (!(rangeKm > 420)) return 0
-  return Math.min(7, Math.max(0.28, rangeKm / 1800))
+  if (!(rangeKm > 700)) return 0
+  const kmPerPx = rangeKm / 1300
+  const overlapKm = 8 * kmPerPx
+  const deg = overlapKm / 111
+  return Math.min(1.15, Math.max(0.05, deg))
 }
 
 /**

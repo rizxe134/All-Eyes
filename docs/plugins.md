@@ -98,7 +98,7 @@ Layers and panels receive `PluginContext`:
 | `getPin` / `onPin` | The operator's chosen spot |
 | `getTrackId` / `onTrack` | The locked contact |
 | `log(layerId, message)` | A fault string on the layer button. Pass `''` to clear |
-| `status(layerId, message)` | Optional HUD line. Aircraft uses it for count, OK / RATE-LIMITED / OFFLINE, and the source |
+| `status(layerId, message)` | Optional HUD line. Aircraft uses it for loaded vs in-view counts and per-source OK / PARTIAL / RATE-LIMITED / OFFLINE |
 
 Commands receive `CommandContext` with `flyTo`, `track`, `getTrackId`, `setLayer`, `findContact`, `searchPlace`, `setTimeMinutes`, `screenshot`, `copyLink`, `setMarkerSize`, `setTheme`, `setCrt`, `setViewer`, and the same alerts and pin helpers.
 
@@ -106,7 +106,7 @@ A `Contact` is one picked thing: id, lat, lon, altKm, heading, pitch, label, det
 
 ## Sprite and viewer model
 
-The globe draws a heading-rotated filled silhouette. Aircraft families (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet) each have their own solid top-down shape. Ships, satellites, and weather icons use the same filled style. Sprites stay small. Zoomed out (past about 640 km) every contact is a solid dot at least 4 px, so the CRT mask cannot shrink it to nothing. Dense areas keep the brightest contact in each cell once the view is wider than about 420 km, and a non-empty cell never drops its last marker. The marker-size slider and `size` scale every marker (about 0.2 to 1.6, default 0.45). Picking uses a 12 px hit radius, chooses the nearest contact, and a repeated click cycles overlaps. A selected aircraft is brighter and gets a thin ring, a solid history line behind it, and a dashed line ahead when the destination coordinates are known. Sprites are light green-white with a dark outline so they read on the natural-color globe.
+The globe draws a heading-rotated filled silhouette. Aircraft families (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet) each have their own solid top-down shape. Ships, satellites, and weather icons use the same filled style. Sprites stay small. Zoomed out (past about 640 km) every contact is a solid dot at least 4 px, so the CRT mask cannot shrink it to nothing. Past about 700 km, overlapping dots keep the brightest contact in a cell about one marker wide. Closer than that, including a dense airport, every contact is drawn. Aircraft on the ground use an amber marker and the GND layer. The marker-size slider and `size` scale every marker (about 0.2 to 1.6, default 0.45). Picking uses a 12 px hit radius, chooses the nearest contact, and a repeated click cycles overlaps. A selected aircraft is brighter and gets a thin ring, a solid history line behind it, and a dashed line ahead when the destination coordinates are known. Sprites are light green-white with a dark outline so they read on the natural-color globe.
 
 `GlobeApi.setHistory` draws that solid trail. `GlobeApi.setRoute` draws the dashed leg. `setOrbit` is still the satellite ground track and does not clear the aircraft lines.
 

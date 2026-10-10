@@ -55,7 +55,7 @@ export function buildShell(root: HTMLElement): Shell {
   const live = el('div', 'ae-live')
   live.append(el('span', 'ae-dot'), el('span', 'ae-live-label', 'LIVE'))
   const count = el('div', 'ae-count', '0 CONTACTS')
-  const feed = el('div', 'ae-feed is-off', 'AIR — · — · —')
+  const feed = el('div', 'ae-feed is-off', 'AIR 0 LOADED · 0 VIEW · —')
   const coords = el('div', 'ae-coords', '')
   const actions = el('div', 'ae-top-actions')
   const mute = el('button', 'ae-btn', 'SND') as HTMLButtonElement

@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { declutterCellDeg, declutterMarkers, markerScreenPx } from '../src/core/markers'
 import { MARKER_DEFAULT } from '../src/core/settings'
-import { backoffMs, feedFailure, feedStatusLine, viewSamples } from '../src/plugins/aircraft/feed'
+import {
+  RENDER_SOFT_CAP,
+  backoffMs,
+  centerFailed,
+  dueTiles,
+  feedFailure,
+  feedStatusLine,
+  hubTiles,
+  mergeFixes,
+  sourceState,
+  trimFarthest,
+  viewTiles,
+} from '../src/plugins/aircraft/feed'
 import type { AirFix } from '../src/plugins/aircraft/parse'
 import { STALE_MS, deadReckonFix, mergeHeld, type HeldContact } from '../src/plugins/aircraft/retain'
 
@@ -92,8 +104,8 @@ describe('marker LOD and declutter', () => {
     expect(cell).toBeGreaterThan(0)
     const crowded = Array.from({ length: 20 }, (_, i) => ({
       id: `air:${i}`,
-      lat: 51 + i * 0.01,
-      lon: 0.01,
+      lat: 51.2 + i * 0.001,
+      lon: 0.2,
       brightness: i / 20,
     }))
     const oneCell = declutterMarkers(crowded, cell)
@@ -114,6 +126,25 @@ describe('marker LOD and declutter', () => {
     expect(locked.length).toBeGreaterThanOrEqual(1)
     expect(declutterMarkers([], cell)).toEqual([])
   })
+
+  it('shows every aircraft at an airport and keeps distant regions at world zoom', () => {
+    expect(declutterCellDeg(280)).toBe(0)
+    const ramp = Array.from({ length: 40 }, (_, i) => ({
+      id: `air:${i}`,
+      lat: 33.64,
+      lon: -84.43 + i * 0.001,
+      brightness: 0.4,
+    }))
+    expect(declutterMarkers(ramp, declutterCellDeg(280))).toHaveLength(40)
+    const world = declutterCellDeg(9800)
+    expect(world).toBeGreaterThan(0)
+    expect(world).toBeLessThan(1.2)
+    const regions = declutterMarkers([
+      { id: 'atl', lat: 33.64, lon: -84.43, brightness: 0.8 },
+      { id: 'ord', lat: 41.98, lon: -87.9, brightness: 0.8 },
+    ], world)
+    expect(regions.map((marker) => marker.id).sort()).toEqual(['atl', 'ord'])
+  })
 })
 
 describe('feed status', () => {
@@ -122,17 +153,52 @@ describe('feed status', () => {
     expect(feedFailure(new Error('403 /api/airplanes/point'))).toBe('denied')
     expect(feedFailure(new Error('502 /api/adsb/point'))).toBe('down')
     expect(backoffMs('denied')).toBeGreaterThan(backoffMs('rate'))
-    expect(feedStatusLine(1842, 'OK', 'ADSB.LOL')).toBe('AIR 1842 · OK · ADSB.LOL')
-    expect(feedStatusLine(1842, 'RATE-LIMITED', 'ADSB.FI')).toContain('RATE-LIMITED')
-    expect(feedStatusLine(0, 'OFFLINE', 'NONE')).toContain('OFFLINE')
+    const line = feedStatusLine(4200, 860, [
+      { id: 'ADSB.LOL', state: 'OK' },
+      { id: 'ADSB.FI', state: 'PARTIAL' },
+    ], false)
+    expect(line).toContain('4200 LOADED')
+    expect(line).toContain('860 VIEW')
+    expect(line).toContain('ADSB.LOL OK')
+    expect(line).toContain('PARTIAL')
+    expect(feedStatusLine(0, 0, [{ id: 'ADSB.LOL', state: 'RATE-LIMITED' }], true)).toContain('FEED COVERAGE LIMIT')
+    expect(sourceState(0, 2, 0, true)).toBe('RATE-LIMITED')
+    expect(sourceState(4, 1, 0, false)).toBe('PARTIAL')
+    expect(sourceState(3, 0, 0, false)).toBe('OK')
   })
 
-  it('queries the view center and does not drop it when the globe is wide', () => {
-    const close = viewSamples(51.5, -0.1, 400)
-    expect(close).toHaveLength(1)
-    expect(close[0]).toMatchObject({ lat: 51.5, lon: -0.1 })
-    const wide = viewSamples(14, 12, 9800)
-    expect(wide[0]).toMatchObject({ lat: 14, lon: 12 })
-    expect(wide.length).toBeGreaterThan(5)
+  it('tiles the camera, including a tight circle on an airport', () => {
+    const field = viewTiles(33.64, -84.43, 160)
+    expect(field[0]).toMatchObject({ lat: 33.64, lon: -84.43 })
+    expect(field[0]?.dist).toBeLessThanOrEqual(25)
+    expect(field.length).toBeGreaterThan(1)
+    const wide = viewTiles(14, 12, 9800)
+    expect(wide.some((tile) => Math.abs(tile.lat - 14) < 0.2 && Math.abs(tile.lon - 12) < 0.2)).toBe(true)
+    expect(wide.length).toBeGreaterThan(8)
+    expect(hubTiles().some((tile) => Math.abs(tile.lat - 33.64) < 0.05 && Math.abs(tile.lon + 84.43) < 0.05)).toBe(true)
+    const due = dueTiles(1_000_000, 33.64, -84.43, 160, new Map(), 4, 0)
+    expect(due.tiles.length).toBeGreaterThan(0)
+    expect(due.tiles.length).toBeLessThanOrEqual(4)
+    const center = field[0]!
+    expect(centerFailed(new Map([[center.key, { at: 1, ok: false, count: 0 }]]), 33.64, -84.43, 160)).toBe(true)
+    expect(centerFailed(new Map([[center.key, { at: 1, ok: true, count: 12 }]]), 33.64, -84.43, 160)).toBe(false)
+  })
+
+  it('dedupes by ICAO across sources and does not drop a viewed region to meet a cap', () => {
+    const merged = mergeFixes([
+      [fix('abc123', { lat: 33.6, callsign: 'OLD' }), fix('def456', { lat: 41.9 })],
+      [fix('abc123', { lat: 33.7, callsign: 'NEW' }), fix('fff111', { lat: 51.5, onGround: true })],
+    ])
+    expect(merged).toHaveLength(3)
+    expect(merged.find((row) => row.icao === 'abc123')).toMatchObject({ lat: 33.7, callsign: 'NEW' })
+    expect(merged.some((row) => row.onGround)).toBe(true)
+
+    const atlanta = Array.from({ length: 80 }, (_, i) => fix(`a${i.toString(16).padStart(5, '0')}`, { lat: 33.64, lon: -84.4 }))
+    const tokyo = Array.from({ length: 80 }, (_, i) => fix(`b${i.toString(16).padStart(5, '0')}`, { lat: 35.55, lon: 139.8 }))
+    const kept = trimFarthest([...atlanta, ...tokyo], 80, 33.64, -84.43)
+    expect(kept).toHaveLength(80)
+    expect(kept.every((row) => row.lat < 34)).toBe(true)
+    const under = trimFarthest([...atlanta, ...tokyo], RENDER_SOFT_CAP, 33.64, -84.43)
+    expect(under).toHaveLength(160)
   })
 })

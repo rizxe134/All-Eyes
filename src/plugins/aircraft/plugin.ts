@@ -1,16 +1,40 @@
 import { ageLabel, formatCard, withSpeed } from '../../core/cards'
-import type { AllEyesPlugin, CardField, Contact, LayerContext, SpeedUnit } from '../../core/types'
+import type { AllEyesPlugin, CardField, Contact, SpeedUnit } from '../../core/types'
 import { getJson } from '../../net/http'
 import { pitchDeg } from '../../core/models'
 import { routeAhead } from './detail'
 import { mergeAirMeta, parseAdsbDb, parseAdsbRoute, parseSpotters, readAirCache, writeAirCache, type AirMeta } from './lookup'
-import { FEED_SOURCES, backoffMs, feedFailure, feedStatusLine, openSkyBox, pointUrl, viewSamples, type FeedState } from './feed'
-import { capAir, displayAirAltKm, parseAdsb, parseOpenSky, type AirFix } from './parse'
+import {
+  FEED_SOURCES,
+  RENDER_SOFT_CAP,
+  backoffMs,
+  centerFailed,
+  dueTiles,
+  feedFailure,
+  feedStatusLine,
+  inView,
+  mergeFixes,
+  openSkyBox,
+  pointUrl,
+  sourceState,
+  trimFarthest,
+  type CoverageTile,
+  type FeedSource,
+  type SourceReport,
+  type TileStamp,
+} from './feed'
+import { displayAirAltKm, parseAdsb, parseOpenSky, type AirFix } from './parse'
 import { STALE_MS, deadReckonFix, mergeHeld, type HeldContact } from './retain'
 import './sprites'
 import { classifyAir } from './types'
 
 const LAYER = 'aircraft'
+const GND = 'airground'
+let airOn = false
+let gndOn = false
+let republish = () => {}
+let armPoll = () => {}
+let disarmPoll = () => {}
 
 interface Sample extends AirFix {
   t: number
@@ -87,53 +111,13 @@ function toContact(fix: AirFix, unit: SpeedUnit): Contact {
     pitch: pitchDeg(fix.vertFpm, fix.speedKt),
     label,
     detail: formatCard(card),
-    brightness: fix.onGround ? 0.32 : 0.5 + Math.min(0.4, fix.altM / 12000),
-    shape: glyph.sprite,
-    scale: fix.onGround ? 0.72 : 1,
+    brightness: fix.onGround ? 0.7 : 0.55 + Math.min(0.4, fix.altM / 12000),
+    shape: fix.onGround ? 'air-gnd' : glyph.sprite,
+    scale: fix.onGround ? 0.8 : 1,
     callsign: fix.callsign,
     card,
     speedKt: fix.speedKt,
   }
-}
-
-function collectFixes(groups: AirFix[][]): AirFix[] {
-  const merged = new Map<string, AirFix>()
-  for (const group of groups) {
-    for (const fix of group) if (fix.icao) merged.set(fix.icao, fix)
-  }
-  return [...merged.values()]
-}
-
-async function loadRegional(ctx: LayerContext, lat: number, lon: number, rangeKm: number): Promise<{ fixes: AirFix[]; source: string; state: FeedState }> {
-  const points = viewSamples(lat, lon, rangeKm)
-  const now = Date.now()
-  let sawRate = false
-  for (const source of FEED_SOURCES) {
-    if ((sourceBackoff.get(source.id) ?? 0) > now) continue
-    const probe = points[0]
-    if (!probe) continue
-    let first: AirFix[] = []
-    try {
-      first = parseAdsb(await getJson(pointUrl(source, probe), ctx.settings, ctx.signal))
-    } catch (err) {
-      const kind = feedFailure(err)
-      if (kind === 'rate') sawRate = true
-      sourceBackoff.set(source.id, now + backoffMs(kind))
-      continue
-    }
-    const rest = await Promise.all(points.slice(1).map((sample) =>
-      getJson(pointUrl(source, sample), ctx.settings, ctx.signal).then(parseAdsb).catch((err: unknown) => {
-        if (feedFailure(err) === 'rate') sawRate = true
-        return [] as AirFix[]
-      }),
-    ))
-    if (source.id === 'ADSB.LOL') {
-      rest.push(await getJson('/api/adsb/mil', ctx.settings, ctx.signal).then(parseAdsb).catch(() => [] as AirFix[]))
-    }
-    const fixes = capAir(collectFixes([first, ...rest]), 8000)
-    if (fixes.length) return { fixes, source: source.id, state: sawRate ? 'RATE-LIMITED' : 'OK' }
-  }
-  return { fixes: [], source: 'NONE', state: sawRate ? 'RATE-LIMITED' : 'OFFLINE' }
 }
 
 export const aircraftPlugin: AllEyesPlugin = {
@@ -144,15 +128,20 @@ export const aircraftPlugin: AllEyesPlugin = {
     {
       id: LAYER,
       label: 'AIR',
-      description: 'Live flights around the view. The last good positions stay up if a feed stalls.',
+      description: 'Airborne flights. The view is tiled from the free feeds, and the last good positions stay up for 90 seconds.',
       defaultOn: true,
       create(ctx) {
         let timer = 0
         let drift = 0
-        let on = false
         let held: Map<string, HeldContact> = new Map()
-        let feedState: FeedState = 'OFFLINE'
-        let feedSource = 'NONE'
+        let pumping = false
+        let sweepCursor = 0
+        let rotate = 0
+        let openskyAt = 0
+        let milAt = 0
+        let statsAt = Date.now()
+        const stamps = new Map<string, TileStamp>()
+        const stats = new Map<string, { ok: number; rate: number; fail: number }>()
 
         const remember = (fixes: AirFix[], t: number) => {
           for (const fix of fixes) {
@@ -183,13 +172,38 @@ export const aircraftPlugin: AllEyesPlugin = {
           return [...held.values()].map((row) => deadReckonFix(row.fix, row.updatedAt, now))
         }
 
+        const rollStats = (now: number) => {
+          if (now - statsAt < 60_000) return
+          statsAt = now
+          stats.clear()
+        }
+
+        const bump = (id: string, kind: 'ok' | 'rate' | 'fail') => {
+          const row = stats.get(id) ?? { ok: 0, rate: 0, fail: 0 }
+          row[kind] += 1
+          stats.set(id, row)
+        }
+
         const publish = () => {
           const fixes = fixesNow()
           const unit = ctx.settings.get().speedUnit
-          ctx.publish(LAYER, fixes.map((fix) => toContact(fix, unit)))
-          const state = fixes.length ? feedState : 'OFFLINE'
-          ctx.status?.(LAYER, feedStatusLine(fixes.length, state, feedSource))
-          ctx.log(LAYER, state === 'OFFLINE' && fixes.length === 0 ? 'AIR FEED OFFLINE' : '')
+          const view = ctx.globe.getView()
+          const airborne = fixes.filter((fix) => !fix.onGround)
+          const grounded = fixes.filter((fix) => fix.onGround)
+          ctx.publish(LAYER, airOn ? airborne.map((fix) => toContact(fix, unit)) : [])
+          ctx.publish(GND, gndOn ? grounded.map((fix) => toContact(fix, unit)) : [])
+          const shown = [...(airOn ? airborne : []), ...(gndOn ? grounded : [])]
+          const visible = shown.filter((fix) => inView(fix.lat, fix.lon, view.lat, view.lon, view.rangeKm)).length
+          const now = Date.now()
+          const sources: SourceReport[] = [...FEED_SOURCES.map((source) => source.id), 'OPENSKY'].map((id) => {
+            const row = stats.get(id) ?? { ok: 0, rate: 0, fail: 0 }
+            const backed = (sourceBackoff.get(id) ?? 0) > now
+            return { id, state: sourceState(row.ok, row.rate, row.fail, backed) }
+          })
+          const gap = centerFailed(stamps, view.lat, view.lon, view.rangeKm) && visible === 0
+          ctx.status?.(LAYER, feedStatusLine(fixes.length, visible, sources, gap))
+          const quiet = fixes.length === 0 && sources.every((row) => row.state === 'OFFLINE' || row.state === 'RATE-LIMITED')
+          ctx.log(LAYER, quiet ? 'AIR FEED OFFLINE' : '')
           paintTrail()
         }
 
@@ -218,7 +232,7 @@ export const aircraftPlugin: AllEyesPlugin = {
         const storeMeta = (hex: string, extra: Partial<AirMeta>) => {
           airMeta.set(hex, mergeAirMeta(airMeta.get(hex), extra))
           writeAirCache(airMeta)
-          if (on) publish()
+          if (airOn || gndOn) publish()
         }
 
         const enrich = async (hex: string) => {
@@ -272,49 +286,119 @@ export const aircraftPlugin: AllEyesPlugin = {
           }
         }
 
-        const tick = async () => {
-          if (!on || ctx.signal.aborted) return
-          const view = ctx.globe.getView()
+        const orderedSources = (): FeedSource[] => {
           const now = Date.now()
-          let incoming: AirFix[] = []
-          try {
-            const regional = await loadRegional(ctx, view.lat, view.lon, view.rangeKm)
-            incoming = regional.fixes
-            feedSource = regional.source
-            feedState = regional.state
-          } catch (err) {
-            const kind = feedFailure(err)
-            feedState = kind === 'rate' ? 'RATE-LIMITED' : 'OFFLINE'
-          }
-          if (incoming.length < 15 && (sourceBackoff.get('OPENSKY') ?? 0) <= now) {
-            try {
-              const parsed = parseOpenSky(await getJson(openSkyBox(view.lat, view.lon, view.rangeKm), ctx.settings, ctx.signal))
-              if (parsed.length) {
-                incoming = capAir(collectFixes([incoming, parsed]), 8000)
-                if (feedSource === 'NONE') feedSource = 'OPENSKY'
-                feedState = feedState === 'RATE-LIMITED' ? 'RATE-LIMITED' : 'OK'
-              }
-            } catch (err) {
-              const kind = feedFailure(err)
-              sourceBackoff.set('OPENSKY', now + backoffMs(kind))
-              if (!incoming.length) feedState = kind === 'rate' ? 'RATE-LIMITED' : 'OFFLINE'
-            }
-          }
-          if (incoming.length) remember(incoming, now)
-          held = mergeHeld(held, incoming.length ? incoming : null, now, STALE_MS)
-          if (held.size > 8000) {
-            const capped = new Map<string, HeldContact>()
-            for (const row of capAir([...held.values()].map((item) => item.fix), 8000)) {
-              const prev = held.get(row.icao)
-              if (prev) capped.set(row.icao, prev)
-            }
-            held = capped
-          }
-          publish()
-          queueMissing()
+          const ready = FEED_SOURCES.filter((source) => (sourceBackoff.get(source.id) ?? 0) <= now)
+          if (!ready.length) return []
+          const start = rotate % ready.length
+          rotate = (rotate + 1) % FEED_SOURCES.length
+          return [...ready.slice(start), ...ready.slice(0, start)]
         }
 
-        const offClock = ctx.clock.subscribe(() => { if (on) publish() })
+        const fetchTile = async (tile: CoverageTile): Promise<AirFix[]> => {
+          const order = orderedSources()
+          if (!order.length) {
+            stamps.set(tile.key, { at: Date.now(), ok: false, count: 0 })
+            return []
+          }
+          for (const source of order) {
+            try {
+              const parsed = parseAdsb(await getJson(pointUrl(source, tile), ctx.settings, ctx.signal))
+              bump(source.id, 'ok')
+              stamps.set(tile.key, { at: Date.now(), ok: true, count: parsed.length })
+              return parsed
+            } catch (err) {
+              const kind = feedFailure(err)
+              sourceBackoff.set(source.id, Date.now() + backoffMs(kind))
+              bump(source.id, kind === 'rate' ? 'rate' : 'fail')
+            }
+          }
+          stamps.set(tile.key, { at: Date.now(), ok: false, count: 0 })
+          return []
+        }
+
+        const fetchMil = async (): Promise<AirFix[]> => {
+          if (Date.now() - milAt < 40_000) return []
+          if ((sourceBackoff.get('ADSB.LOL') ?? 0) > Date.now()) return []
+          milAt = Date.now()
+          try {
+            return parseAdsb(await getJson('/api/adsb/mil', ctx.settings, ctx.signal))
+          } catch {
+            return []
+          }
+        }
+
+        const fetchOpenSky = async (lat: number, lon: number, rangeKm: number): Promise<AirFix[]> => {
+          const now = Date.now()
+          if (now - openskyAt < 22_000) return []
+          if ((sourceBackoff.get('OPENSKY') ?? 0) > now) return []
+          openskyAt = now
+          try {
+            const parsed = parseOpenSky(await getJson(openSkyBox(lat, lon, rangeKm), ctx.settings, ctx.signal))
+            if (parsed.length) bump('OPENSKY', 'ok')
+            return parsed
+          } catch (err) {
+            const kind = feedFailure(err)
+            sourceBackoff.set('OPENSKY', Date.now() + backoffMs(kind))
+            bump('OPENSKY', kind === 'rate' ? 'rate' : 'fail')
+            return []
+          }
+        }
+
+        const pump = async () => {
+          if (pumping || (!airOn && !gndOn) || ctx.signal.aborted) return
+          pumping = true
+          try {
+            const view = ctx.globe.getView()
+            const now = Date.now()
+            rollStats(now)
+            const batch = dueTiles(now, view.lat, view.lon, view.rangeKm, stamps, 2, sweepCursor)
+            sweepCursor = batch.nextCursor
+            const [groups, sky, mil] = await Promise.all([
+              Promise.all(batch.tiles.map((tile) => fetchTile(tile))),
+              fetchOpenSky(view.lat, view.lon, view.rangeKm),
+              fetchMil(),
+            ])
+            const incoming = mergeFixes([...groups, sky, mil])
+            const stamped = Date.now()
+            if (incoming.length) remember(incoming, stamped)
+            held = mergeHeld(held, incoming.length ? incoming : null, stamped, STALE_MS)
+            if (held.size > RENDER_SOFT_CAP) {
+              const kept = new Map<string, HeldContact>()
+              for (const fix of trimFarthest([...held.values()].map((row) => row.fix), RENDER_SOFT_CAP, view.lat, view.lon)) {
+                const prev = held.get(fix.icao)
+                if (prev) kept.set(fix.icao, prev)
+              }
+              held = kept
+            }
+            if (trails.size > held.size + 800) {
+              for (const key of trails.keys()) if (!held.has(key)) trails.delete(key)
+            }
+            publish()
+            queueMissing()
+          } finally {
+            pumping = false
+          }
+        }
+
+        const arm = () => {
+          if (timer) return
+          void pump()
+          timer = window.setInterval(() => void pump(), 900)
+          drift = window.setInterval(() => { if (airOn || gndOn) publish() }, 2000)
+        }
+        const disarm = () => {
+          if (airOn || gndOn) return
+          window.clearInterval(timer)
+          window.clearInterval(drift)
+          timer = 0
+          drift = 0
+        }
+        republish = publish
+        armPoll = arm
+        disarmPoll = disarm
+
+        const offClock = ctx.clock.subscribe(() => { if (airOn || gndOn) publish() })
         const offTrack = ctx.onTrack((id) => {
           if (id?.startsWith('air:')) {
             const hex = id.slice(4)
@@ -323,7 +407,7 @@ export const aircraftPlugin: AllEyesPlugin = {
             void enrichRoute(hex, fix?.callsign ?? '')
             void enrichPhoto(hex)
           }
-          if (on) paintTrail()
+          if (airOn || gndOn) paintTrail()
         })
         const offHover = ctx.globe.onHover((hit) => {
           const id = hit?.marker.id
@@ -331,27 +415,48 @@ export const aircraftPlugin: AllEyesPlugin = {
         })
         return {
           setEnabled(next) {
-            if (next === on) return
-            on = next
-            if (!next) {
-              window.clearInterval(timer)
-              window.clearInterval(drift)
-              ctx.publish(LAYER, [])
-              ctx.status?.(LAYER, feedStatusLine(0, 'OFFLINE', 'NONE'))
-              return
-            }
-            void tick()
-            timer = window.setInterval(() => void tick(), 25000)
-            drift = window.setInterval(() => { if (on) publish() }, 2000)
+            if (next === airOn) return
+            airOn = next
+            if (!next) ctx.publish(LAYER, [])
+            if (next) arm()
+            else disarm()
+            if (airOn || gndOn) publish()
           },
           dispose() {
-            on = false
+            airOn = false
             window.clearInterval(timer)
             window.clearInterval(drift)
+            timer = 0
+            drift = 0
+            republish = () => {}
+            armPoll = () => {}
+            disarmPoll = () => {}
             offClock()
             offTrack()
             offHover()
             ctx.publish(LAYER, [])
+          },
+        }
+      },
+    },
+    {
+      id: GND,
+      label: 'GND',
+      description: 'Aircraft on the ground, drawn in amber. Turn this off to hide parked and taxiing traffic.',
+      defaultOn: true,
+      create(ctx) {
+        return {
+          setEnabled(next) {
+            if (next === gndOn) return
+            gndOn = next
+            if (!next) ctx.publish(GND, [])
+            if (next) armPoll()
+            else disarmPoll()
+            republish()
+          },
+          dispose() {
+            gndOn = false
+            ctx.publish(GND, [])
           },
         }
       },

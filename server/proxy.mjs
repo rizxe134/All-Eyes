@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 
-const UA = 'AllEyes/1.4.1 (local educational globe)'
+const UA = 'AllEyes/1.4.2 (local educational globe)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -266,7 +266,7 @@ async function route(req, url) {
       key: `spot:${hex}`,
       headers: {
         accept: 'application/json',
-        'user-agent': 'AllEyes/1.4.1 (+https://github.com/rizxe134/All-Eyes)',
+        'user-agent': 'AllEyes/1.4.2 (+https://github.com/rizxe134/All-Eyes)',
       },
     })
   }

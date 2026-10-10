@@ -41,6 +41,18 @@ describe('aircraft parsers', () => {
     expect(fixes[1]?.onGround).toBe(true)
     expect(fixes[1]?.altM).toBe(0)
   })
+
+  it('reads the aircraft array used by adsb.fi and does not cap the list', () => {
+    const fixes = parseAdsb({
+      aircraft: [
+        { hex: 'abc111', flight: 'DAL1', lat: 33.64, lon: -84.43, alt_baro: 'ground', gs: 0 },
+        { hex: 'abc222', flight: 'DAL2', lat: 33.7, lon: -84.5, alt_baro: 12000, gs: 280 },
+      ],
+    })
+    expect(fixes).toHaveLength(2)
+    expect(fixes[0]?.onGround).toBe(true)
+    expect(fixes[1]?.onGround).toBe(false)
+  })
 })
 
 describe('world feeds', () => {
