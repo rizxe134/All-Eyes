@@ -1,7 +1,7 @@
 {
   "name": "all-eyes",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "All Eyes — a live 8-bit intelligence console with a natural-color globe for the browser, Mac, Windows, and Linux.",
   "license": "MIT",
   "type": "module",

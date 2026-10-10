@@ -87,6 +87,14 @@ button { cursor: pointer; }
   letter-spacing: 0.5px;
   color: var(--mid);
 }
+.ae-feed {
+  font-size: 18px;
+  letter-spacing: 0.4px;
+  color: var(--mid);
+  white-space: nowrap;
+}
+.ae-feed.is-rate { color: var(--hot); }
+.ae-feed.is-off { color: var(--dim); }
 
 .ae-live {
   font-family: "Ae Pixel", monospace;

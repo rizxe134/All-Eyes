@@ -156,6 +156,8 @@ export interface PluginContext {
   getTrackId(): string | null
   onTrack(cb: (id: string | null) => void): () => void
   log(layerId: string, message: string): void
+  /** Short HUD line. The aircraft layer reports count, feed state, and source. */
+  status?(layerId: string, message: string): void
 }
 
 export interface LayerContext extends PluginContext {

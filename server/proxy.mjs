@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 
-const UA = 'AllEyes/1.0 (local educational globe)'
+const UA = 'AllEyes/1.4.1 (local educational globe)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -172,17 +172,24 @@ async function route(req, url) {
     const id = header(req, 'x-opensky-client-id') || process.env.OPENSKY_CLIENT_ID || ''
     const secret = header(req, 'x-opensky-client-secret') || process.env.OPENSKY_CLIENT_SECRET || ''
     const token = await openskyBearer(id, secret)
-    const target = 'https://opensky-network.org/api/states/all'
+    const box = ['lamin', 'lomin', 'lamax', 'lomax'].map((key) => {
+      const value = Number(url.searchParams.get(key))
+      return Number.isFinite(value) ? `${key}=${value}` : ''
+    }).filter(Boolean)
+    const target = box.length === 4
+      ? `https://opensky-network.org/api/states/all?${box.join('&')}`
+      : 'https://opensky-network.org/api/states/all'
+    const boxKey = box.length === 4 ? box.join(',') : 'all'
     if (token) {
       const authed = await upstream(target, {
         headers: { authorization: `Bearer ${token}` },
         ttl: 10000,
-        key: `opensky:${id}`,
+        key: `opensky:${id}:${boxKey}`,
         timeout: 4500,
       })
       if (authed.status !== 401 && authed.status !== 403) return authed
     }
-    return upstream(target, { ttl: 10000, key: 'opensky:anon', timeout: 4500 })
+    return upstream(target, { ttl: 10000, key: `opensky:anon:${boxKey}`, timeout: 4500 })
   }
 
   if (path === '/api/adsb/point') {
@@ -198,6 +205,18 @@ async function route(req, url) {
 
   if (path === '/api/adsb/mil') {
     return upstream('https://api.adsb.lol/v2/mil', { ttl: 15000, timeout: 12000 })
+  }
+
+  if (path === '/api/airplanes/point' || path === '/api/adsbfi/point') {
+    const lat = Number(url.searchParams.get('lat'))
+    const lon = Number(url.searchParams.get('lon'))
+    const dist = Math.min(250, Math.max(10, Number(url.searchParams.get('dist')) || 220))
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+      return jsonError(400, 'bad point')
+    }
+    const host = path === '/api/airplanes/point' ? 'https://api.airplanes.live' : 'https://opendata.adsb.fi/api'
+    const target = `${host}/v2/lat/${lat.toFixed(2)}/lon/${lon.toFixed(2)}/dist/${Math.round(dist)}`
+    return upstream(target, { ttl: 12000, timeout: 8000 })
   }
 
   if (path === '/api/celestrak') {
@@ -247,7 +266,7 @@ async function route(req, url) {
       key: `spot:${hex}`,
       headers: {
         accept: 'application/json',
-        'user-agent': 'AllEyes/1.4.0 (+https://github.com/rizxe134/All-Eyes)',
+        'user-agent': 'AllEyes/1.4.1 (+https://github.com/rizxe134/All-Eyes)',
       },
     })
   }

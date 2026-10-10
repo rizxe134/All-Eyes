@@ -132,6 +132,12 @@ export function boot(root: HTMLElement): void {
       else state.faults.delete(layerId)
       renderLayers()
     },
+    status(layerId, message) {
+      if (layerId !== 'aircraft') return
+      shell.feed.textContent = message
+      shell.feed.classList.toggle('is-off', message.includes('OFFLINE') || message.includes('—'))
+      shell.feed.classList.toggle('is-rate', message.includes('RATE-LIMITED'))
+    },
   }
 
   for (const layer of registry.layers()) {

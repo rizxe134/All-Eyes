@@ -3,6 +3,7 @@ export interface Shell {
   clock: HTMLElement
   live: HTMLElement
   count: HTMLElement
+  feed: HTMLElement
   coords: HTMLElement
   layers: HTMLElement
   inspect: HTMLElement
@@ -54,6 +55,7 @@ export function buildShell(root: HTMLElement): Shell {
   const live = el('div', 'ae-live')
   live.append(el('span', 'ae-dot'), el('span', 'ae-live-label', 'LIVE'))
   const count = el('div', 'ae-count', '0 CONTACTS')
+  const feed = el('div', 'ae-feed is-off', 'AIR — · — · —')
   const coords = el('div', 'ae-coords', '')
   const actions = el('div', 'ae-top-actions')
   const mute = el('button', 'ae-btn', 'SND') as HTMLButtonElement
@@ -65,7 +67,7 @@ export function buildShell(root: HTMLElement): Shell {
   link.type = 'button'
   cfg.type = 'button'
   actions.append(mute, shot, link, cfg)
-  top.append(brand, clock, live, count, coords, actions)
+  top.append(brand, clock, live, count, feed, coords, actions)
 
   const layers = el('aside', 'ae-layers')
   const right = el('div', 'ae-right')
@@ -209,6 +211,7 @@ export function buildShell(root: HTMLElement): Shell {
     clock,
     live,
     count,
+    feed,
     coords,
     layers,
     inspect,

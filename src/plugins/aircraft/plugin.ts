@@ -4,33 +4,19 @@ import { getJson } from '../../net/http'
 import { pitchDeg } from '../../core/models'
 import { routeAhead } from './detail'
 import { mergeAirMeta, parseAdsbDb, parseAdsbRoute, parseSpotters, readAirCache, writeAirCache, type AirMeta } from './lookup'
+import { FEED_SOURCES, backoffMs, feedFailure, feedStatusLine, openSkyBox, pointUrl, viewSamples, type FeedState } from './feed'
 import { capAir, displayAirAltKm, parseAdsb, parseOpenSky, type AirFix } from './parse'
+import { STALE_MS, deadReckonFix, mergeHeld, type HeldContact } from './retain'
 import './sprites'
 import { classifyAir } from './types'
 
 const LAYER = 'aircraft'
-const HUBS: Array<[number, number]> = [
-  [40.64, -73.78],
-  [33.94, -118.41],
-  [41.98, -87.9],
-  [51.47, -0.46],
-  [50.04, 8.56],
-  [25.25, 55.36],
-  [1.36, 103.99],
-  [35.55, 139.78],
-  [22.31, 113.91],
-  [-33.95, 151.18],
-  [-23.43, -46.47],
-  [28.56, 77.1],
-  [25.8, -80.29],
-  [37.62, -122.38],
-  [55.97, 37.41],
-  [-26.13, 28.24],
-]
 
 interface Sample extends AirFix {
   t: number
 }
+
+const sourceBackoff = new Map<string, number>()
 
 const airMeta = readAirCache()
 const looked = new Set<string>()
@@ -110,20 +96,44 @@ function toContact(fix: AirFix, unit: SpeedUnit): Contact {
   }
 }
 
-async function loadAdsb(ctx: LayerContext, cursor: { i: number }): Promise<AirFix[]> {
-  const batch: Array<[number, number]> = []
-  for (let n = 0; n < 8; n++) batch.push(HUBS[(cursor.i + n) % HUBS.length]!)
-  cursor.i = (cursor.i + 8) % HUBS.length
-  const jobs = batch.map(([lat, lon]) =>
-    getJson(`/api/adsb/point?lat=${lat}&lon=${lon}&dist=230`, ctx.settings, ctx.signal).then(parseAdsb).catch(() => [] as AirFix[]),
-  )
-  jobs.push(getJson('/api/adsb/mil', ctx.settings, ctx.signal).then(parseAdsb).catch(() => [] as AirFix[]))
-  const groups = await Promise.all(jobs)
+function collectFixes(groups: AirFix[][]): AirFix[] {
   const merged = new Map<string, AirFix>()
   for (const group of groups) {
     for (const fix of group) if (fix.icao) merged.set(fix.icao, fix)
   }
-  return capAir([...merged.values()], 8000)
+  return [...merged.values()]
+}
+
+async function loadRegional(ctx: LayerContext, lat: number, lon: number, rangeKm: number): Promise<{ fixes: AirFix[]; source: string; state: FeedState }> {
+  const points = viewSamples(lat, lon, rangeKm)
+  const now = Date.now()
+  let sawRate = false
+  for (const source of FEED_SOURCES) {
+    if ((sourceBackoff.get(source.id) ?? 0) > now) continue
+    const probe = points[0]
+    if (!probe) continue
+    let first: AirFix[] = []
+    try {
+      first = parseAdsb(await getJson(pointUrl(source, probe), ctx.settings, ctx.signal))
+    } catch (err) {
+      const kind = feedFailure(err)
+      if (kind === 'rate') sawRate = true
+      sourceBackoff.set(source.id, now + backoffMs(kind))
+      continue
+    }
+    const rest = await Promise.all(points.slice(1).map((sample) =>
+      getJson(pointUrl(source, sample), ctx.settings, ctx.signal).then(parseAdsb).catch((err: unknown) => {
+        if (feedFailure(err) === 'rate') sawRate = true
+        return [] as AirFix[]
+      }),
+    ))
+    if (source.id === 'ADSB.LOL') {
+      rest.push(await getJson('/api/adsb/mil', ctx.settings, ctx.signal).then(parseAdsb).catch(() => [] as AirFix[]))
+    }
+    const fixes = capAir(collectFixes([first, ...rest]), 8000)
+    if (fixes.length) return { fixes, source: source.id, state: sawRate ? 'RATE-LIMITED' : 'OK' }
+  }
+  return { fixes: [], source: 'NONE', state: sawRate ? 'RATE-LIMITED' : 'OFFLINE' }
 }
 
 export const aircraftPlugin: AllEyesPlugin = {
@@ -134,13 +144,15 @@ export const aircraftPlugin: AllEyesPlugin = {
     {
       id: LAYER,
       label: 'AIR',
-      description: 'Live flights from OpenSky, with regional ADS-B if that feed is quiet.',
+      description: 'Live flights around the view. The last good positions stay up if a feed stalls.',
       defaultOn: true,
       create(ctx) {
         let timer = 0
+        let drift = 0
         let on = false
-        let latest: AirFix[] = []
-        const cursor = { i: 0 }
+        let held: Map<string, HeldContact> = new Map()
+        let feedState: FeedState = 'OFFLINE'
+        let feedSource = 'NONE'
 
         const remember = (fixes: AirFix[], t: number) => {
           for (const fix of fixes) {
@@ -163,12 +175,21 @@ export const aircraftPlugin: AllEyesPlugin = {
           return out
         }
 
-        const publish = () => {
+        const fixesNow = (): AirFix[] => {
           const sim = ctx.clock.now()
           const live = Math.abs(sim - Date.now()) < 20_000
-          const fixes = live ? latest : atTime(sim)
+          if (!live) return atTime(sim)
+          const now = Date.now()
+          return [...held.values()].map((row) => deadReckonFix(row.fix, row.updatedAt, now))
+        }
+
+        const publish = () => {
+          const fixes = fixesNow()
           const unit = ctx.settings.get().speedUnit
           ctx.publish(LAYER, fixes.map((fix) => toContact(fix, unit)))
+          const state = fixes.length ? feedState : 'OFFLINE'
+          ctx.status?.(LAYER, feedStatusLine(fixes.length, state, feedSource))
+          ctx.log(LAYER, state === 'OFFLINE' && fixes.length === 0 ? 'AIR FEED OFFLINE' : '')
           paintTrail()
         }
 
@@ -242,7 +263,8 @@ export const aircraftPlugin: AllEyesPlugin = {
 
         const queueMissing = () => {
           let budget = 4
-          for (const fix of latest) {
+          for (const row of held.values()) {
+            const fix = row.fix
             if (budget <= 0) break
             if (fix.typeCode || airMeta.has(fix.icao) || looked.has(fix.icao)) continue
             budget -= 1
@@ -252,35 +274,41 @@ export const aircraftPlugin: AllEyesPlugin = {
 
         const tick = async () => {
           if (!on || ctx.signal.aborted) return
+          const view = ctx.globe.getView()
+          const now = Date.now()
+          let incoming: AirFix[] = []
           try {
-            const payload = await getJson('/api/opensky/states', ctx.settings, ctx.signal)
-            const parsed = parseOpenSky(payload)
-            if (parsed.length > 40) {
-              latest = parsed
-              remember(parsed, Date.now())
-              ctx.log(LAYER, '')
-              publish()
-              queueMissing()
-              return
-            }
-          } catch {
-            /* fall through to regional ads-b */
-          }
-          try {
-            const incoming = await loadAdsb(ctx, cursor)
-            const now = Date.now()
-            const merged = new Map<string, AirFix>()
-            for (const fix of latest) merged.set(fix.icao, fix)
-            for (const fix of incoming) merged.set(fix.icao, fix)
-            remember(incoming, now)
-            const fresh = [...merged.values()].filter((fix) => {
-              const last = trails.get(fix.icao)?.at(-1)?.t ?? now
-              return now - last < 4 * 60 * 1000
-            })
-            latest = capAir(fresh, 8000)
-            ctx.log(LAYER, latest.length ? '' : 'AIR FEED EMPTY')
+            const regional = await loadRegional(ctx, view.lat, view.lon, view.rangeKm)
+            incoming = regional.fixes
+            feedSource = regional.source
+            feedState = regional.state
           } catch (err) {
-            ctx.log(LAYER, err instanceof Error ? err.message : 'AIR FEED FAULT')
+            const kind = feedFailure(err)
+            feedState = kind === 'rate' ? 'RATE-LIMITED' : 'OFFLINE'
+          }
+          if (incoming.length < 15 && (sourceBackoff.get('OPENSKY') ?? 0) <= now) {
+            try {
+              const parsed = parseOpenSky(await getJson(openSkyBox(view.lat, view.lon, view.rangeKm), ctx.settings, ctx.signal))
+              if (parsed.length) {
+                incoming = capAir(collectFixes([incoming, parsed]), 8000)
+                if (feedSource === 'NONE') feedSource = 'OPENSKY'
+                feedState = feedState === 'RATE-LIMITED' ? 'RATE-LIMITED' : 'OK'
+              }
+            } catch (err) {
+              const kind = feedFailure(err)
+              sourceBackoff.set('OPENSKY', now + backoffMs(kind))
+              if (!incoming.length) feedState = kind === 'rate' ? 'RATE-LIMITED' : 'OFFLINE'
+            }
+          }
+          if (incoming.length) remember(incoming, now)
+          held = mergeHeld(held, incoming.length ? incoming : null, now, STALE_MS)
+          if (held.size > 8000) {
+            const capped = new Map<string, HeldContact>()
+            for (const row of capAir([...held.values()].map((item) => item.fix), 8000)) {
+              const prev = held.get(row.icao)
+              if (prev) capped.set(row.icao, prev)
+            }
+            held = capped
           }
           publish()
           queueMissing()
@@ -307,15 +335,19 @@ export const aircraftPlugin: AllEyesPlugin = {
             on = next
             if (!next) {
               window.clearInterval(timer)
+              window.clearInterval(drift)
               ctx.publish(LAYER, [])
+              ctx.status?.(LAYER, feedStatusLine(0, 'OFFLINE', 'NONE'))
               return
             }
             void tick()
             timer = window.setInterval(() => void tick(), 25000)
+            drift = window.setInterval(() => { if (on) publish() }, 2000)
           },
           dispose() {
             on = false
             window.clearInterval(timer)
+            window.clearInterval(drift)
             offClock()
             offTrack()
             offHover()

@@ -29,8 +29,10 @@ function glyph(picture: string): string[] {
 }
 
 registerSprite('dot', glyph(`
-##
-##
+####
+####
+####
+####
 `))
 
 registerSprite('chevron', glyph(`

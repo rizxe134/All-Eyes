@@ -8,6 +8,7 @@ import {
   vecToLatLon,
   type Vec3,
 } from './geo'
+import { declutterCellDeg, declutterMarkers, markerScreenPx } from './markers'
 import { chooseHit } from './pick'
 import { MARKER_MAX, MARKER_DEFAULT, MARKER_MIN } from './settings'
 import { spriteRows } from './sprites'
@@ -160,7 +161,8 @@ function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number 
   const height = Math.max(1, rows.length)
   const width = Math.max(1, rows[0]?.length ?? 1)
   const pixel = 4
-  const pad = 1
+  // Far dots are a solid block. A 1 px halo rounds a 2 px speck down to nothing.
+  const pad = id === 'dot' ? 0 : 1
   const canvas = document.createElement('canvas')
   canvas.width = width * pixel + pad * 2
   canvas.height = height * pixel + pad * 2
@@ -176,8 +178,10 @@ function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number 
   }
   if (ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = '#07140c'
-    for (const [x, y] of lit) ctx.fillRect(x * pixel, y * pixel, pixel + pad * 2, pixel + pad * 2)
+    if (pad > 0) {
+      ctx.fillStyle = '#07140c'
+      for (const [x, y] of lit) ctx.fillRect(x * pixel, y * pixel, pixel + pad * 2, pixel + pad * 2)
+    }
     ctx.fillStyle = '#ffffff'
     for (const [x, y] of lit) ctx.fillRect(x * pixel + pad, y * pixel + pad, pixel, pixel)
   }
@@ -697,6 +701,10 @@ export class Globe implements GlobeApi {
       transparent: true,
       alphaTest: 0.4,
       depthWrite: false,
+      depthTest: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
       // The heading basis can face either way. Both sides stay drawn; depth hides the far hemisphere.
       side: THREE.DoubleSide,
       toneMapped: false,
@@ -712,23 +720,13 @@ export class Globe implements GlobeApi {
 
   private rebuildPools() {
     const range = this.view.rangeKm
-    const cell = range > 420 ? clamp(range / 1800, 0.28, 7) : 0
+    const cell = declutterCellDeg(range)
     const grouped = new Map<string, DrawItem[]>()
+    const keep = new Set<string>()
+    if (this.highlightId) keep.add(this.highlightId)
+    if (this.hoverId) keep.add(this.hoverId)
     for (const [layerId, markers] of this.layers) {
-      const declutter = cell > 0 && markers.length > 12
-      const picked = new Map<string, Marker>()
-      const extras: Marker[] = []
-      for (const marker of markers) {
-        const hot = marker.id === this.highlightId || marker.id === this.hoverId
-        if (!declutter || hot) {
-          extras.push(marker)
-          continue
-        }
-        const key = `${Math.floor(marker.lat / cell)}:${Math.floor(marker.lon / cell)}`
-        const prev = picked.get(key)
-        if (!prev || marker.brightness > prev.brightness) picked.set(key, marker)
-      }
-      for (const marker of picked.values()) extras.push(marker)
+      const extras = declutterMarkers(markers, cell, keep)
       for (const marker of extras) {
         const sprite = this.drawSprite(marker)
         const list = grouped.get(sprite) ?? []
@@ -778,7 +776,7 @@ export class Globe implements GlobeApi {
     const mesh = new THREE.InstancedMesh(plane, this.spriteMaterial(pool.id), capacity)
     mesh.count = count
     mesh.frustumCulled = false
-    mesh.renderOrder = 3
+    mesh.renderOrder = 4
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
     this.scene.add(mesh)
     pool.mesh = mesh
@@ -803,15 +801,15 @@ export class Globe implements GlobeApi {
       const airy = pool.id.startsWith('air-')
       const ring = pool.id === 'sel-ring'
       const far = range > SPRITE_RANGE
-      const pixels = far ? (ring ? 8 : 5) : ring ? 26 : airy ? 20 : 11
-      const world = clamp((pixels * dist * tan) / (height * 0.5), 0.01, 6) * this.markerSize
+      const pixels = markerScreenPx(far, ring, airy, this.markerSize)
+      const world = clamp((pixels * dist * tan) / (height * 0.5), 0.02, 12)
       const pulseBase = pool.id === 'ico-quake' || pool.id === 'ico-storm'
       for (let i = 0; i < pool.items.length; i++) {
         const marker = pool.items[i]!.marker
         const hot = marker.id === this.highlightId || marker.id === this.hoverId
         const pulse = pulseBase ? 1 + Math.sin(now / 280 + i) * 0.08 : 1
         const scale = world * marker.scale * pulse * (ring ? 1 : hot ? 1.12 : 1)
-        this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.35)
+        this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.9)
         this.orient(marker.lat, marker.lon, marker.heading || 0, scale)
         this.scratch.right.multiplyScalar(pool.aspect)
         this.scratch.matrix.makeBasis(this.scratch.right, this.scratch.forward, this.scratch.up)
