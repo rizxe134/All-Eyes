@@ -688,6 +688,12 @@ export class Globe implements GlobeApi {
     if (camUp.lengthSq() < 1e-6) camUp.set(0, 1, 0)
     this.camera.up.copy(camUp.normalize())
     this.camera.lookAt(target)
+    // A fixed near of 0.05 and far of 4000 cannot separate a dot from the
+    // globe at world zoom, so the earth wins the depth test and the contact vanishes.
+    const camDist = this.camera.position.length()
+    this.camera.near = Math.max(0.05, camDist - R * 1.35)
+    this.camera.far = camDist + 900
+    this.camera.updateProjectionMatrix()
   }
 
   private spriteMaterial(id: string): THREE.MeshBasicMaterial {
