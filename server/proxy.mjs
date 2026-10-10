@@ -247,7 +247,7 @@ async function route(req, url) {
       key: `spot:${hex}`,
       headers: {
         accept: 'application/json',
-        'user-agent': 'AllEyes/1.3 (+https://github.com/rizxe134/All-Eyes)',
+        'user-agent': 'AllEyes/1.3.1 (+https://github.com/rizxe134/All-Eyes)',
       },
     })
   }
