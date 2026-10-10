@@ -24,7 +24,11 @@ function fakeCtx(over: Partial<CommandContext> = {}): CommandContext {
     getTimeMinutes: () => 0,
     toggleMute: () => true,
     setMarkerSize() {},
-    getMarkerSize: () => 0.7,
+    getMarkerSize: () => 0.45,
+    setTheme() {},
+    getTheme: () => 'color',
+    setCrt() {},
+    getCrt: () => 0.4,
     setViewer() {},
     viewerOpen: () => true,
     screenshot() {},
@@ -76,6 +80,8 @@ describe('registry', () => {
     expect(ids).toEqual(expect.arrayContaining(['aircraft', 'satellites', 'quakes', 'weather', 'ships', 'beacons']))
     expect(registry.commands().some((command) => command.name === 'fly')).toBe(true)
     expect(registry.commands().some((command) => command.name === 'pass')).toBe(true)
+    expect(registry.commands().some((command) => command.name === 'theme')).toBe(true)
+    expect(registry.commands().some((command) => command.name === 'crt')).toBe(true)
   })
 })
 

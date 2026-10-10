@@ -179,7 +179,7 @@ export const systemPlugin: AllEyesPlugin = {
     },
     {
       name: 'size',
-      usage: 'size <0.35-1.8|up|down>',
+      usage: 'size <0.2-1.6|up|down>',
       summary: 'Global marker size',
       run(args, ctx) {
         const current = ctx.getMarkerSize()
@@ -189,9 +189,40 @@ export const systemPlugin: AllEyesPlugin = {
         if (arg === 'up') next = current + 0.1
         else if (arg === 'down') next = current - 0.1
         else next = Number(arg)
-        if (!Number.isFinite(next)) return 'USAGE: SIZE <0.35-1.8|UP|DOWN>'
+        if (!Number.isFinite(next)) return 'USAGE: SIZE <0.2-1.6|UP|DOWN>'
         ctx.setMarkerSize(next)
         return `SIZE ${ctx.getMarkerSize().toFixed(2)}`
+      },
+    },
+    {
+      name: 'theme',
+      usage: 'theme <color|green>',
+      summary: 'Natural-color globe or green phosphor',
+      run(args, ctx) {
+        const arg = (args[0] ?? '').toLowerCase()
+        if (!arg) return `THEME ${ctx.getTheme().toUpperCase()}`
+        if (arg !== 'color' && arg !== 'green') return 'USAGE: THEME <COLOR|GREEN>'
+        ctx.setTheme(arg)
+        return `THEME ${ctx.getTheme().toUpperCase()}`
+      },
+    },
+    {
+      name: 'crt',
+      usage: 'crt <0-1|on|off|up|down>',
+      summary: 'Globe CRT intensity',
+      run(args, ctx) {
+        const current = ctx.getCrt()
+        const arg = (args[0] ?? '').toLowerCase()
+        if (!arg) return `CRT ${current.toFixed(2)}`
+        let next = current
+        if (arg === 'on') next = current > 0.05 ? current : 0.4
+        else if (arg === 'off') next = 0
+        else if (arg === 'up') next = current + 0.1
+        else if (arg === 'down') next = current - 0.1
+        else next = Number(arg)
+        if (!Number.isFinite(next)) return 'USAGE: CRT <0-1|ON|OFF|UP|DOWN>'
+        ctx.setCrt(next)
+        return `CRT ${ctx.getCrt().toFixed(2)}`
       },
     },
     {

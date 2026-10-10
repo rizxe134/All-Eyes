@@ -85,7 +85,7 @@ export const weatherPlugin: AllEyesPlugin = {
     {
       id: LAYER,
       label: 'WX',
-      description: 'Global precipitation radar from RainViewer, graded phosphor.',
+      description: 'Global precipitation radar from RainViewer.',
       defaultOn: true,
       create(ctx) {
         let timer = 0

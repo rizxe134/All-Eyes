@@ -7,6 +7,9 @@ export type MarkerShape = string
 
 export type SpeedUnit = 'kt' | 'mph' | 'kmh'
 
+/** color is natural Blue Marble. green is the phosphor grade. */
+export type GlobeTheme = 'color' | 'green'
+
 export interface CardField {
   k: string
   v: string
@@ -78,6 +81,7 @@ export interface GlobeApi {
   setRoute(points: GeoPoint[] | null): void
   setHighlight(id: string | null): void
   setMarkerSize(scale: number): void
+  setTheme(theme: GlobeTheme): void
   flyTo(lat: number, lon: number, rangeKm?: number): void
   setView(lat: number, lon: number, rangeKm: number): void
   getView(): ViewState
@@ -95,8 +99,11 @@ export interface Settings {
   openskyId: string
   openskySecret: string
   firmsKey: string
-  /** Multiplier for globe sprites. About 0.35 to 1.8. */
+  /** Multiplier for globe sprites. About 0.2 to 1.6. Default is small. */
   markerSize: number
+  theme: GlobeTheme
+  /** Globe CRT overlay strength, 0 to 1. */
+  crt: number
   speedUnit: SpeedUnit
 }
 
@@ -188,6 +195,10 @@ export interface CommandContext {
   toggleMute(): boolean
   setMarkerSize(scale: number): void
   getMarkerSize(): number
+  setTheme(theme: GlobeTheme): void
+  getTheme(): GlobeTheme
+  setCrt(amount: number): void
+  getCrt(): number
   setViewer(open: boolean): void
   viewerOpen(): boolean
   screenshot(): void

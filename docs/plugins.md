@@ -99,19 +99,19 @@ Layers and panels receive `PluginContext`:
 | `getTrackId` / `onTrack` | The locked contact |
 | `log(layerId, message)` | A fault string on the layer button. Pass `''` to clear |
 
-Commands receive `CommandContext` with `flyTo`, `track`, `getTrackId`, `setLayer`, `findContact`, `searchPlace`, `setTimeMinutes`, `screenshot`, `copyLink`, `setMarkerSize`, `setViewer`, and the same alerts and pin helpers.
+Commands receive `CommandContext` with `flyTo`, `track`, `getTrackId`, `setLayer`, `findContact`, `searchPlace`, `setTimeMinutes`, `screenshot`, `copyLink`, `setMarkerSize`, `setTheme`, `setCrt`, `setViewer`, and the same alerts and pin helpers.
 
 A `Contact` is one picked thing: id, lat, lon, altKm, heading, pitch, label, detail, brightness (0 to 1), shape, and scale. `shape` is a sprite id. Built-ins are `dot`, `chevron`, `diamond`, `ring`, `box`, and `drop`, registered in `src/core/sprites.ts`.
 
 ## Sprite and viewer model
 
-The globe draws a heading-rotated filled silhouette. Aircraft families (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet) each have their own solid top-down shape. Ships, satellites, and weather icons use the same filled style. Zoomed out (past about 2400 km) every contact is a dot. Dense areas keep the brightest contact in each cell. The marker-size slider and `size` scale every marker. A selected aircraft is brighter and gets a ring, a solid history line behind it, and a dashed line ahead when the destination coordinates are known.
+The globe draws a heading-rotated filled silhouette. Aircraft families (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet) each have their own solid top-down shape. Ships, satellites, and weather icons use the same filled style. Sprites stay small. Zoomed out (past about 640 km) every contact is a 1–3 px dot. Dense areas keep the brightest contact in each cell once the view is wider than about 420 km. The marker-size slider and `size` scale every marker (about 0.2 to 1.6, default 0.45). Picking uses a 12 px hit radius, chooses the nearest contact, and a repeated click cycles overlaps. A selected aircraft is brighter and gets a thin ring, a solid history line behind it, and a dashed line ahead when the destination coordinates are known. Sprites are light green-white with a dark outline so they read on the natural-color globe.
 
 `GlobeApi.setHistory` draws that solid trail. `GlobeApi.setRoute` draws the dashed leg. `setOrbit` is still the satellite ground track and does not clear the aircraft lines.
 
-Clicking an aircraft opens the left flight panel: callsign, type-code badge, photo when PlaneSpotters has one, operator, origin and destination, and the speed and altitude grid. The photo is a flat rectangle in full color, with scanlines and a shadow mask. No photo uses the same frame with color bars and static. Estimated airspeeds are labeled `EST`. Missing fields stay `NOT AVAILABLE`. The info grid scrolls. **3D VIEW**, **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** stay pinned on the bottom bar. **MORE** opens a second row in that bar (copy details, add to watchlist) and closes on Escape or a click outside the bar. The collapsible speed and altitude graph uses samples the aircraft layer already keeps in memory.
+Clicking an aircraft opens the left flight panel: callsign, type-code badge, photo when PlaneSpotters has one, operator, origin and destination, and the speed and altitude grid. The photo is a flat rectangle in full color, with scanlines and a shadow mask. The NO PHOTO label and the colour bars are `display: none` once an image is showing. They come back only when there is no photo or the image fails. Switching planes drops a stale load. Estimated airspeeds are labeled `EST`. Missing fields stay `NOT AVAILABLE`. The info grid scrolls. **3D VIEW**, **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** stay pinned on the bottom bar. **MORE** opens a second row in that bar (copy details, add to watchlist) and closes on Escape or a click outside the bar. The collapsible speed and altitude graph uses samples the aircraft layer already keeps in memory.
 
-The same `shape` id selects the model in the top-right viewer. That panel is a separate WebGL canvas with studio lighting, soft shadows, and a turntable. It does not change the green globe. Airliners, the helicopter, and several satellites load a GLB the first time that shape is shown. The other families are original procedural models (white or silver aircraft, painted hulls, solar arrays). A credit line under the canvas names the author and licence. `pitch` tilts aircraft. Rotors and propellers spin. An empty selection leaves the pad clear and the card says `NO CONTACT SELECTED`. `viewer`, `viewer on`, and `viewer off` collapse the panel.
+The same `shape` id selects the model in the top-right viewer. That panel is a separate WebGL canvas with studio lighting, soft shadows, and a turntable. It does not restyle the globe. The globe defaults to natural color (NASA Blue Marble, city lights on the night side) with a flat CRT overlay. `theme green` restores the phosphor grade. `theme color` switches back. `crt` sets the overlay from 0 to 1. The panels stay green. Airliners, the helicopter, and several satellites load a GLB the first time that shape is shown. The other families are original procedural models (white or silver aircraft, painted hulls, solar arrays). A credit line under the canvas names the author and licence. `pitch` tilts aircraft. Rotors and propellers spin. An empty selection leaves the pad clear and the card says `NO CONTACT SELECTED`. `viewer`, `viewer on`, and `viewer off` collapse the panel.
 
 Give a plugin both:
 
@@ -131,6 +131,6 @@ Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefi
 
 ## Commands worth knowing
 
-`help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `beacon`, `size`, `viewer`, `mute`, `shot`, `link`.
+`help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `beacon`, `size`, `theme`, `crt`, `viewer`, `mute`, `shot`, `link`.
 
-`size 0.7` (or `size up` / `size down`) matches the marker-size slider in CFG.
+`size 0.45` (or `size up` / `size down`) matches the marker-size slider in CFG. `theme color` and `theme green` match the globe control. `crt 0.4` matches the CRT slider.

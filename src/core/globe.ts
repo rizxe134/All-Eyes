@@ -8,10 +8,15 @@ import {
   vecToLatLon,
   type Vec3,
 } from './geo'
+import { chooseHit } from './pick'
+import { MARKER_MAX, MARKER_DEFAULT, MARKER_MIN } from './settings'
 import { spriteRows } from './sprites'
-import type { GeoPoint, GlobeApi, GlobeClick, Marker, ViewState } from './types'
+import type { GeoPoint, GlobeApi, GlobeClick, GlobeTheme, Marker, ViewState } from './types'
 
 const R = 100
+/** Silhouettes only once the view is close enough that contacts are separated. */
+const SPRITE_RANGE = 640
+const HIT_PX = 12
 
 interface DrawItem {
   layerId: string
@@ -61,6 +66,7 @@ uniform vec3 uSun;
 uniform sampler2D uDay;
 uniform sampler2D uNight;
 uniform float uHasTex;
+uniform float uTheme;
 
 float bayer(vec2 pix) {
   vec2 p = floor(mod(pix, 4.0));
@@ -90,26 +96,33 @@ float bayer(vec2 pix) {
 }
 
 void main() {
-  float dayL = dot(texture2D(uDay, vUv).rgb, vec3(0.299, 0.587, 0.114));
-  float nightL = dot(texture2D(uNight, vUv).rgb, vec3(0.299, 0.587, 0.114));
+  vec3 day = texture2D(uDay, vUv).rgb;
+  vec3 night = texture2D(uNight, vUv).rgb;
+  float dayL = dot(day, vec3(0.299, 0.587, 0.114));
+  float nightL = dot(night, vec3(0.299, 0.587, 0.114));
   float fake = smoothstep(0.25, 0.85, sin(vUv.x * 17.0) * sin(vUv.y * 8.0) * 0.5 + 0.5);
   float luma = mix(fake * 0.45 + 0.12, mix(nightL * 1.15, dayL, 1.0), uHasTex);
   float ndl = dot(normalize(vNormal), normalize(uSun));
-  float light = smoothstep(-0.08, 0.32, ndl);
+  float light = smoothstep(-0.15, 0.35, ndl);
   luma = mix(luma * 0.22 + nightL * uHasTex * 0.85, luma, light);
-  luma = clamp(luma + (bayer(gl_FragCoord.xy) - 0.5) * 0.09, 0.0, 1.0);
+  luma = clamp(luma + (bayer(gl_FragCoord.xy) - 0.5) * 0.06, 0.0, 1.0);
   luma = floor(luma * 5.0) / 5.0;
   float lonF = fract(vUv.x * 12.0);
   float latF = fract(vUv.y * 6.0);
-  float grid = 1.0 - smoothstep(0.0, 0.012, min(min(lonF, 1.0 - lonF), min(latF, 1.0 - latF)));
-  float equator = 1.0 - smoothstep(0.0, 0.0035, abs(vUv.y - 0.5));
-  vec3 col = vec3(0.05, 0.42, 0.16) * luma + vec3(0.012, 0.05, 0.02);
-  col += vec3(0.25, 0.95, 0.45) * grid * 0.28;
-  col += vec3(0.45, 1.0, 0.62) * equator * 0.35;
-  col += vec3(0.55, 1.0, 0.72) * nightL * (1.0 - light) * uHasTex * 0.9;
+  float grid = 1.0 - smoothstep(0.0, 0.006, min(min(lonF, 1.0 - lonF), min(latF, 1.0 - latF)));
+  float equator = 1.0 - smoothstep(0.0, 0.0022, abs(vUv.y - 0.5));
+  vec3 green = vec3(0.05, 0.42, 0.16) * luma + vec3(0.012, 0.05, 0.02);
+  green += vec3(0.25, 0.95, 0.45) * grid * 0.12;
+  green += vec3(0.45, 1.0, 0.62) * equator * 0.16;
+  green += vec3(0.55, 1.0, 0.72) * nightL * (1.0 - light) * uHasTex * 0.55;
   float limb = pow(1.0 - abs(ndl), 6.0);
-  col += vec3(0.2, 0.7, 0.35) * limb * 0.15;
-  gl_FragColor = vec4(col, 1.0);
+  green += vec3(0.2, 0.7, 0.35) * limb * 0.06;
+  vec3 natural = mix(vec3(0.05, 0.12, 0.28), day, uHasTex);
+  natural *= mix(0.2, 1.0, light);
+  natural += night * (1.0 - light) * uHasTex * 0.9;
+  natural += vec3(0.8, 0.92, 0.9) * grid * 0.05;
+  natural += vec3(0.9, 0.96, 0.94) * equator * 0.06;
+  gl_FragColor = vec4(mix(green, natural, uTheme), 1.0);
 }
 `
 
@@ -118,13 +131,15 @@ varying vec3 vNormal;
 varying vec3 vWorld;
 uniform vec3 uCam;
 uniform vec3 uSun;
+uniform float uTheme;
 void main() {
   vec3 n = normalize(vNormal);
   vec3 viewDir = normalize(uCam - vWorld);
-  float fres = pow(1.0 - abs(dot(n, viewDir)), 2.6);
+  float fres = pow(1.0 - abs(dot(n, viewDir)), 2.8);
   float sun = pow(max(dot(n, normalize(uSun)), 0.0), 1.4);
-  float alpha = fres * (0.45 + sun * 0.7);
-  gl_FragColor = vec4(0.35, 1.0, 0.55, alpha);
+  float alpha = fres * mix(0.28 + sun * 0.4, 0.18 + sun * 0.28, uTheme);
+  vec3 tint = mix(vec3(0.35, 1.0, 0.55), vec3(0.45, 0.72, 1.0), uTheme);
+  gl_FragColor = vec4(tint, alpha);
 }
 `
 
@@ -134,7 +149,7 @@ uniform sampler2D uMap;
 void main() {
   float v = texture2D(uMap, vUv).a;
   if (v < 0.06) discard;
-  gl_FragColor = vec4(0.18, 0.95, 0.42, 1.0) * (v * 0.42);
+  gl_FragColor = vec4(0.45, 1.0, 0.78, 1.0) * (v * 0.34);
 }
 `
 
@@ -145,21 +160,26 @@ function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number 
   const height = Math.max(1, rows.length)
   const width = Math.max(1, rows[0]?.length ?? 1)
   const pixel = 4
+  const pad = 1
   const canvas = document.createElement('canvas')
-  canvas.width = width * pixel
-  canvas.height = height * pixel
+  canvas.width = width * pixel + pad * 2
+  canvas.height = height * pixel + pad * 2
   const ctx = canvas.getContext('2d')
+  const lit: Array<[number, number]> = []
+  for (let y = 0; y < height; y++) {
+    const row = rows[y] ?? ''
+    for (let x = 0; x < width; x++) {
+      const ch = row[x]
+      if (!ch || ch === '.' || ch === ' ') continue
+      lit.push([x, y])
+    }
+  }
   if (ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    for (let y = 0; y < height; y++) {
-      const row = rows[y] ?? ''
-      for (let x = 0; x < width; x++) {
-        const ch = row[x]
-        if (!ch || ch === '.' || ch === ' ') continue
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(x * pixel, y * pixel, pixel, pixel)
-      }
-    }
+    ctx.fillStyle = '#07140c'
+    for (const [x, y] of lit) ctx.fillRect(x * pixel, y * pixel, pixel + pad * 2, pixel + pad * 2)
+    ctx.fillStyle = '#ffffff'
+    for (const [x, y] of lit) ctx.fillRect(x * pixel + pad, y * pixel + pad, pixel, pixel)
   }
   const texture = new THREE.CanvasTexture(canvas)
   texture.magFilter = THREE.NearestFilter
@@ -168,6 +188,13 @@ function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number 
   texture.colorSpace = THREE.NoColorSpace
   texture.needsUpdate = true
   return { texture, aspect: width / height }
+}
+
+function markerTint(id: string, lift: number): [number, number, number] {
+  if (id === 'ico-quake' || id === 'ico-fire' || id === 'ico-launch') return [lift, lift * 0.84, lift * 0.38]
+  if (id === 'ico-storm') return [lift * 0.5, lift, lift]
+  if (id === 'sel-ring') return [lift, lift, lift * 0.9]
+  return [lift * 0.9, lift, lift * 0.92]
 }
 
 function graticule(): THREE.LineSegments {
@@ -196,7 +223,7 @@ function graticule(): THREE.LineSegments {
   geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
   return new THREE.LineSegments(
     geo,
-    new THREE.LineBasicMaterial({ color: 0x1f8f45, transparent: true, opacity: 0.45, toneMapped: false }),
+    new THREE.LineBasicMaterial({ color: 0x9eb8b4, transparent: true, opacity: 0.14, toneMapped: false }),
   )
 }
 
@@ -213,8 +240,11 @@ export class Globe implements GlobeApi {
     uDay: { value: THREE.Texture }
     uNight: { value: THREE.Texture }
     uHasTex: { value: number }
+    uTheme: { value: number }
   }
-  private atmosUniforms: { uCam: { value: THREE.Vector3 }; uSun: { value: THREE.Vector3 } }
+  private atmosUniforms: { uCam: { value: THREE.Vector3 }; uSun: { value: THREE.Vector3 }; uTheme: { value: number } }
+  private gratMat: THREE.LineBasicMaterial
+  private starMat!: THREE.PointsMaterial
   private layers = new Map<string, Marker[]>()
   private pools = new Map<string, Pool>()
   private mats = new Map<string, THREE.MeshBasicMaterial>()
@@ -230,7 +260,10 @@ export class Globe implements GlobeApi {
   private followRange = 1400
   private highlightId: string | null = null
   private hoverId: string | null = null
-  private markerSize = 0.7
+  private markerSize = MARKER_DEFAULT
+  private theme: GlobeTheme = 'color'
+  private hitKey = ''
+  private hitIndex = 0
   private bucket = -1
   private lodRange = 0
   private dirty = true
@@ -268,7 +301,7 @@ export class Globe implements GlobeApi {
       powerPreference: 'high-performance',
       preserveDrawingBuffer: true,
     })
-    this.renderer.setClearColor(0x010a06, 1)
+    this.renderer.setClearColor(0x02060c, 1)
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.renderer.toneMapping = THREE.NoToneMapping
     this.camera = new THREE.PerspectiveCamera(38, 1, 0.05, 4000)
@@ -279,6 +312,7 @@ export class Globe implements GlobeApi {
       uDay: { value: blank },
       uNight: { value: blank },
       uHasTex: { value: 0 },
+      uTheme: { value: 1 },
     }
     this.earth = new THREE.Mesh(
       new THREE.SphereGeometry(R, 96, 64),
@@ -290,8 +324,14 @@ export class Globe implements GlobeApi {
       }),
     )
     this.scene.add(this.earth)
-    this.scene.add(graticule())
-    this.atmosUniforms = { uCam: { value: new THREE.Vector3() }, uSun: { value: this.earthUniforms.uSun.value } }
+    const grat = graticule()
+    this.gratMat = grat.material as THREE.LineBasicMaterial
+    this.scene.add(grat)
+    this.atmosUniforms = {
+      uCam: { value: new THREE.Vector3() },
+      uSun: { value: this.earthUniforms.uSun.value },
+      uTheme: { value: 1 },
+    }
     const atmos = new THREE.Mesh(
       new THREE.SphereGeometry(R * 1.055, 64, 48),
       new THREE.ShaderMaterial({
@@ -413,7 +453,27 @@ export class Globe implements GlobeApi {
   }
 
   setMarkerSize(scale: number): void {
-    this.markerSize = clamp(scale, 0.35, 1.8)
+    this.markerSize = clamp(scale, MARKER_MIN, MARKER_MAX)
+  }
+
+  setTheme(theme: GlobeTheme): void {
+    this.theme = theme === 'green' ? 'green' : 'color'
+    const color = this.theme === 'color' ? 1 : 0
+    this.earthUniforms.uTheme.value = color
+    this.atmosUniforms.uTheme.value = color
+    if (color) {
+      this.gratMat.color.setHex(0x9eb8b4)
+      this.gratMat.opacity = 0.14
+      this.starMat.color.setHex(0xe7f1ff)
+      this.starMat.opacity = 0.7
+      this.renderer.setClearColor(0x02060c, 1)
+    } else {
+      this.gratMat.color.setHex(0x1f8f45)
+      this.gratMat.opacity = 0.22
+      this.starMat.color.setHex(0xc8ffd4)
+      this.starMat.opacity = 0.55
+      this.renderer.setClearColor(0x010a06, 1)
+    }
   }
 
   flyTo(lat: number, lon: number, rangeKm = 1800): void {
@@ -443,7 +503,7 @@ export class Globe implements GlobeApi {
   setFollow(target: { lat: number; lon: number; altKm: number } | null): void {
     const starting = !this.follow && !!target
     this.follow = target
-    if (target && starting) this.followRange = clamp(650 + target.altKm * 0.35, 420, 9000)
+    if (target && starting) this.followRange = clamp(360 + target.altKm * 0.35, 260, 9000)
   }
 
   project(lat: number, lon: number, altKm: number): { x: number; y: number; visible: boolean } {
@@ -493,6 +553,7 @@ export class Globe implements GlobeApi {
     const loader = new THREE.TextureLoader()
     let loaded = 0
     const done = (tex: THREE.Texture, slot: 'uDay' | 'uNight') => {
+      // Raw sRGB bytes. A custom shader has no colorspace chunk, so decoding here would display the globe too dark.
       tex.colorSpace = THREE.NoColorSpace
       tex.anisotropy = 4
       this.earthUniforms[slot].value = tex
@@ -516,19 +577,16 @@ export class Globe implements GlobeApi {
     }
     const geo = new THREE.BufferGeometry()
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    const stars = new THREE.Points(
-      geo,
-      new THREE.PointsMaterial({
-        color: 0xc8ffd4,
-        size: 1.5,
-        sizeAttenuation: false,
-        transparent: true,
-        opacity: 0.75,
-        depthWrite: false,
-        toneMapped: false,
-      }),
-    )
-    this.scene.add(stars)
+    this.starMat = new THREE.PointsMaterial({
+      color: 0xe7f1ff,
+      size: 1.35,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0.7,
+      depthWrite: false,
+      toneMapped: false,
+    })
+    this.scene.add(new THREE.Points(geo, this.starMat))
   }
 
   private place(out: THREE.Vector3, lat: number, lon: number, altKm: number, lift: number) {
@@ -648,17 +706,16 @@ export class Globe implements GlobeApi {
   }
 
   private drawSprite(marker: Marker): string {
-    const hot = marker.id === this.highlightId || marker.id === this.hoverId
-    if (!hot && this.view.rangeKm > 2400) return 'dot'
+    if (this.view.rangeKm > SPRITE_RANGE) return 'dot'
     return marker.shape || 'dot'
   }
 
   private rebuildPools() {
     const range = this.view.rangeKm
-    const cell = range > 1100 ? clamp(range / 4200, 0.18, 5) : 0
+    const cell = range > 420 ? clamp(range / 1800, 0.28, 7) : 0
     const grouped = new Map<string, DrawItem[]>()
     for (const [layerId, markers] of this.layers) {
-      const declutter = cell > 0 && markers.length > 48
+      const declutter = cell > 0 && markers.length > 12
       const picked = new Map<string, Marker>()
       const extras: Marker[] = []
       for (const marker of markers) {
@@ -677,8 +734,7 @@ export class Globe implements GlobeApi {
         const list = grouped.get(sprite) ?? []
         list.push({ layerId, marker })
         grouped.set(sprite, list)
-        const hot = marker.id === this.highlightId || marker.id === this.hoverId
-        if (hot && sprite.startsWith('air-')) {
+        if (marker.id === this.highlightId && (sprite.startsWith('air-') || sprite === 'dot')) {
           const ring = grouped.get('sel-ring') ?? []
           ring.push({ layerId, marker })
           grouped.set('sel-ring', ring)
@@ -700,7 +756,7 @@ export class Globe implements GlobeApi {
       pool.items = items
       this.ensurePool(pool, items.length)
     }
-    this.bucket = range > 2400 ? 2 : range > 1100 ? 1 : 0
+    this.bucket = range > SPRITE_RANGE ? 1 : 0
     this.lodRange = range
   }
 
@@ -732,8 +788,8 @@ export class Globe implements GlobeApi {
 
   private writeMarkers(now: number) {
     const range = this.view.rangeKm
-    const bucket = range > 2400 ? 2 : range > 1100 ? 1 : 0
-    const drift = bucket === 2 ? 700 : bucket === 1 ? 180 : 40
+    const bucket = range > SPRITE_RANGE ? 1 : 0
+    const drift = bucket === 1 ? 240 : 36
     if (this.dirty || bucket !== this.bucket || Math.abs(range - this.lodRange) > drift) {
       this.rebuildPools()
       this.dirty = false
@@ -746,22 +802,24 @@ export class Globe implements GlobeApi {
       if (!mesh || !mesh.visible) continue
       const airy = pool.id.startsWith('air-')
       const ring = pool.id === 'sel-ring'
-      const pixels = range > 2400 ? 4.2 : range > 900 ? (ring ? 28 : airy ? 20 : 11) : (ring ? 40 : airy ? 30 : 16)
-      const world = clamp((pixels * dist * tan) / (height * 0.5), 0.04, 2.4) * this.markerSize
+      const far = range > SPRITE_RANGE
+      const pixels = far ? (ring ? 8 : 5) : ring ? 26 : airy ? 20 : 11
+      const world = clamp((pixels * dist * tan) / (height * 0.5), 0.01, 6) * this.markerSize
       const pulseBase = pool.id === 'ico-quake' || pool.id === 'ico-storm'
       for (let i = 0; i < pool.items.length; i++) {
         const marker = pool.items[i]!.marker
         const hot = marker.id === this.highlightId || marker.id === this.hoverId
         const pulse = pulseBase ? 1 + Math.sin(now / 280 + i) * 0.08 : 1
-        const scale = world * marker.scale * pulse * (ring ? 1 : hot ? 1.35 : 1)
+        const scale = world * marker.scale * pulse * (ring ? 1 : hot ? 1.12 : 1)
         this.place(this.scratch.pos, marker.lat, marker.lon, marker.altKm, 0.35)
         this.orient(marker.lat, marker.lon, marker.heading || 0, scale)
         this.scratch.right.multiplyScalar(pool.aspect)
         this.scratch.matrix.makeBasis(this.scratch.right, this.scratch.forward, this.scratch.up)
         this.scratch.matrix.setPosition(this.scratch.pos)
         mesh.setMatrixAt(i, this.scratch.matrix)
-        const b = clamp(marker.brightness * (hot ? 1 : 0.78), 0.22, 1)
-        this.scratch.color.setRGB(hot ? 0.92 : 0.15 + b * 0.55, hot ? 1 : 0.55 + b * 0.45, hot ? 0.78 : 0.2 + b * 0.25)
+        const lift = hot ? 1 : 0.9 + clamp(marker.brightness, 0, 1) * 0.1
+        const tint = markerTint(pool.id, lift)
+        this.scratch.color.setRGB(tint[0], tint[1], tint[2])
         mesh.setColorAt(i, this.scratch.color)
       }
       mesh.instanceMatrix.needsUpdate = true
@@ -784,13 +842,14 @@ export class Globe implements GlobeApi {
     return vecToLatLon({ x: hit.point.x, y: hit.point.y, z: hit.point.z })
   }
 
-  private pickMarker(event: PointerEvent): { marker: Marker; layerId: string } | null {
+  private collectHits(event: PointerEvent): { marker: Marker; layerId: string; id: string; d: number }[] {
     const rect = this.canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
-    let best: { marker: Marker; layerId: string; d: number } | null = null
     const camN = this.camera.position.clone().normalize()
+    const hits: { marker: Marker; layerId: string; id: string; d: number }[] = []
     for (const pool of this.pools.values()) {
+      if (pool.id === 'sel-ring') continue
       for (const item of pool.items) {
         const marker = item.marker
         const v = latLonToVec(marker.lat, marker.lon, marker.altKm, R)
@@ -799,10 +858,24 @@ export class Globe implements GlobeApi {
         const projected = this.project(marker.lat, marker.lon, marker.altKm)
         if (!projected.visible) continue
         const d = Math.hypot(projected.x - x, projected.y - y)
-        if (d < 14 && (!best || d < best.d)) best = { marker, layerId: item.layerId, d }
+        if (d <= HIT_PX) hits.push({ marker, layerId: item.layerId, id: marker.id, d })
       }
     }
-    return best ? { marker: best.marker, layerId: best.layerId } : null
+    return hits
+  }
+
+  private pickMarker(event: PointerEvent, cycle: boolean): { marker: Marker; layerId: string } | null {
+    const hits = this.collectHits(event)
+    const chosen = chooseHit(hits, cycle ? this.hitKey : '', cycle ? this.hitIndex : -1)
+    if (!cycle) return chosen ? { marker: chosen.item.marker, layerId: chosen.item.layerId } : null
+    if (!chosen) {
+      this.hitKey = ''
+      this.hitIndex = 0
+      return null
+    }
+    this.hitKey = chosen.key
+    this.hitIndex = chosen.index
+    return { marker: chosen.item.marker, layerId: chosen.item.layerId }
   }
 
   private onDown = (event: PointerEvent) => {
@@ -819,7 +892,7 @@ export class Globe implements GlobeApi {
     if (!this.dragging) {
       const ground = this.ground(event)
       for (const fn of this.movers) fn(ground)
-      const picked = this.pickMarker(event)
+      const picked = this.pickMarker(event, false)
       const id = picked?.marker.id ?? null
       const changed = id !== this.hoverId
       if (changed) {
@@ -857,7 +930,7 @@ export class Globe implements GlobeApi {
     if (!this.dragging) return
     this.dragging = false
     if (this.moved > 5) return
-    const markerHit = this.pickMarker(event)
+    const markerHit = this.pickMarker(event, true)
     const ground = this.ground(event)
     if (!ground && !markerHit) return
     const hit: GlobeClick = {

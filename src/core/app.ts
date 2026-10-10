@@ -7,9 +7,9 @@ import { clamp, formatLat, formatLon } from './geo'
 import { Globe } from './globe'
 import { PluginRegistry } from './registry'
 import { decodeShare, encodeShare } from './share'
-import { SettingsStore } from './settings'
+import { MARKER_MAX, MARKER_MIN, SettingsStore } from './settings'
 import { Sfx } from './audio'
-import { toMarker, type CommandContext, type LayerHandle, type PluginContext, type WatchRule } from './types'
+import { toMarker, type CommandContext, type GlobeTheme, type LayerHandle, type PluginContext, type WatchRule } from './types'
 import { builtinPlugins } from '../plugins'
 import { getJson } from '../net/http'
 import { buildShell } from '../ui/shell'
@@ -377,6 +377,22 @@ export function boot(root: HTMLElement): void {
     audio.play('shot')
   }
 
+  function applyLook() {
+    const current = settings.get()
+    globe.setTheme(current.theme)
+    globe.setMarkerSize(current.markerSize)
+    shell.canvas.classList.toggle('is-color', current.theme === 'color')
+    shell.globeCrt.style.setProperty('--crt', current.crt.toFixed(2))
+    shell.globeCrt.classList.toggle('is-off', current.crt <= 0.001)
+    const form = shell.settingsForm
+    const sizeInput = form.elements.namedItem('markerSize') as HTMLInputElement | null
+    const crtInput = form.elements.namedItem('crt') as HTMLInputElement | null
+    const themeInput = form.elements.namedItem('theme') as HTMLSelectElement | null
+    if (sizeInput) sizeInput.value = String(current.markerSize)
+    if (crtInput) crtInput.value = String(current.crt)
+    if (themeInput) themeInput.value = current.theme
+  }
+
   const commands: CommandContext = {
     flyTo: (lat, lon, range) => globe.flyTo(lat, lon, range),
     getView: () => globe.getView(),
@@ -407,13 +423,20 @@ export function boot(root: HTMLElement): void {
       return mute
     },
     setMarkerSize(scale) {
-      const markerSize = clamp(scale, 0.35, 1.8)
-      settings.update({ markerSize })
-      globe.setMarkerSize(markerSize)
-      const input = shell.settingsForm.elements.namedItem('markerSize') as HTMLInputElement | null
-      if (input) input.value = String(markerSize)
+      settings.update({ markerSize: clamp(scale, MARKER_MIN, MARKER_MAX) })
+      applyLook()
     },
     getMarkerSize: () => settings.get().markerSize,
+    setTheme(theme: GlobeTheme) {
+      settings.update({ theme: theme === 'green' ? 'green' : 'color' })
+      applyLook()
+    },
+    getTheme: () => settings.get().theme,
+    setCrt(amount) {
+      settings.update({ crt: clamp(amount, 0, 1) })
+      applyLook()
+    },
+    getCrt: () => settings.get().crt,
     setViewer(open) {
       viewer.setOpen(open)
       try {
@@ -531,6 +554,8 @@ export function boot(root: HTMLElement): void {
     ;(form.elements.namedItem('openskySecret') as HTMLInputElement).value = current.openskySecret
     ;(form.elements.namedItem('firmsKey') as HTMLInputElement).value = current.firmsKey
     ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
+    ;(form.elements.namedItem('crt') as HTMLInputElement).value = String(current.crt)
+    ;(form.elements.namedItem('theme') as HTMLSelectElement).value = current.theme
     shell.settings.hidden = false
   })
   shell.settingsForm.addEventListener('submit', (event) => {
@@ -544,6 +569,9 @@ export function boot(root: HTMLElement): void {
     shell.settings.hidden = true
     const size = Number((form.elements.namedItem('markerSize') as HTMLInputElement).value)
     if (Number.isFinite(size)) commands.setMarkerSize(size)
+    const crt = Number((form.elements.namedItem('crt') as HTMLInputElement).value)
+    if (Number.isFinite(crt)) commands.setCrt(crt)
+    commands.setTheme((form.elements.namedItem('theme') as HTMLSelectElement).value === 'green' ? 'green' : 'color')
     showOutput('KEYS STORED LOCALLY')
     audio.play('click')
   })
@@ -680,9 +708,12 @@ export function boot(root: HTMLElement): void {
   })
   shell.infoHead.addEventListener('pointerup', () => { draggingCard = false })
   const sizeInput = shell.settingsForm.elements.namedItem('markerSize') as HTMLInputElement
+  const crtInput = shell.settingsForm.elements.namedItem('crt') as HTMLInputElement
+  const themeInput = shell.settingsForm.elements.namedItem('theme') as HTMLSelectElement
   sizeInput.addEventListener('input', () => commands.setMarkerSize(Number(sizeInput.value)))
-  globe.setMarkerSize(settings.get().markerSize)
-  sizeInput.value = String(settings.get().markerSize)
+  crtInput.addEventListener('input', () => commands.setCrt(Number(crtInput.value)))
+  themeInput.addEventListener('change', () => commands.setTheme(themeInput.value === 'green' ? 'green' : 'color'))
+  applyLook()
 
   entities.subscribe(() => {
     shell.count.textContent = `${entities.count().toLocaleString()} CONTACTS`

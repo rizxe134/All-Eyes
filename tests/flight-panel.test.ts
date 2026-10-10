@@ -55,6 +55,42 @@ describe('flight panel layout', () => {
     expect(actions && body && (actions.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_PRECEDING)).toBeTruthy()
   })
 
+  it('hides NO PHOTO with display none once a photo is showing', () => {
+    const css = readFileSync('src/styles.css', 'utf8')
+    expect(css).toMatch(/\.ae-nophoto\[hidden\][\s\S]*?display:\s*none/)
+    expect(css).toMatch(/\.ae-crt-snow\[hidden\][\s\S]*?display:\s*none/)
+
+    const panel = mountFlightPanel()
+    document.body.append(panel.root)
+    const style = document.createElement('style')
+    style.textContent = css
+    document.head.append(style)
+    panel.setView(view('https://example.test/a.jpg'))
+    const placeholder = panel.root.querySelector('.ae-nophoto') as HTMLElement
+    const img = panel.root.querySelector('.ae-crt-screen img') as HTMLImageElement
+    const snow = panel.root.querySelector('.ae-crt-snow') as HTMLElement
+    expect(placeholder.hidden).toBe(true)
+    expect(img.hidden).toBe(false)
+    expect(snow.hidden).toBe(true)
+    expect(getComputedStyle(placeholder).display).toBe('none')
+    expect(getComputedStyle(snow).display).toBe('none')
+
+    img.dispatchEvent(new Event('error'))
+    expect(placeholder.hidden).toBe(false)
+    expect(img.hidden).toBe(true)
+    expect(snow.hidden).toBe(false)
+    expect(getComputedStyle(placeholder).display).not.toBe('none')
+
+    panel.setView(view('https://example.test/b.jpg'))
+    expect(placeholder.hidden).toBe(true)
+    expect(img.hidden).toBe(false)
+    expect(snow.hidden).toBe(true)
+    img.dispatchEvent(new Event('load'))
+    expect(placeholder.hidden).toBe(true)
+    expect(snow.hidden).toBe(true)
+    expect(getComputedStyle(placeholder).display).toBe('none')
+  })
+
   it('shows color bars when there is no photo', () => {
     const panel = mountFlightPanel()
     document.body.append(panel.root)

@@ -1,3 +1,4 @@
 Earth day and night images are NASA Blue Marble and city lights, public domain,
 as distributed with the three-globe example assets.
-They are graded to phosphor green at runtime by this app.
+The color theme shows them in natural color, with city lights on the night side.
+The green theme grades the same images to phosphor at runtime.

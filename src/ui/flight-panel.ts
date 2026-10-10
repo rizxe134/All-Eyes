@@ -1,4 +1,5 @@
 import type { FlightView } from '../plugins/aircraft/detail'
+import { emptyPhoto, requestPhoto, settlePhoto, showPlaceholder, type PhotoFrame } from './photo-state'
 
 export interface FlightPanel {
   root: HTMLElement
@@ -137,22 +138,61 @@ export function mountFlightPanel(): FlightPanel {
     ctx.putImageData(frame, 0, 0)
   }
 
-  function syncSnow() {
-    const bars = img.hidden
-    snow.classList.toggle('is-bars', bars)
-    paintSnow(bars)
-    if (snowTimer) window.clearInterval(snowTimer)
-    snowTimer = 0
-    if (root.hidden || reduceMotion) return
-    snowTimer = window.setInterval(() => paintSnow(img.hidden), bars ? 90 : 160)
+  let frame: PhotoFrame = emptyPhoto()
+  let onLoad: (() => void) | null = null
+  let onError: (() => void) | null = null
+
+  function detachPhoto() {
+    if (onLoad) img.removeEventListener('load', onLoad)
+    if (onError) img.removeEventListener('error', onError)
+    onLoad = null
+    onError = null
   }
 
-  img.addEventListener('error', () => {
-    img.hidden = true
-    placeholder.hidden = false
-    placeholder.textContent = 'NO PHOTO'
+  function syncSnow() {
+    const bars = showPlaceholder(frame)
+    snow.hidden = !bars
+    snow.classList.toggle('is-bars', bars)
+    placeholder.hidden = !bars
+    img.hidden = bars
+    if (!frame.url) img.removeAttribute('src')
+    if (snowTimer) window.clearInterval(snowTimer)
+    snowTimer = 0
+    if (!bars || root.hidden || reduceMotion) return
+    paintSnow(true)
+    snowTimer = window.setInterval(() => paintSnow(true), 90)
+  }
+
+  function showPhoto(url: string) {
+    const prevUrl = frame.url
+    frame = requestPhoto(frame, url)
+    if (!frame.url) {
+      detachPhoto()
+      syncSnow()
+      return
+    }
+    if (frame.url === prevUrl && img.getAttribute('src') === frame.url && frame.phase !== 'failed') {
+      syncSnow()
+      return
+    }
+    const token = frame.token
+    detachPhoto()
+    const load = () => {
+      frame = settlePhoto(frame, token, true)
+      syncSnow()
+    }
+    const error = () => {
+      frame = settlePhoto(frame, token, false)
+      syncSnow()
+    }
+    onLoad = load
+    onError = error
+    img.addEventListener('load', load)
+    img.addEventListener('error', error)
+    if (img.getAttribute('src') === frame.url) img.removeAttribute('src')
+    img.src = frame.url
     syncSnow()
-  })
+  }
 
   const hooks = {
     close: [] as Array<() => void>,
@@ -196,7 +236,7 @@ export function mountFlightPanel(): FlightPanel {
     root.hidden = !view
     root.classList.toggle('is-open', Boolean(view))
     if (!view) {
-      syncSnow()
+      showPhoto('')
       return
     }
     title.textContent = view.callsign
@@ -222,21 +262,16 @@ export function mountFlightPanel(): FlightPanel {
       }
       grid.append(dt, dd)
     }
-    if (view.photoUrl) {
-      placeholder.hidden = true
-      img.hidden = false
-      if (img.src !== view.photoUrl) img.src = view.photoUrl
-      credit.hidden = !view.photoCredit
-      credit.textContent = view.photoCredit ? `PHOTO ${view.photoCredit}` : ''
+    if (view.photoUrl && view.photoCredit) {
+      credit.hidden = false
+      credit.textContent = `PHOTO ${view.photoCredit}`
       credit.href = view.photoLink || view.photoUrl
     } else {
-      img.hidden = true
-      img.removeAttribute('src')
-      placeholder.hidden = false
-      placeholder.textContent = 'NO PHOTO'
       credit.hidden = true
+      credit.textContent = ''
+      credit.removeAttribute('href')
     }
-    syncSnow()
+    showPhoto(view.photoUrl || '')
   }
 
   return {

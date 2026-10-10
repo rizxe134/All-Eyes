@@ -320,7 +320,7 @@ button { cursor: pointer; }
 .ae-alert.is-new strong { animation: ae-blink 0.8s steps(2, end) infinite; }
 .ae-alert span { font-size: 18px; color: var(--mid); }
 .ae-watch, .ae-cmd, .ae-scrubrow { display: flex; gap: 6px; align-items: center; }
-.ae-watch input, .ae-prompt, .ae-dialog input, .ae-watch select {
+.ae-watch input, .ae-prompt, .ae-dialog input, .ae-dialog select, .ae-watch select {
   background: #02140c;
   border: 3px solid var(--line);
   padding: 4px 6px;
@@ -393,8 +393,58 @@ button { cursor: pointer; }
   position: absolute;
   background: var(--hot);
 }
-.ae-cross::before { left: 5px; top: -5px; width: 2px; height: 22px; }
-.ae-cross::after { top: 5px; left: -5px; height: 2px; width: 22px; }
+.ae-cross::before { left: 5px; top: 2px; width: 1px; height: 8px; }
+.ae-cross::after { top: 5px; left: 2px; height: 1px; width: 8px; }
+
+.ae-globe.is-color {
+  filter: contrast(1.04) saturate(1.06) brightness(1.03);
+}
+.ae-globe-crt {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--crt, 0.4);
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2) 0px,
+    rgba(0, 0, 0, 0.2) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mix-blend-mode: multiply;
+  animation: ae-globe-flicker 2.8s steps(2, end) infinite;
+}
+.ae-globe-crt.is-off { opacity: 0; animation: none; }
+.ae-globe-crt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.42;
+  background-image:
+    radial-gradient(circle, rgba(255, 40, 40, 0.5) 0.4px, transparent 0.7px),
+    radial-gradient(circle, rgba(40, 220, 90, 0.42) 0.4px, transparent 0.7px),
+    radial-gradient(circle, rgba(50, 90, 255, 0.48) 0.4px, transparent 0.7px);
+  background-size: 3px 3px;
+  background-position: 0 0, 1px 0, 2px 0;
+  mix-blend-mode: soft-light;
+}
+.ae-globe-crt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow:
+    inset 2px 0 0 rgba(255, 50, 40, 0.14),
+    inset -2px 0 0 rgba(40, 170, 255, 0.14);
+  mix-blend-mode: screen;
+}
+@keyframes ae-globe-flicker {
+  0%, 100% { filter: brightness(1); }
+  46% { filter: brightness(0.97); }
+  47% { filter: brightness(1); }
+  91% { filter: brightness(0.95); }
+  92% { filter: brightness(1); }
+}
 
 .ae-track {
   position: absolute;
@@ -441,6 +491,7 @@ button { cursor: pointer; }
 }
 .ae-field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; font-size: 18px; color: var(--mid); }
 .ae-field input { font-size: 20px; }
+.ae-field select { font-family: "Ae Pixel", monospace; font-size: 10px; background: #02140c; }
 .ae-dialog p { margin: 0 0 8px; font-size: 18px; color: var(--dim); }
 .ae-dialog .ae-row { display: flex; gap: 8px; }
 
@@ -464,7 +515,7 @@ button { cursor: pointer; }
 @keyframes ae-roll { from { background-position: 0 0; } to { background-position: 0 6px; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .ae-scan, .ae-brand, .ae-dot, .ae-alert.is-new strong, .ae-crt-screen { animation: none; }
+  .ae-scan, .ae-brand, .ae-dot, .ae-alert.is-new strong, .ae-crt-screen, .ae-globe-crt { animation: none; }
 }
 
 .ae-flight {
@@ -593,6 +644,11 @@ button { cursor: pointer; }
   letter-spacing: 1px;
   text-shadow: 0 1px 0 #000, 0 0 8px rgba(0, 0, 0, 0.85);
 }
+.ae-nophoto[hidden],
+.ae-crt-screen img[hidden],
+.ae-crt-snow[hidden] {
+  display: none;
+}
 @keyframes ae-crt-flicker {
   0%, 100% { opacity: 1; }
   47% { opacity: 0.97; }
@@ -600,6 +656,7 @@ button { cursor: pointer; }
   92% { opacity: 0.94; }
   93% { opacity: 1; }
 }
+.ae-flight-credit[hidden] { display: none; }
 .ae-flight-credit {
   display: block;
   margin-top: 4px;

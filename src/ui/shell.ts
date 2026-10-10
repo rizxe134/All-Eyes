@@ -28,6 +28,7 @@ export interface Shell {
   liveBtn: HTMLButtonElement
   settings: HTMLElement
   settingsForm: HTMLFormElement
+  globeCrt: HTMLElement
   watchForm: HTMLFormElement
   info: HTMLElement
   infoHead: HTMLElement
@@ -122,7 +123,7 @@ export function buildShell(root: HTMLElement): Shell {
   const prompt = el('input', 'ae-prompt') as HTMLInputElement
   prompt.autocomplete = 'off'
   prompt.spellcheck = false
-  prompt.placeholder = 'fly tokyo   layer ships off   viewer   size 0.7   help'
+  prompt.placeholder = 'fly tokyo   layer ships off   theme color   crt 0.4   size 0.45   help'
   prompt.setAttribute('aria-label', 'Command')
   form.append(gt, prompt)
   foot.append(scrubRow, output, suggest, form)
@@ -149,12 +150,35 @@ export function buildShell(root: HTMLElement): Shell {
   const markerSize = el('input') as HTMLInputElement
   markerSize.name = 'markerSize'
   markerSize.type = 'range'
-  markerSize.min = '0.35'
-  markerSize.max = '1.8'
+  markerSize.min = '0.2'
+  markerSize.max = '1.6'
   markerSize.step = '0.05'
-  markerSize.value = '0.7'
+  markerSize.value = '0.45'
   sizeWrap.append(markerSize)
   dialog.append(sizeWrap)
+  const themeWrap = el('label', 'ae-field')
+  themeWrap.append(document.createTextNode('GLOBE'))
+  const theme = el('select') as HTMLSelectElement
+  theme.name = 'theme'
+  for (const [value, label] of [['color', 'COLOR'], ['green', 'GREEN']] as const) {
+    const option = el('option', '', label) as HTMLOptionElement
+    option.value = value
+    theme.append(option)
+  }
+  theme.value = 'color'
+  themeWrap.append(theme)
+  dialog.append(themeWrap)
+  const crtWrap = el('label', 'ae-field')
+  crtWrap.append(document.createTextNode('CRT'))
+  const crt = el('input') as HTMLInputElement
+  crt.name = 'crt'
+  crt.type = 'range'
+  crt.min = '0'
+  crt.max = '1'
+  crt.step = '0.05'
+  crt.value = '0.4'
+  crtWrap.append(crt)
+  dialog.append(crtWrap)
   const row = el('div', 'ae-row')
   const save = el('button', 'ae-btn', 'SAVE') as HTMLButtonElement
   save.type = 'submit'
@@ -177,7 +201,8 @@ export function buildShell(root: HTMLElement): Shell {
   infoHead.append(infoTitle, infoSpeed)
   const infoBody = el('pre')
   info.append(infoHead, infoBody)
-  root.append(canvas, cross, hud, info, boot, settings, scan)
+  const globeCrt = el('div', 'ae-globe-crt')
+  root.append(canvas, globeCrt, cross, hud, info, boot, settings, scan)
 
   return {
     canvas,
@@ -209,6 +234,7 @@ export function buildShell(root: HTMLElement): Shell {
     liveBtn,
     settings,
     settingsForm: dialog,
+    globeCrt,
     watchForm,
     info,
     infoHead,

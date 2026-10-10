@@ -1,6 +1,14 @@
 # All Eyes
 
-A live "see the whole world" console. The globe fills the window, the interface is green phosphor and 8-bit, and the feeds run with no API keys.
+A live "see the whole world" console. The globe fills the window in natural color, the panels stay green phosphor and 8-bit, and the feeds run with no API keys.
+
+## What's new in 1.4.0
+
+- Plane markers are much smaller. Silhouettes appear only when you are zoomed in (about 640 km). Farther out they are 1–3 px dots. Dense areas thin harder. The hit target stays about 12 px, the nearest contact wins, and another click on the same spot cycles overlaps. The lock cross and the selection ring are smaller. **CFG** and `size` default to 0.45.
+- A flight photo no longer keeps the NO PHOTO label on top of a real picture. The placeholder and colour bars are removed once the image loads, and they return only when there is no photo or the load fails.
+- The globe is natural color (NASA Blue Marble, city lights on the night side) with the same flat CRT treatment as the flight photo: scanlines, a phosphor mask, a little color fringe, and a soft flicker. No curved glass. `theme green` switches the globe back to phosphor. `crt` sets the strength. The panels stay green. Markers stay light green-white with a dark outline.
+
+1.3.1, 1.3.0, 1.2.0, 1.1.0, and 1.0.0 are still on the releases page.
 
 ## What's new in 1.3.1
 
@@ -11,9 +19,7 @@ A live "see the whole world" console. The globe fills the window, the interface 
 - Aircraft on the globe are solid top-down silhouettes, one shape per family (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet). They point along their heading and stay small. Ships, satellites, and weather icons use the same filled style. Zoomed out they are still dots. **CFG** and `size` still scale them.
 - Click a plane for the left flight panel: callsign, type-code badge, photo when a free source has one, operator, origin and destination, altitude, speed, track, and squawk. The selected plane is brighter, with a ring, a solid line for where it has been, and a dashed line toward the destination when that airport is known. **3D VIEW** opens the top-right model viewer. **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** sit on the panel. A collapsible graph draws the speed and altitude this contact has already reported.
 - Fields the feeds do not have stay `NOT AVAILABLE`. Airspeeds computed from ground speed are marked `EST`. Nothing is invented.
-- **3D VIEW** opens a realistic model on its own canvas: white airliners, a helicopter, ships, and satellites, with studio light and a credit under the picture. The globe stays the green silhouette map. Model authors and licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).
-
-1.3.0, 1.2.0, 1.1.0, and 1.0.0 are still on the releases page.
+- **3D VIEW** opens a realistic model on its own canvas: white airliners, a helicopter, ships, and satellites, with studio light and a credit under the picture. Model authors and licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).
 
 ## Run
 
@@ -34,23 +40,23 @@ Apple menu, then **About This Mac**: Chip is Apple M1 or later for Apple Silicon
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.3.1-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
-| Intel | `All-Eyes-1.3.1-macOS-Intel-x64.zip` | Zip of All Eyes.app |
+| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.4.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
+| Intel | `All-Eyes-1.4.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
 
 ### Windows
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Windows, recommended | `All-Eyes-1.3.1-Windows-x64-Installer.exe` | Installer |
-| 64-bit Windows, no install | `All-Eyes-1.3.1-Windows-x64-Portable.exe` | Portable exe |
+| 64-bit Windows, recommended | `All-Eyes-1.4.0-Windows-x64-Installer.exe` | Installer |
+| 64-bit Windows, no install | `All-Eyes-1.4.0-Windows-x64-Portable.exe` | Portable exe |
 
 ### Linux
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Linux, recommended | `All-Eyes-1.3.1-Linux-x64.AppImage` | AppImage |
-| Debian or Ubuntu | `All-Eyes-1.3.1-Linux-x64.deb` | Debian package |
-| Any 64-bit Linux | `All-Eyes-1.3.1-Linux-x64.tar.gz` | Archive |
+| 64-bit Linux, recommended | `All-Eyes-1.4.0-Linux-x64.AppImage` | AppImage |
+| Debian or Ubuntu | `All-Eyes-1.4.0-Linux-x64.deb` | Debian package |
+| Any 64-bit Linux | `All-Eyes-1.4.0-Linux-x64.tar.gz` | Archive |
 
 ## How to install
 
@@ -60,7 +66,7 @@ Open the section for your computer. The desktop builds are unsigned, so the firs
 <summary>macOS</summary>
 
 1. Click the Apple menu, then **About This Mac**.
-2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-1.3.1-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-1.3.1-macOS-Intel-x64.zip`.
+2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-1.4.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-1.4.0-macOS-Intel-x64.zip`.
 3. Double-click the zip. macOS unpacks it and shows `All Eyes.app`.
 4. Drag `All Eyes.app` into **Applications**.
 5. First launch: right-click `All Eyes.app`, choose **Open**, then **Open** again. macOS says it cannot verify the developer. That warning is expected, because the app is unsigned.
@@ -76,11 +82,11 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 <details>
 <summary>Windows</summary>
 
-1. Download `All-Eyes-1.3.1-Windows-x64-Installer.exe` (recommended), or `All-Eyes-1.3.1-Windows-x64-Portable.exe` if you do not want to install.
+1. Download `All-Eyes-1.4.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-1.4.0-Windows-x64-Portable.exe` if you do not want to install.
 2. Double-click the file you downloaded.
 3. If you see **Windows protected your PC**, choose **More info**, then **Run anyway**. That warning is expected, because the app is unsigned.
 4. Installer: step through the setup. It adds an **All Eyes** shortcut to the Start menu and the desktop. Open the app from either shortcut.
-5. Portable: nothing is installed. Double-click `All-Eyes-1.3.1-Windows-x64-Portable.exe` each time you want the globe.
+5. Portable: nothing is installed. Double-click `All-Eyes-1.4.0-Windows-x64-Portable.exe` each time you want the globe.
 
 </details>
 
@@ -89,12 +95,12 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 
 **AppImage (any distro)**
 
-1. Download `All-Eyes-1.3.1-Linux-x64.AppImage`.
+1. Download `All-Eyes-1.4.0-Linux-x64.AppImage`.
 2. In that folder, run:
 
 ```bash
-chmod +x All-Eyes-1.3.1-Linux-x64.AppImage
-./All-Eyes-1.3.1-Linux-x64.AppImage
+chmod +x All-Eyes-1.4.0-Linux-x64.AppImage
+./All-Eyes-1.4.0-Linux-x64.AppImage
 ```
 
 Or right-click the file, choose **Properties**, turn on **Allow executing file as a program**, and double-click it.
@@ -108,28 +114,28 @@ sudo apt install libfuse2
 Or skip FUSE and run:
 
 ```bash
-./All-Eyes-1.3.1-Linux-x64.AppImage --appimage-extract-and-run
+./All-Eyes-1.4.0-Linux-x64.AppImage --appimage-extract-and-run
 ```
 
 **Debian or Ubuntu package**
 
-1. Download `All-Eyes-1.3.1-Linux-x64.deb`.
+1. Download `All-Eyes-1.4.0-Linux-x64.deb`.
 2. In that folder, run:
 
 ```bash
-sudo apt install ./All-Eyes-1.3.1-Linux-x64.deb
+sudo apt install ./All-Eyes-1.4.0-Linux-x64.deb
 ```
 
 3. Open **All Eyes** from the applications menu. The package name is `all-eyes`. The program file is `/opt/All Eyes/all-eyes`.
 
 **Archive**
 
-1. Download `All-Eyes-1.3.1-Linux-x64.tar.gz`.
-2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.3.1-Linux-x64`:
+1. Download `All-Eyes-1.4.0-Linux-x64.tar.gz`.
+2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.4.0-Linux-x64`:
 
 ```bash
-tar -xzf All-Eyes-1.3.1-Linux-x64.tar.gz
-cd All-Eyes-1.3.1-Linux-x64
+tar -xzf All-Eyes-1.4.0-Linux-x64.tar.gz
+cd All-Eyes-1.4.0-Linux-x64
 ./all-eyes
 ```
 
@@ -142,7 +148,7 @@ cd All-Eyes-1.3.1-Linux-x64
 1. Press `/` to open the command line.
 2. Try `fly tokyo`, `pass iss`, `size 0.8`, or `help`.
 3. Hover a marker. The top-right viewer shows a realistic 3D model and the card. Click a plane to open the flight panel and follow it. Drag the globe to look around without closing the panel. The **KT** button switches speed units. `viewer off` hides the model viewer.
-4. Click **CFG** to add an optional OpenSky or NASA FIRMS key, or to set marker size. The globe runs with none of the keys set.
+4. Click **CFG** to add an optional OpenSky or NASA FIRMS key, or to set marker size, globe theme, and CRT. The globe runs with none of the keys set. `theme green` and `crt 0` are there if you want the old phosphor globe with no overlay.
 
 Drag the globe to look around. Click empty ground to drop the follow lock and set the pin.
 
