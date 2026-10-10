@@ -7,6 +7,7 @@ A live "see the whole world" console. The globe fills the window, the interface 
 - Aircraft on the globe are solid top-down silhouettes, one shape per family (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet). They point along their heading and stay small. Ships, satellites, and weather icons use the same filled style. Zoomed out they are still dots. **CFG** and `size` still scale them.
 - Click a plane for the left flight panel: callsign, type-code badge, photo when a free source has one, operator, origin and destination, altitude, speed, track, and squawk. The selected plane is brighter, with a ring, a solid line for where it has been, and a dashed line toward the destination when that airport is known. **3D VIEW** opens the top-right model viewer. **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** sit on the panel. A collapsible graph draws the speed and altitude this contact has already reported.
 - Fields the feeds do not have stay `NOT AVAILABLE`. Airspeeds computed from ground speed are marked `EST`. Nothing is invented.
+- **3D VIEW** opens a realistic model on its own canvas: white airliners, a helicopter, ships, and satellites, with studio light and a credit under the picture. The globe stays the green silhouette map. Model authors and licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).
 
 1.2.0, 1.1.0, and 1.0.0 are still on the releases page.
 
@@ -136,7 +137,7 @@ cd All-Eyes-1.3.0-Linux-x64
 
 1. Press `/` to open the command line.
 2. Try `fly tokyo`, `pass iss`, `size 0.8`, or `help`.
-3. Hover a marker. The top-right viewer shows its 3D model and card. Click a plane to open the flight panel and follow it. Drag the globe to look around without closing the panel. The **KT** button switches speed units. `viewer off` hides the model viewer.
+3. Hover a marker. The top-right viewer shows a realistic 3D model and the card. Click a plane to open the flight panel and follow it. Drag the globe to look around without closing the panel. The **KT** button switches speed units. `viewer off` hides the model viewer.
 4. Click **CFG** to add an optional OpenSky or NASA FIRMS key, or to set marker size. The globe runs with none of the keys set.
 
 Drag the globe to look around. Click empty ground to drop the follow lock and set the pin.

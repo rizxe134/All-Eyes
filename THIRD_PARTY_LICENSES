@@ -1,0 +1,82 @@
+Third-party models in the model viewer
+======================================
+
+The globe keeps All Eyes' original green silhouettes. The top-right model viewer
+loads the files below the first time that shape is shown. Airline liveries are
+not included. Families without a row here are original procedural models in
+src/ui/studio-models.ts, © All Eyes contributors, MIT, same terms as this
+repository (https://github.com/rizxe134/All-Eyes).
+
+Aircraft by amvlab
+------------------
+
+Author: amorfinv (amvlab)
+Licence: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Source: https://github.com/amvlab/aircraft-models
+Files used (the `*_nologo` builds, renamed):
+
+| Viewer id | File                | Upstream model                          |
+| --------- | ------------------- | --------------------------------------- |
+| air-a320  | public/models/air-a320.glb | A320_nologo.glb                  |
+| air-b737  | public/models/air-b737.glb | B737_nologo.glb                  |
+| air-a350  | public/models/air-a350.glb | A350_nologo.glb                  |
+| air-b777  | public/models/air-b777.glb | B787_nologo.glb                  |
+| air-a380  | public/models/air-a380.glb | A380_nologo.glb                  |
+
+The Boeing widebody-twin family (777 and 787) shares one sprite. The mesh in
+the viewer is the 787, not a 777. Changes: none to the geometry; the files are
+served as glTF binary and shown with this app's lighting.
+
+Credit required by CC BY: "A320 / 737 / A350 / 787 / A380 model by amvlab"
+(the viewer credit line links the repository and the licence).
+
+NASA 3D Resources
+-----------------
+
+Author: NASA
+Licence: Public domain (United States government work)
+Source: https://github.com/nasa/NASA-3D-Resources
+https://nasa3d.arc.nasa.gov/
+
+| Viewer id    | File                       | Upstream model              |
+| ------------ | -------------------------- | --------------------------- |
+| air-heli     | public/models/air-heli.glb     | Ingenuity Mars Helicopter |
+| sat-wx       | public/models/sat-wx.glb       | Aqua                      |
+| sat-nav      | public/models/sat-nav.glb      | CYGNSS                    |
+| sat-science  | public/models/sat-science.glb  | CubeSat 1RU Generic       |
+
+The ISS mesh published by NASA is too large for this app. The station in the
+viewer is an original procedural model, not that file. Ingenuity is a coaxial
+Mars helicopter; it stands in for the helicopter family.
+
+These NASA files use Draco mesh compression and, where noted upstream, WebP
+textures. They are decoded in the browser. They were not otherwise modified.
+
+Draco decoder
+-------------
+
+public/draco/gltf/draco_decoder.wasm
+public/draco/gltf/draco_wasm_wrapper.js
+
+Author: Google
+Licence: Apache License 2.0
+https://github.com/google/draco
+Copied from the three.js r170 examples (examples/jsm/libs/draco/gltf/), which
+redistribute the decoder. Loaded only when a compressed model is opened.
+
+Procedural stand-ins
+--------------------
+
+Built in code when no suitable small CC0 or CC-BY model was found. Original
+work, MIT, All Eyes contributors:
+
+- air-b747, air-rj, air-prop, air-light, air-fighter, air-biz, air-cargo, air-unk
+- ship-cargo, ship-tanker, ship-pax, ship-fish, ship-mil, ship-tug, ship-sail, ship-unk
+- sat-station, sat-comms, sat-debris
+- weather and abstract markers (storm, quake, launch, fire, volcano, and the plain marker)
+
+Not used
+--------
+
+Flightradar24 models and other tracker assets are not included.

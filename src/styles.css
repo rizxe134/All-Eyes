@@ -183,11 +183,20 @@ button { cursor: pointer; }
 .ae-viewer-body[hidden] { display: none; }
 .ae-viewer-canvas {
   width: 100%;
-  height: 148px;
+  height: 176px;
   display: block;
-  background: #010a06;
+  background: radial-gradient(ellipse at 50% 38%, #3a4452 0%, #1a2028 55%, #10141a 100%);
   border: 3px solid var(--mid);
 }
+.ae-viewer-credit {
+  margin: 6px 0 0;
+  font-family: "Ae Term", monospace;
+  font-size: 15px;
+  line-height: 1.25;
+  color: var(--mid);
+}
+.ae-viewer-credit a { color: var(--ink); text-decoration: none; }
+.ae-viewer-credit a:hover { text-decoration: underline; }
 .ae-viewer pre {
   margin: 8px 0 0;
   max-height: 168px;
@@ -628,6 +637,7 @@ button { cursor: pointer; }
   .ae-hud.is-flight .ae-layers { left: 10px; top: auto; bottom: 108px; }
   .ae-hud.is-flight .ae-alerts { left: 200px; }
   .ae-right { width: 220px; }
-  .ae-viewer-canvas { height: 112px; }
+  .ae-viewer-canvas { height: 128px; }
+  .ae-viewer-credit { font-size: 14px; }
   .ae-viewer pre { max-height: 96px; font-size: 16px; }
 }

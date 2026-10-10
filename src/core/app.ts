@@ -244,6 +244,14 @@ export function boot(root: HTMLElement): void {
     viewer.speed.textContent = unit
     shell.infoSpeed.textContent = unit
     if (!contact) {
+      const preview = new URLSearchParams(window.location.search).get('model')
+      if (preview) {
+        viewer.show(preview, 6)
+        viewer.title.textContent = 'MODEL VIEWER'
+        viewer.card.textContent = preview.toUpperCase()
+        shell.info.hidden = true
+        return
+      }
       viewer.idle()
       viewer.title.textContent = 'MODEL VIEWER'
       viewer.card.textContent = 'NO CONTACT SELECTED'

@@ -111,16 +111,16 @@ The globe draws a heading-rotated filled silhouette. Aircraft families (narrowbo
 
 Clicking an aircraft opens the left flight panel: callsign, type-code badge, photo when PlaneSpotters has one, operator, origin and destination, and the speed and altitude grid. Estimated airspeeds are labeled `EST`. Missing fields stay `NOT AVAILABLE`. **3D VIEW** opens the model viewer. **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** sit on the bottom bar. The collapsible speed and altitude graph uses samples the aircraft layer already keeps in memory.
 
-The same `shape` id selects the mesh in the top-right model viewer. Hover or follow a contact and that panel shows the low-poly model on a turntable, with the card underneath. `pitch` tilts aircraft. Helicopter rotors and propellers spin in the viewer. An empty selection shows a rotating wireframe globe and `NO CONTACT SELECTED`. `viewer`, `viewer on`, and `viewer off` collapse the panel.
+The same `shape` id selects the model in the top-right viewer. That panel is a separate WebGL canvas with studio lighting, soft shadows, and a turntable. It does not change the green globe. Airliners, the helicopter, and several satellites load a GLB the first time that shape is shown. The other families are original procedural models (white or silver aircraft, painted hulls, solar arrays). A credit line under the canvas names the author and licence. `pitch` tilts aircraft. Rotors and propellers spin. An empty selection leaves the pad clear and the card says `NO CONTACT SELECTED`. `viewer`, `viewer on`, and `viewer off` collapse the panel.
 
 Give a plugin both:
 
-1. Register the pixels with `registerSprite(id, rows)` from `src/core/sprites.ts`. `#` is a lit pixel. Rows must be the same width. Import that module from the plugin so it runs at startup.
-2. Add a mesh under the same id in `src/core/models.ts` (`builders`). The viewer falls back to a small octahedron if the id is missing. Set `contact.shape` to that id.
+1. Register the pixels with `registerSprite(id, rows)` from `src/core/sprites.ts`. `#` is a lit pixel. Rows must be the same width. Import that module from the plugin so it runs at startup. The globe silhouette pass in `src/core/silhouettes.ts` overwrites the aircraft, ship, and satellite ids.
+2. Register the same id in `src/core/models.ts` (`builders`) so the mesh list stays complete. The viewer does not draw those meshes. To show a realistic model, add a GLB at `public/models/<id>.glb` and a row in `src/ui/view-models.ts`, or a procedural builder in `src/ui/studio-models.ts`. Set `contact.shape` to that id. Sources, authors, and licences go in `THIRD_PARTY_LICENSES`.
 
 Optional `card` is a list of `{ k, v }` rows. Empty values are hidden. Set `speedKt` when the row labeled `SPD` should follow the KT / MPH / KM/H toggle. `formatCard` and `withSpeed` in `src/core/cards.ts` build the text. The viewer shows those rows. If the viewer is hidden, the same text follows the pointer.
 
-Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there, a filled silhouette in `src/core/silhouettes.ts` (installed from `src/plugins/glyphs.ts` after the pixel modules), and a mesh with the same id in `src/core/models.ts`. The pixel modules remain as the fallback art; the silhouette pass overwrites those ids at startup.
+Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefix rules). Add a row there, a filled silhouette in `src/core/silhouettes.ts` (installed from `src/plugins/glyphs.ts` after the pixel modules), and a mesh with the same id in `src/core/models.ts`. The pixel modules remain as the fallback art; the silhouette pass overwrites those ids at startup. The viewer model for that id is the GLB or procedural mesh, not the globe mesh.
 
 ## Rules
 
