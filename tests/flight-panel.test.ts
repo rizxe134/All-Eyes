@@ -30,7 +30,11 @@ describe('flight panel layout', () => {
     const css = readFileSync('src/styles.css', 'utf8')
     expect(css).not.toContain('hue-rotate')
     expect(css).not.toContain('sepia')
+    expect(css).not.toContain('ae-crt-bezel')
+    expect(css).not.toContain('ae-crt-led')
+    expect(css).not.toContain('ae-crt-vignette')
     expect(css).toContain('.ae-crt-screen')
+    expect(css).toContain('border-radius: 0')
     expect(css).toContain('.ae-flight-body')
 
     const panel = mountFlightPanel()

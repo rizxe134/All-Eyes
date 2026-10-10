@@ -516,44 +516,29 @@ button { cursor: pointer; }
   color: var(--hot);
 }
 .ae-flight-photo { margin: 8px 8px 4px; }
-.ae-crt-bezel {
-  position: relative;
-  padding: 10px 10px 16px;
-  border-radius: 16px;
-  background:
-    linear-gradient(180deg, #3a3a3a 0%, #1a1a1a 18%, #0c0c0c 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -6px 10px rgba(0, 0, 0, 0.55),
-    0 3px 0 #050505;
-}
 .ae-crt-screen {
   position: relative;
   height: 132px;
   overflow: hidden;
-  border-radius: 18px / 14px;
+  border: 2px solid var(--mid);
+  border-radius: 0;
   background: #07080c;
-  box-shadow:
-    inset 0 0 0 2px rgba(0, 0, 0, 0.65),
-    inset 0 0 28px rgba(0, 0, 0, 0.45),
-    0 0 14px rgba(190, 210, 255, 0.18);
+  box-shadow: 0 0 12px rgba(210, 225, 255, 0.22);
   animation: ae-crt-flicker 1.8s steps(2, end) infinite;
 }
 .ae-crt-screen img,
 .ae-crt-snow {
   position: absolute;
-  left: -4%;
-  top: -6%;
-  width: 108%;
-  height: 112%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 46% / 14%;
-  transform: scale(1.04);
+  border-radius: 0;
 }
 .ae-crt-screen img {
   z-index: 0;
   background: #101218;
-  filter: contrast(1.06) saturate(1.08) brightness(1.04);
+  filter: contrast(1.08) saturate(1.06) brightness(1.06);
 }
 .ae-crt-snow {
   z-index: 0;
@@ -563,14 +548,12 @@ button { cursor: pointer; }
 .ae-crt-snow.is-bars { opacity: 1; }
 .ae-crt-mask,
 .ae-crt-scan,
-.ae-crt-chroma,
-.ae-crt-vignette,
-.ae-crt-shine {
+.ae-crt-chroma {
   position: absolute;
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  border-radius: inherit;
+  border-radius: 0;
 }
 .ae-crt-mask {
   opacity: 0.28;
@@ -594,20 +577,9 @@ button { cursor: pointer; }
 }
 .ae-crt-chroma {
   box-shadow:
-    inset 4px 0 0 rgba(255, 50, 40, 0.28),
-    inset -4px 0 0 rgba(40, 170, 255, 0.28);
+    inset 3px 0 0 rgba(255, 50, 40, 0.28),
+    inset -3px 0 0 rgba(40, 170, 255, 0.28);
   mix-blend-mode: screen;
-}
-.ae-crt-vignette {
-  background: radial-gradient(ellipse at center, transparent 52%, rgba(0, 0, 0, 0.55) 100%);
-}
-.ae-crt-shine {
-  background: linear-gradient(
-    155deg,
-    rgba(255, 255, 255, 0.34) 0%,
-    rgba(255, 255, 255, 0.08) 16%,
-    transparent 34%
-  );
 }
 .ae-nophoto {
   position: absolute;
@@ -620,20 +592,6 @@ button { cursor: pointer; }
   font-size: 8px;
   letter-spacing: 1px;
   text-shadow: 0 1px 0 #000, 0 0 8px rgba(0, 0, 0, 0.85);
-}
-.ae-crt-led {
-  position: absolute;
-  right: 12px;
-  bottom: 5px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #5a2018;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6);
-}
-.ae-crt-led.is-on {
-  background: #3dff7a;
-  box-shadow: 0 0 6px #3dff7a;
 }
 @keyframes ae-crt-flicker {
   0%, 100% { opacity: 1; }

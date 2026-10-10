@@ -4,7 +4,7 @@ A live "see the whole world" console. The globe fills the window, the interface 
 
 ## What's new in 1.3.1
 
-- The flight photo sits in a vintage CRT frame in full color: curved glass, scanlines, a phosphor mask, a little glow, and a dark bezel. With no photo, the same screen shows color bars and static. The route row stays under the screen, and the speed list scrolls while **3D VIEW**, **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** stay pinned at the bottom.
+- The flight photo is a flat rectangle in full color, with scanlines, a phosphor mask, a little color fringe, and a soft glow. With no photo, the same frame shows color bars and static. The route row stays under the screen, and the speed list scrolls while **3D VIEW**, **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** stay pinned at the bottom.
 
 ## What's new in 1.3.0
 

@@ -34,7 +34,6 @@ export function mountFlightPanel(): FlightPanel {
   head.append(title, badge, close)
 
   const photo = el('div', 'ae-flight-photo ae-crt')
-  const bezel = el('div', 'ae-crt-bezel')
   const screen = el('div', 'ae-crt-screen')
   const img = el('img') as HTMLImageElement
   img.alt = ''
@@ -46,17 +45,12 @@ export function mountFlightPanel(): FlightPanel {
   const mask = el('div', 'ae-crt-mask')
   const scan = el('div', 'ae-crt-scan')
   const chroma = el('div', 'ae-crt-chroma')
-  const vignette = el('div', 'ae-crt-vignette')
-  const shine = el('div', 'ae-crt-shine')
-  screen.append(img, snow, placeholder, mask, scan, chroma, vignette, shine)
-  const led = el('span', 'ae-crt-led')
-  led.title = 'Power'
-  bezel.append(screen, led)
+  screen.append(img, snow, placeholder, mask, scan, chroma)
   const credit = el('a', 'ae-flight-credit', '') as HTMLAnchorElement
   credit.target = '_blank'
   credit.rel = 'noreferrer'
   credit.hidden = true
-  photo.append(bezel, credit)
+  photo.append(screen, credit)
 
   const operator = el('div', 'ae-flight-op', 'NOT AVAILABLE')
   const route = el('div', 'ae-flight-route')
@@ -146,7 +140,6 @@ export function mountFlightPanel(): FlightPanel {
   function syncSnow() {
     const bars = img.hidden
     snow.classList.toggle('is-bars', bars)
-    led.classList.toggle('is-on', !bars && !root.hidden)
     paintSnow(bars)
     if (snowTimer) window.clearInterval(snowTimer)
     snowTimer = 0
