@@ -66,12 +66,17 @@ button { cursor: pointer; }
   top: 10px;
   left: 10px;
   right: 10px;
-  min-height: 46px;
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-  padding: 6px 10px;
+  flex-wrap: nowrap;
+  gap: 10px;
+  padding: 4px 8px;
+  overflow: hidden;
+  contain: layout;
+  box-sizing: border-box;
 }
 
 .ae-brand {
@@ -81,28 +86,46 @@ button { cursor: pointer; }
   color: var(--hot);
   text-shadow: 0 0 8px rgba(61, 255, 122, 0.45);
   animation: ae-flick 4.5s steps(2, end) infinite;
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .ae-clock, .ae-count, .ae-coords {
-  font-size: 22px;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 18px;
   letter-spacing: 0.5px;
   color: var(--mid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
+.ae-clock { width: 88px; }
+.ae-count { width: 128px; }
+.ae-coords { width: 168px; text-align: right; }
 .ae-feeds {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  max-width: 48vw;
-  min-width: 0;
+  justify-content: center;
+  gap: 0;
+  flex: 1 1 200px;
+  min-width: 120px;
+  max-width: none;
+  overflow: hidden;
 }
 .ae-feed {
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: 0.3px;
   color: var(--mid);
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   line-height: 1.15;
-  max-width: 48vw;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
 }
 .ae-tip {
   position: absolute;
@@ -139,7 +162,7 @@ button { cursor: pointer; }
 }
 .ae-live.is-replay .ae-dot { animation: none; background: var(--dim); }
 
-.ae-top-actions { margin-left: auto; display: flex; gap: 8px; }
+.ae-top-actions { margin-left: 0; display: flex; gap: 8px; flex: 0 0 auto; }
 
 .ae-btn, .ae-layer, .ae-watch button, .ae-dialog button {
   background: #062615;
@@ -164,16 +187,19 @@ button { cursor: pointer; }
 
 .ae-dock {
   position: absolute;
-  top: 132px;
+  top: 82px;
   left: 10px;
-  bottom: 96px;
-  width: min(232px, 36vw);
+  bottom: 114px;
+  width: 252px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   z-index: 6;
   pointer-events: none;
   min-height: 0;
+  overflow: hidden;
+  contain: layout;
+  box-sizing: border-box;
 }
 .ae-layers {
   position: relative;
@@ -209,8 +235,9 @@ button { cursor: pointer; }
   border: 1px solid #04140c;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.65);
 }
-.ae-layer-name, .ae-layer-count { flex: 0 0 auto; font-family: "Ae Term", monospace; font-size: 16px; line-height: 1.05; white-space: nowrap; }
-.ae-layer-name { flex: 1 1 auto; min-width: 0; }
+.ae-layer-name, .ae-layer-count { flex: 0 0 auto; font-family: "Ae Term", monospace; font-size: 16px; line-height: 1.05; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ae-layer-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ae-layer-count { min-width: 5ch; text-align: right; }
 .ae-legend {
   flex: 0 0 auto;
   pointer-events: auto;
@@ -241,19 +268,23 @@ button { cursor: pointer; }
 
 .ae-right {
   position: absolute;
-  top: 132px;
+  top: 82px;
   right: 10px;
+  bottom: 114px;
   width: 292px;
-  max-height: calc(100vh - 150px);
+  max-height: none;
   display: flex;
   flex-direction: column;
   gap: 8px;
   pointer-events: none;
   z-index: 6;
-  overflow: auto;
+  overflow: hidden;
+  contain: layout;
+  box-sizing: border-box;
 }
-.ae-viewer, .ae-side { pointer-events: auto; }
-.ae-viewer { padding: 0; }
+.ae-viewer, .ae-side { pointer-events: auto; min-height: 0; }
+.ae-viewer { padding: 0; flex: 0 0 auto; }
+.ae-side { flex: 1 1 auto; overflow: auto; }
 .ae-viewer-head {
   display: flex;
   align-items: center;
@@ -330,13 +361,18 @@ button { cursor: pointer; }
   position: fixed;
   z-index: 24;
   pointer-events: auto;
-  min-width: 168px;
-  max-width: 280px;
+  top: 82px;
+  left: 270px;
+  width: 240px;
+  max-height: min(420px, calc(100vh - 200px));
+  overflow: auto;
   background: rgba(2, 14, 8, 0.9);
   border: 3px solid var(--mid);
   color: var(--ink);
   box-shadow: 4px 4px 0 var(--shadow);
+  box-sizing: border-box;
 }
+.ae-infocard.is-moved { right: auto; }
 .ae-infocard header {
   display: flex;
   align-items: center;
@@ -353,9 +389,9 @@ button { cursor: pointer; }
 .ae-infocard pre {
   margin: 0;
   padding: 6px 8px 8px;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.15;
-  white-space: pre;
+  white-space: pre-wrap;
 }
 .ae-infocard.is-pin { border-color: var(--hot); }
 .ae-infocard.is-pin header { background: #145c2c; }
@@ -393,13 +429,16 @@ button { cursor: pointer; }
 
 .ae-alerts {
   position: absolute;
-  left: 200px;
-  bottom: 108px;
-  width: min(440px, calc(100vw - 540px));
+  left: 270px;
+  bottom: 122px;
+  width: 280px;
+  max-height: 140px;
+  overflow: auto;
   padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  box-sizing: border-box;
 }
 .ae-alert {
   border: 3px solid var(--mid);
@@ -440,19 +479,23 @@ button { cursor: pointer; }
   left: 10px;
   right: 10px;
   bottom: 10px;
-  padding: 6px 8px 8px;
+  height: 96px;
+  padding: 6px 8px;
+  overflow: hidden;
+  contain: layout;
+  box-sizing: border-box;
 }
 .ae-scrubrow input[type="range"] {
   flex: 1;
   accent-color: #3dff7a;
   height: 18px;
 }
-.ae-scrub-label { min-width: 168px; font-size: 20px; color: var(--mid); text-align: right; }
+.ae-scrub-label { width: 112px; min-width: 112px; font-size: 16px; color: var(--mid); text-align: right; white-space: nowrap; overflow: hidden; font-variant-numeric: tabular-nums; }
 .ae-output, .ae-suggest {
-  margin: 4px 0;
-  max-height: 28vh;
+  margin: 2px 0;
+  max-height: 22px;
   overflow: auto;
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1.15;
   color: var(--hot);
   white-space: pre-wrap;
@@ -544,9 +587,13 @@ button { cursor: pointer; }
 
 .ae-track {
   position: absolute;
-  top: 132px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 82px;
+  left: 270px;
+  transform: none;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   padding: 6px 8px;
   font-family: "Ae Pixel", monospace;
   font-size: 8px;
@@ -615,12 +662,16 @@ button { cursor: pointer; }
 }
 
 .ae-flight {
-  position: absolute;
-  top: 132px;
-  left: 10px;
-  width: 336px;
-  max-height: calc(100vh - 176px);
-  z-index: 8;
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  z-index: 2;
   overflow: hidden;
   pointer-events: auto;
   display: flex;
@@ -629,6 +680,7 @@ button { cursor: pointer; }
   border: 3px solid var(--mid);
   box-shadow: 4px 4px 0 var(--shadow);
   color: var(--ink);
+  box-sizing: border-box;
 }
 .ae-flight-body {
   flex: 1 1 auto;
@@ -636,9 +688,19 @@ button { cursor: pointer; }
   overflow: auto;
 }
 .ae-flight[hidden] { display: none; }
-.ae-hud.is-flight .ae-dock { left: 356px; }
 .ae-flight { border-color: var(--accent, var(--line)); }
-.ae-hud.is-flight .ae-alerts { left: 546px; }
+.ae-hud.is-flight .ae-layers,
+.ae-hud.is-flight .ae-legend,
+.ae-hud.is-flight .ae-radar-wrap { display: none; }
+.ae-hud.is-flight .ae-dock {
+  left: 10px;
+  top: 82px;
+  bottom: 114px;
+  display: flex;
+  flex-direction: column;
+  max-height: none;
+  width: 252px;
+}
 .ae-flight-head {
   display: flex;
   align-items: center;
@@ -898,7 +960,7 @@ button { cursor: pointer; }
 @media (max-width: 900px), (max-height: 720px) {
   .ae-side { display: none; }
   .ae-alerts { display: none; }
-  .ae-dock { width: min(440px, calc(100vw - 250px)); top: 108px; bottom: 78px; }
+  .ae-dock { width: 400px; top: 82px; bottom: 114px; left: 10px; }
   .ae-layers {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -906,22 +968,28 @@ button { cursor: pointer; }
   }
   .ae-layer { padding: 2px 4px; }
   .ae-layer-name, .ae-layer-count { font-size: 15px; }
-  .ae-feed { font-size: 14px; }
+  .ae-feed { font-size: 13px; }
   .ae-clock, .ae-count, .ae-coords { font-size: 16px; }
-  .ae-flight { width: min(336px, calc(100vw - 20px)); max-height: 46vh; }
-  .ae-hud.is-flight .ae-dock { left: 10px; top: auto; bottom: 78px; max-height: 46vh; }
-  .ae-right { width: 220px; }
+  .ae-clock { width: 78px; }
+  .ae-count { width: 108px; }
+  .ae-coords { width: 132px; }
+  .ae-flight { width: 100%; max-height: none; }
+  .ae-hud.is-flight .ae-dock { left: 10px; top: 82px; bottom: 114px; width: 400px; max-height: none; }
+  .ae-right { width: 220px; top: 82px; bottom: 114px; }
+  .ae-track { left: 418px; }
   .ae-viewer-canvas { height: 128px; }
   .ae-viewer-credit { font-size: 14px; }
   .ae-viewer pre { max-height: 96px; font-size: 16px; }
 }
 
-@media (max-height: 820px), (max-width: 900px) {
+@media (max-height: 720px), (max-width: 900px) {
   .ae-dock {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 108px;
-    grid-template-rows: minmax(120px, 1fr) auto;
-    width: min(480px, calc(100vw - 246px));
+    grid-template-rows: minmax(0, 1fr) auto;
+    width: 400px;
+    top: 82px;
+    bottom: 114px;
   }
   .ae-layers { grid-column: 1; grid-row: 1; width: auto; max-height: none; }
   .ae-legend { grid-column: 1; grid-row: 2; max-height: 88px; }

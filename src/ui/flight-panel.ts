@@ -14,6 +14,8 @@ export interface FlightPanel {
   onCopy(cb: () => void): void
   onWatch(cb: () => void): void
   onSpeed(cb: () => void): void
+  onPin(cb: () => void): void
+  setPinned(on: boolean): void
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) {
@@ -97,9 +99,12 @@ export function mountFlightPanel(): FlightPanel {
   menu.hidden = true
   const copy = el('button', '', 'COPY DETAILS') as HTMLButtonElement
   const watch = el('button', '', 'ADD TO WATCHLIST') as HTMLButtonElement
+  const pin = el('button', '', 'PIN CARD') as HTMLButtonElement
   copy.type = 'button'
   watch.type = 'button'
-  menu.append(copy, watch)
+  pin.type = 'button'
+  pin.title = 'Float a copy of this card. It stays where you put it.'
+  menu.append(copy, watch, pin)
   actions.append(actionBar, menu)
 
   const body = el('div', 'ae-flight-body')
@@ -203,6 +208,7 @@ export function mountFlightPanel(): FlightPanel {
     copy: [] as Array<() => void>,
     watch: [] as Array<() => void>,
     speed: [] as Array<() => void>,
+    pin: [] as Array<() => void>,
   }
   close.addEventListener('click', () => hooks.close.forEach((fn) => fn()))
   view3d.addEventListener('click', () => hooks.view3d.forEach((fn) => fn()))
@@ -221,6 +227,10 @@ export function mountFlightPanel(): FlightPanel {
   watch.addEventListener('click', () => {
     setMenu(false)
     hooks.watch.forEach((fn) => fn())
+  })
+  pin.addEventListener('click', () => {
+    setMenu(false)
+    hooks.pin.forEach((fn) => fn())
   })
   document.addEventListener('pointerdown', (event) => {
     if (menu.hidden) return
@@ -306,6 +316,11 @@ export function mountFlightPanel(): FlightPanel {
     onCopy: (cb) => hooks.copy.push(cb),
     onWatch: (cb) => hooks.watch.push(cb),
     onSpeed: (cb) => hooks.speed.push(cb),
+    onPin: (cb) => hooks.pin.push(cb),
+    setPinned(on: boolean) {
+      pin.textContent = on ? 'UNPIN CARD' : 'PIN CARD'
+      pin.classList.toggle('is-on', on)
+    },
   }
 }
 

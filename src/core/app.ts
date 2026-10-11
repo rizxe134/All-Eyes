@@ -13,6 +13,7 @@ import { LEGEND, layerHex } from './palette'
 import { toMarker, type CommandContext, type GlobeTheme, type LayerHandle, type MarkerStyle, type PluginContext, type WatchRule } from './types'
 import { builtinPlugins } from '../plugins'
 import { getJson } from '../net/http'
+import { clampBox, placeTip } from '../ui/clamp'
 import { buildShell } from '../ui/shell'
 import { startRadar } from '../ui/radar'
 import { mountViewer } from '../ui/viewer'
@@ -139,6 +140,7 @@ export function boot(root: HTMLElement): void {
       const node = layerId === 'ships' ? shell.ships : layerId === 'satellites' ? shell.sats : layerId === 'aircraft' ? shell.feed : null
       if (!node) return
       node.textContent = message
+      node.title = message
       node.classList.toggle('is-off', message.includes('OFFLINE') || message.includes('COVERAGE LIMIT') || message.includes('—'))
       node.classList.toggle('is-rate', message.includes('RATE-LIMITED') || message.includes('PARTIAL'))
     },
@@ -179,6 +181,14 @@ export function boot(root: HTMLElement): void {
     }
     shell.track.hidden = !contact
     shell.track.textContent = contact ? `LOCK ${contact.label}` : ''
+    if (!id) {
+      cardPinned = false
+      flight.setPinned(false)
+      shell.info.hidden = true
+      shell.info.classList.remove('is-moved')
+      shell.info.style.left = ''
+      shell.info.style.top = ''
+    }
     for (const fn of trackListeners) fn(id)
     renderInspect()
     renderCard()
@@ -238,19 +248,16 @@ export function boot(root: HTMLElement): void {
     shell.radarToggle.textContent = on ? 'HIDE' : 'SHOW'
   }
 
-  function placeDock() {
-    const foot = shell.hud.querySelector('.ae-foot')
-    const footTop = foot?.getBoundingClientRect().top ?? window.innerHeight - 120
-    const bottomPx = Math.max(88, Math.ceil(window.innerHeight - footTop) + 14)
-    const topPx = Math.ceil(shell.top.getBoundingClientRect().bottom) + 8
-    const flight = shell.hud.classList.contains('is-flight')
-    const short = window.innerHeight <= 720 || window.innerWidth <= 900
-    shell.dock.style.bottom = `${bottomPx}px`
-    shell.right.style.top = `${topPx}px`
-    shell.right.style.bottom = `${bottomPx}px`
-    shell.right.style.maxHeight = 'none'
-    if (flight && short) shell.dock.style.top = ''
-    else shell.dock.style.top = `${topPx}px`
+  let cardPinned = false
+
+  function setCardPinned(on: boolean) {
+    cardPinned = on
+    state.cardDragged = false
+    shell.info.classList.remove('is-moved')
+    shell.info.style.left = ''
+    shell.info.style.top = ''
+    flight.setPinned(on)
+    renderCard()
   }
 
   function accentFor(id: string | null): string {
@@ -272,16 +279,16 @@ export function boot(root: HTMLElement): void {
       shell.inspect.textContent = 'HOVER OR CLICK A MARKER'
       return
     }
-    shell.inspect.textContent = contact.label
+    shell.inspect.textContent = `${contact.label}\n${cardBody(contact)}`
   }
 
   function placeCard(x: number, y: number) {
-    const width = shell.info.offsetWidth || 200
-    const height = shell.info.offsetHeight || 160
-    const left = clamp(x, 8, Math.max(8, window.innerWidth - width - 8))
-    const top = clamp(y, 8, Math.max(8, window.innerHeight - height - 8))
-    shell.info.style.left = `${left}px`
-    shell.info.style.top = `${top}px`
+    const width = shell.info.offsetWidth || 240
+    const height = shell.info.offsetHeight || 180
+    const box = clampBox(x, y, width, height, window.innerWidth, window.innerHeight)
+    shell.info.classList.add('is-moved')
+    shell.info.style.left = `${box.left}px`
+    shell.info.style.top = `${box.top}px`
   }
 
   function focusContact() {
@@ -315,17 +322,14 @@ export function boot(root: HTMLElement): void {
     const locked = Boolean(pinned && contact.id === pinned.id)
     viewer.title.textContent = locked ? `LOCK ${contact.label}` : contact.label
     viewer.card.textContent = cardBody(contact)
-    const docked = Boolean(pinned && contact.id === pinned.id && (pinned.kind === 'air' || pinned.kind === 'ship' || pinned.kind === 'sat'))
-    const hovering = Boolean(state.hoverId && contact.id === state.hoverId && (!pinned || pinned.id !== contact.id))
-    if (viewer.isOpen() || docked || hovering) {
+    if (!cardPinned) {
       shell.info.hidden = true
       return
     }
     shell.info.hidden = false
-    shell.info.classList.toggle('is-pin', locked)
+    shell.info.classList.add('is-pin')
     shell.infoTitle.textContent = viewer.title.textContent
     shell.infoBody.textContent = viewer.card.textContent
-    if (!locked) placeCard(state.hoverX + 16, state.hoverY + 16)
   }
 
   function renderFlight() {
@@ -477,7 +481,6 @@ export function boot(root: HTMLElement): void {
     applyRadar(current.radar)
     renderLegend()
     renderLayers()
-    placeDock()
     const form = shell.settingsForm
     const sizeInput = form.elements.namedItem('markerSize') as HTMLInputElement | null
     const crtInput = form.elements.namedItem('crt') as HTMLInputElement | null
@@ -756,8 +759,9 @@ export function boot(root: HTMLElement): void {
       shell.tip.hidden = false
       shell.tip.textContent = contact.callsign || contact.label
       shell.tip.style.setProperty('--tip', layerHex(contact.shape === 'air-gnd' ? 'airground' : contact.layerId))
-      shell.tip.style.left = `${hit.x + 14}px`
-      shell.tip.style.top = `${hit.y + 14}px`
+      const box = placeTip(hit.x, hit.y, shell.tip.offsetWidth || 96, shell.tip.offsetHeight || 24, window.innerWidth, window.innerHeight)
+      shell.tip.style.left = `${box.left}px`
+      shell.tip.style.top = `${box.top}px`
     } else {
       shell.tip.hidden = true
     }
@@ -770,6 +774,11 @@ export function boot(root: HTMLElement): void {
     renderFlight()
   }
   flight.onClose(() => setTrack(null))
+  flight.onPin(() => setCardPinned(!cardPinned))
+  shell.infoUnpin.addEventListener('click', (event) => {
+    event.stopPropagation()
+    setCardPinned(false)
+  })
   flight.onView3d(() => {
     commands.setViewer(true)
     audio.play('click')
@@ -860,13 +869,10 @@ export function boot(root: HTMLElement): void {
   } catch {
     /* keep the viewer open */
   }
-  window.addEventListener('resize', placeDock)
-  if (typeof ResizeObserver !== 'undefined') {
-    const watch = new ResizeObserver(() => placeDock())
-    watch.observe(shell.top)
-    const foot = shell.hud.querySelector('.ae-foot')
-    if (foot) watch.observe(foot)
-  }
+  window.addEventListener('resize', () => {
+    if (shell.info.hidden || !shell.info.classList.contains('is-moved')) return
+    placeCard(shell.info.offsetLeft, shell.info.offsetTop)
+  })
   let draggingCard = false
   let dragOx = 0
   let dragOy = 0
@@ -940,17 +946,6 @@ export function boot(root: HTMLElement): void {
     shell.liveBtn.classList.toggle('is-on', live)
   }
   clock.subscribe(() => paintClock())
-  const followCard = () => {
-    if (state.trackId && !state.cardDragged && !shell.info.hidden) {
-      const contact = entities.get(state.trackId)
-      if (contact) {
-        const point = globe.project(contact.lat, contact.lon, contact.altKm)
-        if (point.visible) placeCard(point.x + 18, point.y + 18)
-      }
-    }
-    requestAnimationFrame(followCard)
-  }
-  requestAnimationFrame(followCard)
 
   for (const panel of registry.panels()) {
     const card = document.createElement('section')

@@ -45,6 +45,7 @@ export interface Shell {
   infoTitle: HTMLElement
   infoBody: HTMLElement
   infoSpeed: HTMLButtonElement
+  infoUnpin: HTMLButtonElement
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) {
@@ -238,7 +239,10 @@ export function buildShell(root: HTMLElement): Shell {
   const infoSpeed = el('button', 'ae-btn', 'KT') as HTMLButtonElement
   infoSpeed.type = 'button'
   infoSpeed.title = 'Toggle KT / MPH / KM/H'
-  infoHead.append(infoTitle, infoSpeed)
+  const infoUnpin = el('button', 'ae-btn', 'UNPIN') as HTMLButtonElement
+  infoUnpin.type = 'button'
+  infoUnpin.title = 'Dock the card again'
+  infoHead.append(infoTitle, infoSpeed, infoUnpin)
   const infoBody = el('pre')
   info.append(infoHead, infoBody)
   const globeCrt = el('div', 'ae-globe-crt')
@@ -293,6 +297,7 @@ export function buildShell(root: HTMLElement): Shell {
     infoTitle,
     infoBody,
     infoSpeed,
+    infoUnpin,
   }
 }
 

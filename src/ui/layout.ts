@@ -1,6 +1,6 @@
 /**
- * Left-dock shape for a window. Below 800 px tall the radar sits beside the
- * list so it cannot cover a layer button. Short windows also use two columns.
+ * Left-dock shape for a window. At 720 px tall or 900 px wide the radar sits beside the
+ * layer list and the list uses two columns, so a layer button is never covered.
  */
 export interface DockLayout {
   columns: 1 | 2
@@ -11,7 +11,7 @@ export interface DockLayout {
 
 export function dockLayout(width: number, height: number): DockLayout {
   const two = height <= 720 || width <= 900
-  const side = height <= 800 || width <= 900
+  const side = height <= 720 || width <= 900
   return {
     columns: two ? 2 : 1,
     radarPx: side ? 96 : 148,
