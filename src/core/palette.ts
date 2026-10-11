@@ -24,6 +24,8 @@ export const LAYER_COLORS: Record<string, string> = {
   weather: '#ff9a3c',
   launches: '#ff6eb4',
   beacons: '#c6ff4a',
+  transit: '#7dffb3',
+  poi: '#ffd36a',
 }
 
 /** Short legend. Satellite families share the cyan family; Starlink is called out. */
@@ -38,6 +40,8 @@ export const LEGEND: ReadonlyArray<{ id: string; name: string }> = [
   { id: 'events', name: 'EVENTS' },
   { id: 'launches', name: 'LAUNCHES' },
   { id: 'beacons', name: 'BEACONS' },
+  { id: 'transit', name: 'TRANSIT' },
+  { id: 'poi', name: 'PLACES' },
 ]
 
 const HEX = /^#[0-9a-f]{6}$/i

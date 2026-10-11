@@ -10,6 +10,8 @@ export function authHeaders(url: string, settings: SettingsStore): Record<string
   if (url.includes('/api/firms/') && current.firmsKey) {
     headers['x-firms-map-key'] = current.firmsKey
   }
+  if (url.includes('/api/traffic/tomtom') && current.tomtomKey) headers['x-tomtom-key'] = current.tomtomKey
+  if (url.includes('/api/traffic/here') && current.hereKey) headers['x-here-key'] = current.hereKey
   return headers
 }
 

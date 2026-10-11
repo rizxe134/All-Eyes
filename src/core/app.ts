@@ -3,7 +3,7 @@ import { execute, formatHelp } from './command'
 import { SimClock } from './clock'
 import { EntityIndex } from './entities'
 import { formatCard, nextSpeedUnit, speedUnitLabel, withSpeed } from './cards'
-import { clamp, formatLat, formatLon } from './geo'
+import { clamp, distanceKm, formatLat, formatLon } from './geo'
 import { Globe } from './globe'
 import { PluginRegistry } from './registry'
 import { decodeShare, encodeShare } from './share'
@@ -22,18 +22,12 @@ import { flightText, formatFlight } from '../plugins/aircraft/detail'
 import { airAheadOn, airFixNow, airMetaFor, airTrail, setAirAhead } from '../plugins/aircraft/plugin'
 import { formatShip, onShipDetail, shipDetailText, shipMeta, shipNow, shipTrackOn, shipTrail, toggleShipTrack } from '../plugins/ships/plugin'
 import { formatSat, onSatDetail, satSeries, satTrackOn, toggleSatTrack } from '../plugins/satellites/plugin'
+import { parseNominatim } from '../city/feeds'
+import { clearTileCache } from '../city/cache'
+import { crtForZoom } from './range'
 
 const LAYER_KEY = 'alleyes.layers.v1'
 const VIEWER_KEY = 'alleyes.viewer.v1'
-
-function parseNominatim(payload: unknown): { lat: number; lon: number; label: string } | null {
-  if (!Array.isArray(payload) || !payload[0] || typeof payload[0] !== 'object') return null
-  const row = payload[0] as { lat?: string; lon?: string; display_name?: string }
-  const lat = Number(row.lat)
-  const lon = Number(row.lon)
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null
-  return { lat, lon, label: row.display_name || `${lat.toFixed(2)},${lon.toFixed(2)}` }
-}
 
 function loadLayerPrefs(): Record<string, boolean> {
   try {
@@ -130,6 +124,13 @@ export function boot(root: HTMLElement): void {
     onTrack(cb) {
       trackListeners.add(cb)
       return () => trackListeners.delete(cb)
+    },
+    nearby(lat, lon, radiusKm) {
+      const out = []
+      for (const contact of entities.all()) {
+        if (distanceKm(lat, lon, contact.lat, contact.lon) <= radiusKm) out.push(contact)
+      }
+      return out
     },
     log(layerId, message) {
       if (message) state.faults.set(layerId, message)
@@ -476,8 +477,9 @@ export function boot(root: HTMLElement): void {
     globe.setTheme(current.theme)
     globe.setMarkerSize(current.markerSize)
     shell.canvas.classList.toggle('is-color', current.theme === 'color')
-    shell.globeCrt.style.setProperty('--crt', current.crt.toFixed(2))
-    shell.globeCrt.classList.toggle('is-off', current.crt <= 0.001)
+    const crtNow = crtForZoom(current.crt, globe.getView().rangeKm)
+    shell.globeCrt.style.setProperty('--crt', crtNow.toFixed(3))
+    shell.globeCrt.classList.toggle('is-off', crtNow <= 0.001)
     applyRadar(current.radar)
     renderLegend()
     renderLayers()
@@ -676,6 +678,11 @@ export function boot(root: HTMLElement): void {
     ;(form.elements.namedItem('openskySecret') as HTMLInputElement).value = current.openskySecret
     ;(form.elements.namedItem('firmsKey') as HTMLInputElement).value = current.firmsKey
     ;(form.elements.namedItem('aisstreamKey') as HTMLInputElement).value = current.aisstreamKey
+    ;(form.elements.namedItem('maptilerKey') as HTMLInputElement).value = current.maptilerKey
+    ;(form.elements.namedItem('mapboxKey') as HTMLInputElement).value = current.mapboxKey
+    ;(form.elements.namedItem('tomtomKey') as HTMLInputElement).value = current.tomtomKey
+    ;(form.elements.namedItem('hereKey') as HTMLInputElement).value = current.hereKey
+    ;(form.elements.namedItem('basemapSource') as HTMLSelectElement).value = current.basemapSource
     ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
     ;(form.elements.namedItem('crt') as HTMLInputElement).value = String(current.crt)
     ;(form.elements.namedItem('theme') as HTMLSelectElement).value = current.theme
@@ -690,6 +697,15 @@ export function boot(root: HTMLElement): void {
       openskySecret: (form.elements.namedItem('openskySecret') as HTMLInputElement).value.trim(),
       firmsKey: (form.elements.namedItem('firmsKey') as HTMLInputElement).value.trim(),
       aisstreamKey: (form.elements.namedItem('aisstreamKey') as HTMLInputElement).value.trim(),
+      maptilerKey: (form.elements.namedItem('maptilerKey') as HTMLInputElement).value.trim(),
+      mapboxKey: (form.elements.namedItem('mapboxKey') as HTMLInputElement).value.trim(),
+      tomtomKey: (form.elements.namedItem('tomtomKey') as HTMLInputElement).value.trim(),
+      hereKey: (form.elements.namedItem('hereKey') as HTMLInputElement).value.trim(),
+      basemapSource: (form.elements.namedItem('basemapSource') as HTMLSelectElement).value === 'mapbox'
+        ? 'mapbox'
+        : (form.elements.namedItem('basemapSource') as HTMLSelectElement).value === 'maptiler'
+          ? 'maptiler'
+          : 'free',
       markerStyle: (form.elements.namedItem('markerStyle') as HTMLSelectElement).value === 'mono' ? 'mono' : 'color',
     })
     shell.settings.hidden = true
@@ -700,6 +716,12 @@ export function boot(root: HTMLElement): void {
     commands.setTheme((form.elements.namedItem('theme') as HTMLSelectElement).value === 'green' ? 'green' : 'color')
     showOutput('KEYS STORED LOCALLY')
     audio.play('click')
+  })
+  const clearCache = shell.settingsForm.elements.namedItem('clearCache') as HTMLButtonElement | null
+  clearCache?.addEventListener('click', () => {
+    audio.play('click')
+    globe.clearCityCache()
+    void clearTileCache().then(() => showOutput('MAP CACHE CLEARED'))
   })
   shell.watchForm.addEventListener('submit', (event) => {
     event.preventDefault()
@@ -901,6 +923,11 @@ export function boot(root: HTMLElement): void {
     audio.play('click')
     const on = commands.setRadar(!settings.get().radar)
     showOutput(on ? 'RADAR ON' : 'RADAR OFF')
+  })
+  globe.onView(() => {
+    const faded = crtForZoom(settings.get().crt, globe.getView().rangeKm)
+    shell.globeCrt.style.setProperty('--crt', faded.toFixed(3))
+    shell.globeCrt.classList.toggle('is-off', faded <= 0.001)
   })
   applyLook()
 

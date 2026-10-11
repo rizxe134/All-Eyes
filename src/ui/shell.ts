@@ -150,7 +150,7 @@ export function buildShell(root: HTMLElement): Shell {
   const prompt = el('input', 'ae-prompt') as HTMLInputElement
   prompt.autocomplete = 'off'
   prompt.spellcheck = false
-  prompt.placeholder = 'fly tokyo   layer ships off   theme color   crt 0.4   size 0.45   help'
+  prompt.placeholder = 'city atlanta   map hybrid   place times square   crt 0.4   help'
   prompt.setAttribute('aria-label', 'Command')
   form.append(gt, prompt)
   foot.append(scrubRow, output, suggest, form)
@@ -175,6 +175,25 @@ export function buildShell(root: HTMLElement): Shell {
   dialog.append(field('OpenSky client secret', 'openskySecret', 'password'))
   dialog.append(field('NASA FIRMS map key', 'firmsKey', 'password'))
   dialog.append(field('AISStream key (global ships)', 'aisstreamKey', 'password'))
+  dialog.append(field('MapTiler key (optional basemap)', 'maptilerKey', 'password'))
+  dialog.append(field('Mapbox token (optional basemap)', 'mapboxKey', 'password'))
+  dialog.append(field('TomTom key (live traffic speed)', 'tomtomKey', 'password'))
+  dialog.append(field('HERE key (live traffic speed)', 'hereKey', 'password'))
+  const sourceWrap = el('label', 'ae-field')
+  sourceWrap.append(document.createTextNode('BASEMAP SOURCE'))
+  const basemapSource = el('select') as HTMLSelectElement
+  basemapSource.name = 'basemapSource'
+  for (const [value, label] of [['free', 'FREE'], ['maptiler', 'MAPTILER'], ['mapbox', 'MAPBOX']] as const) {
+    const option = el('option', '', label) as HTMLOptionElement
+    option.value = value
+    basemapSource.append(option)
+  }
+  sourceWrap.append(basemapSource)
+  dialog.append(sourceWrap)
+  const clearCache = el('button', 'ae-btn', 'CLEAR MAP CACHE') as HTMLButtonElement
+  clearCache.type = 'button'
+  clearCache.name = 'clearCache'
+  dialog.append(clearCache)
   const sizeWrap = el('label', 'ae-field')
   sizeWrap.append(document.createTextNode('MARKER SIZE'))
   const markerSize = el('input') as HTMLInputElement

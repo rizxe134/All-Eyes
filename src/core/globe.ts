@@ -11,6 +11,8 @@ import {
 import { declutterCellDeg, declutterMarkers, markerScreenPx } from './markers'
 import { layerRgb } from './palette'
 import { chooseHit, hitRadiusPx, layerPriority } from './pick'
+import { CityStage } from '../city/stage'
+import { cameraNear, MAX_RANGE_KM, MIN_RANGE_KM } from './range'
 import { MARKER_MAX, MARKER_DEFAULT, MARKER_MIN } from './settings'
 import { spriteRows } from './sprites'
 import type { GeoPoint, GlobeApi, GlobeClick, GlobeTheme, Marker, OrbitTrack, ViewState } from './types'
@@ -245,7 +247,11 @@ export class Globe implements GlobeApi {
     uTheme: { value: number }
   }
   private atmosUniforms: { uCam: { value: THREE.Vector3 }; uSun: { value: THREE.Vector3 }; uTheme: { value: number } }
+  private grat: THREE.LineSegments
   private gratMat: THREE.LineBasicMaterial
+  private city: CityStage
+  private viewers = new Set<(view: ViewState) => void>()
+  private viewTick = 0
   private starMat!: THREE.PointsMaterial
   private layers = new Map<string, Marker[]>()
   private pools = new Map<string, Pool>()
@@ -327,8 +333,10 @@ export class Globe implements GlobeApi {
     )
     this.scene.add(this.earth)
     const grat = graticule()
+    this.grat = grat
     this.gratMat = grat.material as THREE.LineBasicMaterial
     this.scene.add(grat)
+    this.city = new CityStage(this.scene)
     this.atmosUniforms = {
       uCam: { value: new THREE.Vector3() },
       uSun: { value: this.earthUniforms.uSun.value },
@@ -395,7 +403,7 @@ export class Globe implements GlobeApi {
       this.radarTex.image = canvas
     }
     this.radarTex.needsUpdate = true
-    this.radarMesh.visible = true
+    this.radarMesh.visible = this.view.rangeKm >= 80
   }
 
   setOrbit(points: GeoPoint[] | null): void {
@@ -554,7 +562,7 @@ export class Globe implements GlobeApi {
       fromRange: this.view.rangeKm,
       toLat: clamp(lat, -85, 85),
       toLon: lon,
-      toRange: clamp(rangeKm, 180, 70000),
+      toRange: clamp(rangeKm, MIN_RANGE_KM, MAX_RANGE_KM),
       t0: performance.now(),
       dur: 1200,
     }
@@ -564,7 +572,7 @@ export class Globe implements GlobeApi {
     this.flight = null
     this.view.lat = clamp(lat, -85, 85)
     this.view.lon = lon
-    this.view.rangeKm = clamp(rangeKm, 180, 70000)
+    this.view.rangeKm = clamp(rangeKm, MIN_RANGE_KM, MAX_RANGE_KM)
   }
 
   getView(): ViewState {
@@ -609,6 +617,31 @@ export class Globe implements GlobeApi {
   onRelease(cb: () => void): () => void {
     this.releasers.add(cb)
     return () => this.releasers.delete(cb)
+  }
+
+  onView(cb: (view: ViewState) => void): () => void {
+    this.viewers.add(cb)
+    return () => this.viewers.delete(cb)
+  }
+
+  setBasemap(mode: 'sat' | 'streets' | 'hybrid' | 'dark', source: 'free' | 'maptiler' | 'mapbox', keys: { maptiler: string; mapbox: string }): void {
+    this.city.setBasemap(mode, source, keys)
+  }
+
+  setCityDraw(draw: { imagery: boolean; roads: boolean; buildings: boolean; traffic: boolean; flowRatio: number | null }): void {
+    this.city.setDraw(draw)
+  }
+
+  setCityVectors(data: { roads: { id: string; cls: string; points: { lat: number; lon: number }[] }[]; rails: { id: string; cls: string; points: { lat: number; lon: number }[] }[]; buildings: { id: string; heightM: number; points: { lat: number; lon: number }[] }[]; pois: { id: string; name: string; kind: string; lat: number; lon: number }[] } | null): void {
+    this.city.setVectors(data)
+  }
+
+  clearCityCache(): void {
+    this.city.clearGpu()
+  }
+
+  cityNote(): string {
+    return this.city.note
   }
 
   private resize = () => {
@@ -737,6 +770,13 @@ export class Globe implements GlobeApi {
       this.velLon *= 0.9
     }
     this.placeCamera()
+    this.grat.visible = this.view.rangeKm > 350
+    if (this.radarMesh.visible && this.view.rangeKm < 80) this.radarMesh.visible = false
+    this.city.update(this.view, this.time())
+    this.viewTick += 1
+    if (this.viewers.size && this.viewTick % 8 === 0) {
+      for (const fn of this.viewers) fn(this.view)
+    }
     const sun = sunDirection(this.time())
     this.earthUniforms.uSun.value.set(sun.x, sun.y, sun.z)
     this.atmosUniforms.uCam.value.copy(this.camera.position)
@@ -758,7 +798,7 @@ export class Globe implements GlobeApi {
     // A fixed near of 0.05 and far of 4000 cannot separate a dot from the
     // globe at world zoom, so the earth wins the depth test and the contact vanishes.
     const camDist = this.camera.position.length()
-    this.camera.near = Math.max(0.05, camDist - R * 1.35)
+    this.camera.near = cameraNear(camDist, R)
     this.camera.far = camDist + 900
     this.camera.updateProjectionMatrix()
   }
@@ -995,7 +1035,7 @@ export class Globe implements GlobeApi {
     this.lastX = event.clientX
     this.lastY = event.clientY
     this.moved += Math.abs(dx) + Math.abs(dy)
-    const sens = 0.11 * (this.view.rangeKm / 12000)
+    const sens = 0.11 * (Math.max(this.view.rangeKm, 1.2) / 12000)
     this.velLon = dx * sens
     this.velLat = dy * sens
     if (this.moved > 4 && (this.follow || this.flight)) {
@@ -1021,15 +1061,16 @@ export class Globe implements GlobeApi {
       layerId: markerHit?.layerId ?? null,
     }
     if (event.detail >= 2 && ground && !markerHit) {
-      this.flyTo(ground.lat, ground.lon, Math.max(280, this.view.rangeKm * 0.42))
+      this.flyTo(ground.lat, ground.lon, Math.max(MIN_RANGE_KM, this.view.rangeKm * 0.45))
     }
     for (const fn of this.clickers) fn(hit)
   }
 
   private onWheel = (event: WheelEvent) => {
     event.preventDefault()
-    const factor = event.deltaY > 0 ? 1.1 : 0.9
+    const step = this.view.rangeKm < 40 ? 1.07 : 1.1
+    const factor = event.deltaY > 0 ? step : 1 / step
     if (this.follow) this.followRange = clamp(this.followRange * factor, 220, 22000)
-    else this.view.rangeKm = clamp(this.view.rangeKm * factor, 180, 70000)
+    else this.view.rangeKm = clamp(this.view.rangeKm * factor, MIN_RANGE_KM, MAX_RANGE_KM)
   }
 }

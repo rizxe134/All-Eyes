@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 
-const UA = 'AllEyes/1.5.0 (local educational globe)'
+const UA = 'AllEyes/2.0.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -368,14 +368,87 @@ async function route(req, url) {
   }
 
   if (path === '/api/nominatim') {
+    const lat = Number(url.searchParams.get('lat'))
+    const lon = Number(url.searchParams.get('lon'))
     const q = (url.searchParams.get('q') || '').trim()
-    if (!q || q.length > 80) return jsonError(400, 'bad query')
+    const reverse = Number.isFinite(lat) && Number.isFinite(lon)
+    if (!reverse && (!q || q.length > 80)) return jsonError(400, 'bad query')
     const wait = 1100 - (Date.now() - lastNominatim)
     if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
     lastNominatim = Date.now()
-    const target =
-      'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q)
-    return upstream(target, { ttl: 6 * 60 * 60 * 1000, key: `geo:${q.toLowerCase()}`, timeout: 12000 })
+    const viewbox = url.searchParams.get('viewbox') || ''
+    const boxed = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(viewbox)
+      ? `&viewbox=${viewbox}&bounded=1`
+      : ''
+    const target = reverse
+      ? `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&extratags=1&zoom=12&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`
+      : `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=1&q=${encodeURIComponent(q)}${boxed}`
+    return upstream(target, {
+      ttl: 6 * 60 * 60 * 1000,
+      key: reverse ? `geo:${lat.toFixed(2)},${lon.toFixed(2)}` : `geo:${q.toLowerCase()}:${viewbox}`,
+      timeout: 12000,
+    })
+  }
+
+  if (path === '/api/overpass') {
+    const data = url.searchParams.get('data') || ''
+    if (data.length < 12 || data.length > 4000 || !data.startsWith('[out:json]')) return jsonError(400, 'bad query')
+    return upstream('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(data), {
+      ttl: 8 * 60 * 1000,
+      timeout: 25000,
+      key: `ov:${data}`,
+      headers: { accept: 'application/json' },
+    })
+  }
+
+  if (path === '/api/meteo') {
+    const lat = Number(url.searchParams.get('lat'))
+    const lon = Number(url.searchParams.get('lon'))
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return jsonError(400, 'bad point')
+    const target = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`
+    return upstream(target, { ttl: 10 * 60 * 1000, key: `wx:${lat.toFixed(2)},${lon.toFixed(2)}` })
+  }
+
+  if (path === '/api/air') {
+    const lat = Number(url.searchParams.get('lat'))
+    const lon = Number(url.searchParams.get('lon'))
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return jsonError(400, 'bad point')
+    const target = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=us_aqi,pm2_5`
+    return upstream(target, { ttl: 10 * 60 * 1000, key: `aq:${lat.toFixed(2)},${lon.toFixed(2)}` })
+  }
+
+  if (path === '/api/transit/mbta') {
+    return upstream('https://api-v3.mbta.com/vehicles?page[limit]=200', {
+      ttl: 15000,
+      headers: { accept: 'application/vnd.api+json' },
+    })
+  }
+
+  if (path === '/api/transit/fi') {
+    return upstream('https://rata.digitraffic.fi/api/v1/train-locations/latest/', {
+      ttl: 15000,
+      headers: { accept: 'application/json' },
+    })
+  }
+
+  if (path === '/api/traffic/tomtom') {
+    const key = header(req, 'x-tomtom-key') || process.env.TOMTOM_KEY || ''
+    if (!/^[A-Za-z0-9._-]{8,160}$/.test(key)) return jsonError(404, 'no tomtom key')
+    const lat = Number(url.searchParams.get('lat'))
+    const lon = Number(url.searchParams.get('lon'))
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return jsonError(400, 'bad point')
+    const target = `https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=${lat.toFixed(4)},${lon.toFixed(4)}&unit=KMPH&key=${encodeURIComponent(key)}`
+    return upstream(target, { ttl: 60000, key: `tt:${lat.toFixed(2)},${lon.toFixed(2)}:${key.slice(0, 4)}` })
+  }
+
+  if (path === '/api/traffic/here') {
+    const key = header(req, 'x-here-key') || process.env.HERE_API_KEY || ''
+    if (!/^[A-Za-z0-9._-]{8,160}$/.test(key)) return jsonError(404, 'no here key')
+    const lat = Number(url.searchParams.get('lat'))
+    const lon = Number(url.searchParams.get('lon'))
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return jsonError(400, 'bad point')
+    const target = `https://data.traffic.hereapi.com/v7/flow?in=${encodeURIComponent(`circle:${lat.toFixed(4)},${lon.toFixed(4)};r=800`)}&locationReferencing=shape&apiKey=${encodeURIComponent(key)}`
+    return upstream(target, { ttl: 60000, key: `here:${lat.toFixed(2)},${lon.toFixed(2)}:${key.slice(0, 4)}` })
   }
 
   if (path === '/api/rain/meta') {
@@ -424,7 +497,7 @@ export async function handleApi(req, res) {
   if (req.method === 'OPTIONS') {
     res.statusCode = 204
     res.setHeader('access-control-allow-origin', '*')
-    res.setHeader('access-control-allow-headers', 'x-opensky-client-id, x-opensky-client-secret, x-firms-map-key')
+    res.setHeader('access-control-allow-headers', 'x-opensky-client-id, x-opensky-client-secret, x-firms-map-key, x-tomtom-key, x-here-key')
     res.setHeader('access-control-allow-methods', 'GET, OPTIONS')
     res.end()
     return true

@@ -104,6 +104,12 @@ export interface GlobeApi {
   onMove(cb: (hit: { lat: number; lon: number } | null) => void): () => void
   onHover(cb: (hit: { marker: Marker; layerId: string; x: number; y: number } | null) => void): () => void
   onRelease(cb: () => void): () => void
+  onView(cb: (view: ViewState) => void): () => void
+  setBasemap(mode: 'sat' | 'streets' | 'hybrid' | 'dark', source: 'free' | 'maptiler' | 'mapbox', keys: { maptiler: string; mapbox: string }): void
+  setCityDraw(draw: { imagery: boolean; roads: boolean; buildings: boolean; traffic: boolean; flowRatio: number | null }): void
+  setCityVectors(data: { roads: { id: string; cls: string; points: { lat: number; lon: number }[] }[]; rails: { id: string; cls: string; points: { lat: number; lon: number }[] }[]; buildings: { id: string; heightM: number; points: { lat: number; lon: number }[] }[]; pois: { id: string; name: string; kind: string; lat: number; lon: number }[] } | null): void
+  clearCityCache(): void
+  cityNote(): string
 }
 
 export interface Settings {
@@ -113,6 +119,16 @@ export interface Settings {
   firmsKey: string
   /** Optional AISStream key. Empty keeps the keyless regional feeds. */
   aisstreamKey: string
+  /** Optional MapTiler key. Used only when basemapSource is maptiler. */
+  maptilerKey: string
+  /** Optional Mapbox token. Used only when basemapSource is mapbox. */
+  mapboxKey: string
+  /** Optional TomTom key. Live speed ratio. Vehicle positions stay simulated. */
+  tomtomKey: string
+  /** Optional HERE key. Live speed ratio when the flow call succeeds. */
+  hereKey: string
+  basemap: 'sat' | 'streets' | 'hybrid' | 'dark'
+  basemapSource: 'free' | 'maptiler' | 'mapbox'
   /** Multiplier for globe sprites. About 0.2 to 1.6. Default is small. */
   markerSize: number
   theme: GlobeTheme
@@ -178,6 +194,8 @@ export interface PluginContext {
   log(layerId: string, message: string): void
   /** Short HUD line. The aircraft layer reports count, feed state, and source. */
   status?(layerId: string, message: string): void
+  /** Contacts inside a radius. City info uses this for overhead aircraft, ships, and quakes. */
+  nearby?(lat: number, lon: number, radiusKm: number): Contact[]
 }
 
 export interface LayerContext extends PluginContext {

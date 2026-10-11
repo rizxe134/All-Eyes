@@ -47,5 +47,6 @@ describe('HUD slots do not move when a contact is open', () => {
     expect(css).toMatch(/text-overflow:\s*ellipsis/)
     expect(css).toMatch(/\.ae-flight \{[^}]*position:\s*relative/)
     expect(css).toMatch(/\.ae-hud\.is-flight \.ae-layers/)
+    expect(css).toMatch(/\.ae-city-card \{[^}]*height:\s*210px/)
   })
 })

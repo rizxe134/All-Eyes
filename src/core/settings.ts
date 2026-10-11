@@ -1,3 +1,4 @@
+import { parseBasemapMode, parseBasemapSource } from '../city/basemap'
 import { applyPalette, parseHex } from './palette'
 import type { GlobeTheme, MarkerStyle, Settings, SettingsStore as SettingsApi, SpeedUnit } from './types'
 
@@ -14,6 +15,12 @@ const EMPTY: Settings = {
   openskySecret: '',
   firmsKey: '',
   aisstreamKey: '',
+  maptilerKey: '',
+  mapboxKey: '',
+  tomtomKey: '',
+  hereKey: '',
+  basemap: 'hybrid',
+  basemapSource: 'free',
   markerSize: MARKER_DEFAULT,
   theme: 'color',
   crt: CRT_DEFAULT,
@@ -81,6 +88,12 @@ export class SettingsStore implements SettingsApi {
         openskySecret: String(parsed.openskySecret ?? ''),
         firmsKey: String(parsed.firmsKey ?? ''),
         aisstreamKey: String(parsed.aisstreamKey ?? ''),
+        maptilerKey: String(parsed.maptilerKey ?? ''),
+        mapboxKey: String(parsed.mapboxKey ?? ''),
+        tomtomKey: String(parsed.tomtomKey ?? ''),
+        hereKey: String(parsed.hereKey ?? ''),
+        basemap: parseBasemapMode(String(parsed.basemap ?? '')) ?? 'hybrid',
+        basemapSource: parseBasemapSource(String(parsed.basemapSource ?? '')) ?? 'free',
         markerSize: legacySize ? MARKER_DEFAULT : markerSize(parsed.markerSize),
         theme: theme ?? 'color',
         crt: crt ?? CRT_DEFAULT,

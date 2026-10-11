@@ -135,3 +135,30 @@ Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefi
 `help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `sat`, `find`, `beacon`, `size`, `colors`, `radar`, `theme`, `crt`, `viewer`, `mute`, `shot`, `link`. `sat iss` and `find 25544` lock a satellite. `find` also takes a ship name or MMSI. `colors mono` restores the single phosphor. `colors aircraft #4da3ff` sets one layer. `colors reset` clears those overrides. `radar off` hides the scope.
 
 `size 0.45` (or `size up` / `size down`) matches the marker-size slider in CFG. `theme color` and `theme green` match the globe control. `crt 0.4` matches the CRT slider.
+
+## City layers
+
+City zoom is a plugin, `src/plugins/city`, plus a renderer in `src/city` that the globe owns. The plugin publishes contacts and asks the globe to draw tiles, roads, and buildings. It does not position HUD panels from the camera.
+
+| Layer id | What it draws | Source |
+| --- | --- | --- |
+| `imagery` | Raster tiles under about 1600 km | Esri World Imagery, CARTO Voyager, CARTO Dark, or Esri reference labels. MapTiler or Mapbox only when CFG source is that provider and a key is saved |
+| `roads` | Road and rail lines | OpenStreetMap via Overpass |
+| `buildings` | Extruded footprints | OpenStreetMap `height` or `building:levels` |
+| `traffic` | Moving markers on those lines | Simulated. TomTom or HERE, if configured and the call works, supplies a speed ratio that recolours them |
+| `transit` | Chevron markers | MBTA vehicles near Boston, Digitraffic trains in Finland. Both keyless |
+| `poi` | Drop markers | Overpass amenities, stations, airports |
+
+`city <name>`, `city list`, `place <address>`, `poi <name>`, and `map sat|streets|hybrid|dark` are the commands. The city card in the right column is a fixed 210 px box. Search uses Nominatim through `/api/nominatim` (cached, one request at a time, a proper User-Agent on the proxy).
+
+To add a city source:
+
+1. Put the parser in `src/city/` and cover it from `tests/city.test.ts`.
+2. Allowlist the host in `server/proxy.mjs`. Do not fetch it from the page.
+3. If it needs a key, add a field on `Settings`, a CFG input, and a header in `src/net/http.ts`. Leave the feed off when the key is empty.
+4. Publish contacts with `ctx.publish` for anything the operator should click. Draw geometry through `GlobeApi.setCityVectors` only when it has to sit on the ground.
+5. Say in the city card whether the feed is live or simulated. Do not invent a timetable, a population, or a congestion colour.
+
+Tiles are fetched in the page (those hosts send `Access-Control-Allow-Origin`) and stored in IndexedDB, about 48 MB, which Electron keeps in the app user-data directory. Four tile requests run at once. **CLEAR MAP CACHE** drops the database and the GPU copies. The official OpenStreetMap tile servers are not used. OpenFreeMap is vector-only, so it is not a raster source here. A global elevation mesh is not included.
+
+`crtForZoom` in `src/core/range.ts` fades the globe CRT as range falls below 140 km. The stored CRT value does not change. The near plane uses the v1.4.1 formula until the camera is close enough that 0.05 would clip the surface.

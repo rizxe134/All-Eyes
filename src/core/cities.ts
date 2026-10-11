@@ -44,6 +44,8 @@ export const CITIES: City[] = [
   { name: 'DENVER', lat: 39.74, lon: -104.99 },
   { name: 'MIAMI', lat: 25.76, lon: -80.19 },
   { name: 'WASHINGTON', lat: 38.91, lon: -77.04, aliases: ['DC'] },
+  { name: 'ATLANTA', lat: 33.749, lon: -84.388 },
+  { name: 'BOSTON', lat: 42.36, lon: -71.059 },
   { name: 'REYKJAVIK', lat: 64.15, lon: -21.94 },
   { name: 'OSLO', lat: 59.91, lon: 10.75 },
   { name: 'STOCKHOLM', lat: 59.33, lon: 18.07 },
