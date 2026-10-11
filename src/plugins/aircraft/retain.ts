@@ -1,7 +1,14 @@
 import type { AirFix } from './parse'
 
-/** Drop a contact only after this long with no fresh hit. */
+/** Drop a contact in the camera disk only after this long with no fresh hit. */
 export const STALE_MS = 90_000
+
+/**
+ * Contacts outside the camera disk stay this long, so a world sweep can lap
+ * the globe without the far side blinking off, and moving the camera does not
+ * throw them away.
+ */
+export const FAR_STALE_MS = 7 * 60_000
 
 export interface HeldContact {
   fix: AirFix
@@ -23,6 +30,29 @@ export function mergeHeld(
   for (const [icao, held] of previous) {
     if (!icao) continue
     if (now - held.updatedAt > staleMs) continue
+    next.set(icao, held)
+  }
+  if (!incoming || incoming.length === 0) return next
+  for (const fix of incoming) {
+    const icao = fix.icao?.trim().toLowerCase()
+    if (!icao) continue
+    next.set(icao, { fix: { ...fix, icao }, updatedAt: now })
+  }
+  return next
+}
+
+/** Same merge, with a per-contact age so far traffic outlives the view. */
+export function mergeHeldAged(
+  previous: ReadonlyMap<string, HeldContact>,
+  incoming: readonly AirFix[] | null,
+  now: number,
+  staleFor: (fix: AirFix) => number,
+): Map<string, HeldContact> {
+  const next = new Map<string, HeldContact>()
+  for (const [icao, held] of previous) {
+    if (!icao) continue
+    const limit = staleFor(held.fix)
+    if (!Number.isFinite(limit) || now - held.updatedAt > limit) continue
     next.set(icao, held)
   }
   if (!incoming || incoming.length === 0) return next

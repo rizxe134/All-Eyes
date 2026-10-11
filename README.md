@@ -2,6 +2,12 @@
 
 A live "see the whole world" console. The globe fills the window in natural color, the panels stay green phosphor and 8-bit, and the feeds run with no API keys.
 
+## What's new in 1.6.0
+
+- Markers are colour-coded by category (aircraft blue, ground amber, satellites cyan, Starlink violet, ships teal, quakes red, storms magenta, events yellow, weather orange, launches pink, beacons lime), with the same colour on the globe, the layer swatch, the tooltip, and the dock. A thin dark outline stays on every marker. The selection ring stays bright. **LEGEND** sits under the layer list. **CFG** and `colors` switch back to the old phosphor (`colors mono`) or set one layer (`colors aircraft #4da3ff`). `colors reset` clears those overrides.
+- Aircraft stay on the whole globe. A 250 nm grid covers populated airspace and the ocean tracks, and the background sweep keeps refreshing it while the camera tile stays first in line. Contacts still merge by ICAO and coast between polls. Far contacts stay for about seven minutes, so moving the camera does not wipe the other continents. The top bar shows loaded worldwide, in view, sweep coverage, and each source as OK, PARTIAL, RATE-LIMITED, or OFFLINE. It says FEED COVERAGE LIMIT when the free feeds have nothing for the spot you are looking at.
+- The layer list uses full names (AIRCRAFT, GROUND, SATELLITES, STARLINK, QUAKES, WEATHER, SHIPS, STORMS, EVENTS, LAUNCHES, BEACONS, and the satellite groups) with a colour swatch and the count on the right. On a short window it uses two columns and scrolls. The radar sits under that list, so it cannot cover a layer button. `radar off` hides it.
+
 ## What's new in 1.5.0
 
 - Every marker is easier to hit: a 14 px pad (larger on a touch screen), nearest-to-cursor picking, a priority tie-break, a pointer, and a small name tooltip. Click again to cycle overlaps. Escape, a click on empty ground, or the lock chip clears the selection, and the lock stays on the same id while the feeds refresh.
@@ -58,23 +64,23 @@ Apple menu, then **About This Mac**: Chip is Apple M1 or later for Apple Silicon
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.5.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
-| Intel | `All-Eyes-1.5.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
+| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-1.6.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
+| Intel | `All-Eyes-1.6.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
 
 ### Windows
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Windows, recommended | `All-Eyes-1.5.0-Windows-x64-Installer.exe` | Installer |
-| 64-bit Windows, no install | `All-Eyes-1.5.0-Windows-x64-Portable.exe` | Portable exe |
+| 64-bit Windows, recommended | `All-Eyes-1.6.0-Windows-x64-Installer.exe` | Installer |
+| 64-bit Windows, no install | `All-Eyes-1.6.0-Windows-x64-Portable.exe` | Portable exe |
 
 ### Linux
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Linux, recommended | `All-Eyes-1.5.0-Linux-x64.AppImage` | AppImage |
-| Debian or Ubuntu | `All-Eyes-1.5.0-Linux-x64.deb` | Debian package |
-| Any 64-bit Linux | `All-Eyes-1.5.0-Linux-x64.tar.gz` | Archive |
+| 64-bit Linux, recommended | `All-Eyes-1.6.0-Linux-x64.AppImage` | AppImage |
+| Debian or Ubuntu | `All-Eyes-1.6.0-Linux-x64.deb` | Debian package |
+| Any 64-bit Linux | `All-Eyes-1.6.0-Linux-x64.tar.gz` | Archive |
 
 ## How to install
 
@@ -84,7 +90,7 @@ Open the section for your computer. The desktop builds are unsigned, so the firs
 <summary>macOS</summary>
 
 1. Click the Apple menu, then **About This Mac**.
-2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-1.5.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-1.5.0-macOS-Intel-x64.zip`.
+2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-1.6.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-1.6.0-macOS-Intel-x64.zip`.
 3. Double-click the zip. macOS unpacks it and shows `All Eyes.app`.
 4. Drag `All Eyes.app` into **Applications**.
 5. First launch: right-click `All Eyes.app`, choose **Open**, then **Open** again. macOS says it cannot verify the developer. That warning is expected, because the app is unsigned.
@@ -100,11 +106,11 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 <details>
 <summary>Windows</summary>
 
-1. Download `All-Eyes-1.5.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-1.5.0-Windows-x64-Portable.exe` if you do not want to install.
+1. Download `All-Eyes-1.6.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-1.6.0-Windows-x64-Portable.exe` if you do not want to install.
 2. Double-click the file you downloaded.
 3. If you see **Windows protected your PC**, choose **More info**, then **Run anyway**. That warning is expected, because the app is unsigned.
 4. Installer: step through the setup. It adds an **All Eyes** shortcut to the Start menu and the desktop. Open the app from either shortcut.
-5. Portable: nothing is installed. Double-click `All-Eyes-1.5.0-Windows-x64-Portable.exe` each time you want the globe.
+5. Portable: nothing is installed. Double-click `All-Eyes-1.6.0-Windows-x64-Portable.exe` each time you want the globe.
 
 </details>
 
@@ -113,12 +119,12 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 
 **AppImage (any distro)**
 
-1. Download `All-Eyes-1.5.0-Linux-x64.AppImage`.
+1. Download `All-Eyes-1.6.0-Linux-x64.AppImage`.
 2. In that folder, run:
 
 ```bash
-chmod +x All-Eyes-1.5.0-Linux-x64.AppImage
-./All-Eyes-1.5.0-Linux-x64.AppImage
+chmod +x All-Eyes-1.6.0-Linux-x64.AppImage
+./All-Eyes-1.6.0-Linux-x64.AppImage
 ```
 
 Or right-click the file, choose **Properties**, turn on **Allow executing file as a program**, and double-click it.
@@ -132,28 +138,28 @@ sudo apt install libfuse2
 Or skip FUSE and run:
 
 ```bash
-./All-Eyes-1.5.0-Linux-x64.AppImage --appimage-extract-and-run
+./All-Eyes-1.6.0-Linux-x64.AppImage --appimage-extract-and-run
 ```
 
 **Debian or Ubuntu package**
 
-1. Download `All-Eyes-1.5.0-Linux-x64.deb`.
+1. Download `All-Eyes-1.6.0-Linux-x64.deb`.
 2. In that folder, run:
 
 ```bash
-sudo apt install ./All-Eyes-1.5.0-Linux-x64.deb
+sudo apt install ./All-Eyes-1.6.0-Linux-x64.deb
 ```
 
 3. Open **All Eyes** from the applications menu. The package name is `all-eyes`. The program file is `/opt/All Eyes/all-eyes`.
 
 **Archive**
 
-1. Download `All-Eyes-1.5.0-Linux-x64.tar.gz`.
-2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.5.0-Linux-x64`:
+1. Download `All-Eyes-1.6.0-Linux-x64.tar.gz`.
+2. Unpack it and start the program. The folder inside the archive is `All-Eyes-1.6.0-Linux-x64`:
 
 ```bash
-tar -xzf All-Eyes-1.5.0-Linux-x64.tar.gz
-cd All-Eyes-1.5.0-Linux-x64
+tar -xzf All-Eyes-1.6.0-Linux-x64.tar.gz
+cd All-Eyes-1.6.0-Linux-x64
 ./all-eyes
 ```
 

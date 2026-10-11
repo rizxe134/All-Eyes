@@ -14,7 +14,10 @@ export interface Shell {
   alerts: HTMLElement
   chips: HTMLElement
   radar: HTMLCanvasElement
+  radarWrap: HTMLElement
   radarLabel: HTMLElement
+  radarToggle: HTMLButtonElement
+  legend: HTMLElement
   readout: HTMLElement
   scrub: HTMLInputElement
   scrubLabel: HTMLElement
@@ -25,6 +28,9 @@ export interface Shell {
   right: HTMLElement
   boot: HTMLElement
   bootText: HTMLElement
+  hud: HTMLElement
+  top: HTMLElement
+  dock: HTMLElement
   mute: HTMLButtonElement
   shot: HTMLButtonElement
   link: HTMLButtonElement
@@ -76,7 +82,12 @@ export function buildShell(root: HTMLElement): Shell {
   actions.append(mute, shot, link, cfg)
   top.append(brand, clock, live, count, feeds, coords, actions)
 
+  const dock = el('div', 'ae-dock')
   const layers = el('aside', 'ae-layers')
+  const legend = el('details', 'ae-legend')
+  const legendSummary = el('summary', '', 'LEGEND')
+  const legendBody = el('div', 'ae-legend-body')
+  legend.append(legendSummary, legendBody)
   const right = el('div', 'ae-right')
   const side = el('aside', 'ae-side')
   const inspectCard = el('section', 'ae-card')
@@ -89,8 +100,14 @@ export function buildShell(root: HTMLElement): Shell {
   const radar = el('canvas', 'ae-radar') as HTMLCanvasElement
   radar.width = 160
   radar.height = 160
-  const radarLabel = el('div', 'ae-radar-label', 'RADAR')
-  radarWrap.append(radar, radarLabel)
+  const radarHead = el('div', 'ae-radar-label')
+  const radarLabel = el('span', '', 'RADAR')
+  const radarToggle = el('button', 'ae-btn', 'HIDE') as HTMLButtonElement
+  radarToggle.type = 'button'
+  radarToggle.title = 'Hide the radar'
+  radarHead.append(radarLabel, radarToggle)
+  radarWrap.append(radar, radarHead)
+  dock.append(layers, legend, radarWrap)
 
   const alerts = el('div', 'ae-alerts')
   const alertList = el('div', 'ae-alert-list')
@@ -191,6 +208,17 @@ export function buildShell(root: HTMLElement): Shell {
   crt.value = '0.4'
   crtWrap.append(crt)
   dialog.append(crtWrap)
+  const colorWrap = el('label', 'ae-field')
+  colorWrap.append(document.createTextNode('MARKER COLORS'))
+  const markerStyle = el('select') as HTMLSelectElement
+  markerStyle.name = 'markerStyle'
+  for (const [value, label] of [['color', 'CATEGORY'], ['mono', 'MONO']] as const) {
+    const option = el('option', '', label) as HTMLOptionElement
+    option.value = value
+    markerStyle.append(option)
+  }
+  colorWrap.append(markerStyle)
+  dialog.append(colorWrap)
   const row = el('div', 'ae-row')
   const save = el('button', 'ae-btn', 'SAVE') as HTMLButtonElement
   save.type = 'submit'
@@ -202,7 +230,7 @@ export function buildShell(root: HTMLElement): Shell {
   settings.append(dialog)
 
   right.append(side)
-  hud.append(top, layers, right, radarWrap, alerts, foot, track)
+  hud.append(top, dock, right, alerts, foot, track)
   const info = el('div', 'ae-infocard')
   info.hidden = true
   const infoHead = el('header')
@@ -234,7 +262,10 @@ export function buildShell(root: HTMLElement): Shell {
     alerts: alertList,
     chips,
     radar,
+    radarWrap,
     radarLabel,
+    radarToggle,
+    legend: legendBody,
     readout: coords,
     scrub,
     scrubLabel,
@@ -245,6 +276,9 @@ export function buildShell(root: HTMLElement): Shell {
     right,
     boot,
     bootText,
+    hud,
+    top,
+    dock,
     mute,
     shot,
     link,

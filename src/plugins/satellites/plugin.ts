@@ -253,13 +253,13 @@ export const satellitePlugin: AllEyesPlugin = {
   name: 'Satellites',
   version: '1.5.0',
   layers: [
-    makeLayer('stations', 'stations', 'STN', 'Crewed stations from the public CelesTrak catalog.', true),
+    makeLayer('stations', 'stations', 'STATIONS', 'Crewed stations from the public CelesTrak catalog.', true),
     makeLayer('gnss', 'gnss', 'GNSS', 'GPS, Galileo, GLONASS, and BeiDou.', true),
-    makeLayer('weather', 'wxsat', 'WXS', 'Weather satellites.', true),
-    makeLayer('science', 'science', 'SCI', 'Science missions, including Hubble when it is in the catalog.', true),
-    makeLayer('geo', 'geo', 'GEO', 'Geostationary satellites, drawn in a halo above the earth.', true),
-    makeLayer('active', 'satellites', 'SATS', 'The rest of the public active catalog. No stride cap.', true),
-    makeLayer('starlink', 'starlink', 'STAR', 'The full Starlink shell. Off until you arm it.', false),
+    makeLayer('weather', 'wxsat', 'SAT WX', 'Weather satellites.', true),
+    makeLayer('science', 'science', 'SCIENCE', 'Science missions, including Hubble when it is in the catalog.', true),
+    makeLayer('geo', 'geo', 'GEO SAT', 'Geostationary satellites, drawn in a halo above the earth.', true),
+    makeLayer('active', 'satellites', 'SATELLITES', 'The rest of the public active catalog. No stride cap.', true),
+    makeLayer('starlink', 'starlink', 'STARLINK', 'The full Starlink shell. Off until you arm it.', false),
   ],
   panels: [
     {

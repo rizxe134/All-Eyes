@@ -9,7 +9,8 @@ import { PluginRegistry } from './registry'
 import { decodeShare, encodeShare } from './share'
 import { MARKER_MAX, MARKER_MIN, SettingsStore } from './settings'
 import { Sfx } from './audio'
-import { toMarker, type CommandContext, type GlobeTheme, type LayerHandle, type PluginContext, type WatchRule } from './types'
+import { LEGEND, layerHex } from './palette'
+import { toMarker, type CommandContext, type GlobeTheme, type LayerHandle, type MarkerStyle, type PluginContext, type WatchRule } from './types'
 import { builtinPlugins } from '../plugins'
 import { getJson } from '../net/http'
 import { buildShell } from '../ui/shell'
@@ -201,19 +202,62 @@ export function boot(root: HTMLElement): void {
       button.type = 'button'
       button.className = `ae-layer${on ? ' is-on' : ''}${state.faults.has(layer.id) ? ' is-fault' : ''}`
       button.title = state.faults.get(layer.id) || layer.description
+      const swatch = document.createElement('i')
+      swatch.className = 'ae-swatch'
+      swatch.style.background = layerHex(layer.id)
       const name = document.createElement('span')
       name.className = 'ae-layer-name'
       name.textContent = layer.label
       const count = document.createElement('span')
       count.className = 'ae-layer-count'
       count.textContent = on ? String(entities.of(layer.id).length) : '—'
-      button.append(name, count)
+      button.append(swatch, name, count)
       button.addEventListener('click', () => {
         audio.play('click')
         setLayer(layer.id, !on)
       })
       shell.layers.append(button)
     }
+  }
+
+  function renderLegend() {
+    shell.legend.replaceChildren()
+    for (const row of LEGEND) {
+      const line = document.createElement('div')
+      line.className = 'ae-legend-row'
+      const swatch = document.createElement('i')
+      swatch.className = 'ae-swatch'
+      swatch.style.background = layerHex(row.id)
+      line.append(swatch, document.createTextNode(row.name))
+      shell.legend.append(line)
+    }
+  }
+
+  function applyRadar(on: boolean) {
+    shell.radarWrap.hidden = !on
+    shell.radarToggle.textContent = on ? 'HIDE' : 'SHOW'
+  }
+
+  function placeDock() {
+    const foot = shell.hud.querySelector('.ae-foot')
+    const footTop = foot?.getBoundingClientRect().top ?? window.innerHeight - 120
+    const bottomPx = Math.max(88, Math.ceil(window.innerHeight - footTop) + 14)
+    const topPx = Math.ceil(shell.top.getBoundingClientRect().bottom) + 8
+    const flight = shell.hud.classList.contains('is-flight')
+    const short = window.innerHeight <= 720 || window.innerWidth <= 900
+    shell.dock.style.bottom = `${bottomPx}px`
+    shell.right.style.top = `${topPx}px`
+    shell.right.style.bottom = `${bottomPx}px`
+    shell.right.style.maxHeight = 'none'
+    if (flight && short) shell.dock.style.top = ''
+    else shell.dock.style.top = `${topPx}px`
+  }
+
+  function accentFor(id: string | null): string {
+    const contact = id ? entities.get(id) : null
+    if (!contact) return layerHex('aircraft')
+    if (contact.shape === 'air-gnd') return layerHex('airground')
+    return layerHex(contact.layerId)
   }
 
   function cardBody(contact: { detail: string; card?: { k: string; v: string }[]; speedKt?: number }): string {
@@ -285,8 +329,9 @@ export function boot(root: HTMLElement): void {
   }
 
   function renderFlight() {
-    const hud = shell.layers.parentElement
+    const hud = shell.hud
     const id = state.trackId
+    flight.root.style.setProperty('--accent', accentFor(id))
     const unit = settings.get().speedUnit
     if (id?.startsWith('air:')) {
       const hex = id.slice(4)
@@ -429,6 +474,10 @@ export function boot(root: HTMLElement): void {
     shell.canvas.classList.toggle('is-color', current.theme === 'color')
     shell.globeCrt.style.setProperty('--crt', current.crt.toFixed(2))
     shell.globeCrt.classList.toggle('is-off', current.crt <= 0.001)
+    applyRadar(current.radar)
+    renderLegend()
+    renderLayers()
+    placeDock()
     const form = shell.settingsForm
     const sizeInput = form.elements.namedItem('markerSize') as HTMLInputElement | null
     const crtInput = form.elements.namedItem('crt') as HTMLInputElement | null
@@ -482,6 +531,31 @@ export function boot(root: HTMLElement): void {
       applyLook()
     },
     getCrt: () => settings.get().crt,
+    setMarkerStyle(style: MarkerStyle) {
+      settings.update({ markerStyle: style === 'mono' ? 'mono' : 'color' })
+      applyLook()
+      renderFlight()
+    },
+    getMarkerStyle: () => settings.get().markerStyle,
+    setColorOverride(layerId, hex) {
+      const next = { ...settings.get().colorOverrides }
+      if (!hex) delete next[layerId]
+      else next[layerId] = hex
+      settings.update({ colorOverrides: next, markerStyle: 'color' })
+      applyLook()
+      renderFlight()
+    },
+    clearColorOverrides() {
+      settings.update({ colorOverrides: {}, markerStyle: 'color' })
+      applyLook()
+      renderFlight()
+    },
+    setRadar(on) {
+      settings.update({ radar: on })
+      applyRadar(on)
+      return on
+    },
+    radarOn: () => settings.get().radar,
     setViewer(open) {
       viewer.setOpen(open)
       try {
@@ -602,6 +676,7 @@ export function boot(root: HTMLElement): void {
     ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
     ;(form.elements.namedItem('crt') as HTMLInputElement).value = String(current.crt)
     ;(form.elements.namedItem('theme') as HTMLSelectElement).value = current.theme
+    ;(form.elements.namedItem('markerStyle') as HTMLSelectElement).value = current.markerStyle
     shell.settings.hidden = false
   })
   shell.settingsForm.addEventListener('submit', (event) => {
@@ -612,6 +687,7 @@ export function boot(root: HTMLElement): void {
       openskySecret: (form.elements.namedItem('openskySecret') as HTMLInputElement).value.trim(),
       firmsKey: (form.elements.namedItem('firmsKey') as HTMLInputElement).value.trim(),
       aisstreamKey: (form.elements.namedItem('aisstreamKey') as HTMLInputElement).value.trim(),
+      markerStyle: (form.elements.namedItem('markerStyle') as HTMLSelectElement).value === 'mono' ? 'mono' : 'color',
     })
     shell.settings.hidden = true
     const size = Number((form.elements.namedItem('markerSize') as HTMLInputElement).value)
@@ -679,6 +755,7 @@ export function boot(root: HTMLElement): void {
     if (hit && contact) {
       shell.tip.hidden = false
       shell.tip.textContent = contact.callsign || contact.label
+      shell.tip.style.setProperty('--tip', layerHex(contact.shape === 'air-gnd' ? 'airground' : contact.layerId))
       shell.tip.style.left = `${hit.x + 14}px`
       shell.tip.style.top = `${hit.y + 14}px`
     } else {
@@ -783,7 +860,13 @@ export function boot(root: HTMLElement): void {
   } catch {
     /* keep the viewer open */
   }
-  window.addEventListener('pagehide', () => viewer.dispose())
+  window.addEventListener('resize', placeDock)
+  if (typeof ResizeObserver !== 'undefined') {
+    const watch = new ResizeObserver(() => placeDock())
+    watch.observe(shell.top)
+    const foot = shell.hud.querySelector('.ae-foot')
+    if (foot) watch.observe(foot)
+  }
   let draggingCard = false
   let dragOx = 0
   let dragOy = 0
@@ -806,6 +889,13 @@ export function boot(root: HTMLElement): void {
   sizeInput.addEventListener('input', () => commands.setMarkerSize(Number(sizeInput.value)))
   crtInput.addEventListener('input', () => commands.setCrt(Number(crtInput.value)))
   themeInput.addEventListener('change', () => commands.setTheme(themeInput.value === 'green' ? 'green' : 'color'))
+  const styleInput = shell.settingsForm.elements.namedItem('markerStyle') as HTMLSelectElement
+  styleInput.addEventListener('change', () => commands.setMarkerStyle(styleInput.value === 'mono' ? 'mono' : 'color'))
+  shell.radarToggle.addEventListener('click', () => {
+    audio.play('click')
+    const on = commands.setRadar(!settings.get().radar)
+    showOutput(on ? 'RADAR ON' : 'RADAR OFF')
+  })
   applyLook()
 
   entities.subscribe(() => {

@@ -10,6 +10,9 @@ export type SpeedUnit = 'kt' | 'mph' | 'kmh'
 /** color is natural Blue Marble. green is the phosphor grade. */
 export type GlobeTheme = 'color' | 'green'
 
+/** color is the category palette. mono is the old light-green markers. */
+export type MarkerStyle = 'color' | 'mono'
+
 export interface CardField {
   k: string
   v: string
@@ -116,6 +119,12 @@ export interface Settings {
   /** Globe CRT overlay strength, 0 to 1. */
   crt: number
   speedUnit: SpeedUnit
+  /** Category colours, or the previous single phosphor. */
+  markerStyle: MarkerStyle
+  /** Optional #rrggbb overrides keyed by layer id. */
+  colorOverrides: Record<string, string>
+  /** Corner radar. Off keeps the layer list clear. */
+  radar: boolean
 }
 
 export interface SettingsStore {
@@ -212,6 +221,12 @@ export interface CommandContext {
   getTheme(): GlobeTheme
   setCrt(amount: number): void
   getCrt(): number
+  setMarkerStyle(style: MarkerStyle): void
+  getMarkerStyle(): MarkerStyle
+  setColorOverride(layerId: string, hex: string | null): void
+  clearColorOverrides(): void
+  setRadar(on: boolean): boolean
+  radarOn(): boolean
   setViewer(open: boolean): void
   viewerOpen(): boolean
   screenshot(): void

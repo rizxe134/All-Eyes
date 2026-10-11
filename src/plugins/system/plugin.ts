@@ -1,4 +1,5 @@
 import { findCity } from '../../core/cities'
+import { parseHex } from '../../core/palette'
 import type { AllEyesPlugin, CommandContext } from '../../core/types'
 
 function watchId(): string {
@@ -192,6 +193,48 @@ export const systemPlugin: AllEyesPlugin = {
         if (!Number.isFinite(next)) return 'USAGE: SIZE <0.2-1.6|UP|DOWN>'
         ctx.setMarkerSize(next)
         return `SIZE ${ctx.getMarkerSize().toFixed(2)}`
+      },
+    },
+    {
+      name: 'colors',
+      usage: 'colors [mono|color|reset|<layer> <#hex|clear>]',
+      summary: 'Category marker colours, or the old phosphor',
+      run(args, ctx) {
+        const head = (args[0] ?? '').toLowerCase()
+        if (!head) return `COLORS ${ctx.getMarkerStyle().toUpperCase()}`
+        if (head === 'mono' || head === 'color') {
+          ctx.setMarkerStyle(head)
+          return `COLORS ${head.toUpperCase()}`
+        }
+        if (head === 'reset') {
+          ctx.clearColorOverrides()
+          return 'COLORS RESET'
+        }
+        const layerId = head
+        const known = ctx.layers().some((layer) => layer.id === layerId)
+        if (!known) return `NO LAYER ${layerId.toUpperCase()}`
+        const paint = (args[1] ?? '').toLowerCase()
+        if (!paint) return 'USAGE: COLORS <LAYER> <#RRGGBB|CLEAR>'
+        if (paint === 'clear') {
+          ctx.setColorOverride(layerId, null)
+          return `COLORS ${layerId.toUpperCase()} CLEAR`
+        }
+        const hex = parseHex(paint)
+        if (!hex) return 'USAGE: COLORS <LAYER> <#RRGGBB|CLEAR>'
+        ctx.setColorOverride(layerId, hex)
+        return `COLORS ${layerId.toUpperCase()} ${hex.toUpperCase()}`
+      },
+    },
+    {
+      name: 'radar',
+      usage: 'radar [on|off]',
+      summary: 'Show or hide the corner radar',
+      run(args, ctx) {
+        const arg = (args[0] ?? '').toLowerCase()
+        if (!arg || arg === 'toggle') return ctx.setRadar(!ctx.radarOn()) ? 'RADAR ON' : 'RADAR OFF'
+        if (arg === 'on' || arg === 'show') return ctx.setRadar(true) ? 'RADAR ON' : 'RADAR OFF'
+        if (arg === 'off' || arg === 'hide') return ctx.setRadar(false) ? 'RADAR ON' : 'RADAR OFF'
+        return 'USAGE: RADAR [ON|OFF]'
       },
     },
     {

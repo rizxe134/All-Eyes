@@ -9,6 +9,7 @@ import {
   type Vec3,
 } from './geo'
 import { declutterCellDeg, declutterMarkers, markerScreenPx } from './markers'
+import { layerRgb } from './palette'
 import { chooseHit, hitRadiusPx, layerPriority } from './pick'
 import { MARKER_MAX, MARKER_DEFAULT, MARKER_MIN } from './settings'
 import { spriteRows } from './sprites'
@@ -161,7 +162,7 @@ function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number 
   const width = Math.max(1, rows[0]?.length ?? 1)
   const pixel = 4
   // Far dots are a solid block. A 1 px halo rounds a 2 px speck down to nothing.
-  const pad = id.startsWith('dot') ? 0 : 1
+  const pad = 1
   const canvas = document.createElement('canvas')
   canvas.width = width * pixel + pad * 2
   canvas.height = height * pixel + pad * 2
@@ -178,7 +179,7 @@ function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number 
   if (ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     if (pad > 0) {
-      ctx.fillStyle = '#07140c'
+      ctx.fillStyle = '#000000'
       for (const [x, y] of lit) ctx.fillRect(x * pixel, y * pixel, pixel + pad * 2, pixel + pad * 2)
     }
     ctx.fillStyle = '#ffffff'
@@ -193,12 +194,9 @@ function bakeSprite(id: string): { texture: THREE.CanvasTexture; aspect: number 
   return { texture, aspect: width / height }
 }
 
-function markerTint(id: string, lift: number): [number, number, number] {
-  if (id === 'ico-quake' || id === 'ico-fire' || id === 'ico-launch') return [lift, lift * 0.84, lift * 0.38]
-  if (id === 'ico-storm') return [lift * 0.5, lift, lift]
-  if (id === 'sel-ring') return [lift, lift, lift * 0.9]
-  if (id === 'air-gnd' || id === 'dot-gnd') return [lift, lift * 0.72, lift * 0.28]
-  return [lift * 0.9, lift, lift * 0.92]
+function markerTint(layerId: string, poolId: string, lift: number): [number, number, number] {
+  if (poolId === 'sel-ring') return [lift, lift, lift * 0.92]
+  return layerRgb(layerId, lift)
 }
 
 function graticule(): THREE.LineSegments {
@@ -881,7 +879,8 @@ export class Globe implements GlobeApi {
       const world = clamp((pixels * dist * tan) / (height * 0.5), 0.02, 12)
       const pulseBase = pool.id === 'ico-quake' || pool.id === 'ico-storm'
       for (let i = 0; i < pool.items.length; i++) {
-        const marker = pool.items[i]!.marker
+        const item = pool.items[i]!
+        const marker = item.marker
         const hot = marker.id === this.highlightId || marker.id === this.hoverId
         const pulse = pulseBase ? 1 + Math.sin(now / 280 + i) * 0.08 : 1
         const scale = world * marker.scale * pulse * (ring ? 1 : hot ? 1.12 : 1)
@@ -892,7 +891,7 @@ export class Globe implements GlobeApi {
         this.scratch.matrix.setPosition(this.scratch.pos)
         mesh.setMatrixAt(i, this.scratch.matrix)
         const lift = hot ? 1 : 0.9 + clamp(marker.brightness, 0, 1) * 0.1
-        const tint = markerTint(pool.id, lift)
+        const tint = markerTint(item.layerId, pool.id, lift)
         this.scratch.color.setRGB(tint[0], tint[1], tint[2])
         mesh.setColorAt(i, this.scratch.color)
       }

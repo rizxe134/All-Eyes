@@ -17,6 +17,7 @@ import {
   openSkyBox,
   pointUrl,
   sourceState,
+  sweepProgress,
   trimFarthest,
   type CoverageTile,
   type FeedSource,
@@ -24,7 +25,7 @@ import {
   type TileStamp,
 } from './feed'
 import { displayAirAltKm, parseAdsb, parseOpenSky, type AirFix } from './parse'
-import { STALE_MS, deadReckonFix, mergeHeld, type HeldContact } from './retain'
+import { FAR_STALE_MS, deadReckonFix, mergeHeldAged, type HeldContact } from './retain'
 import './sprites'
 import { classifyAir } from './types'
 
@@ -41,6 +42,9 @@ interface Sample extends AirFix {
 }
 
 const sourceBackoff = new Map<string, number>()
+const sourceNext = new Map<string, number>()
+const SOURCE_GAP_MS = 800
+const SOURCE_BURST = 2
 
 const airMeta = readAirCache()
 const looked = new Set<string>()
@@ -102,7 +106,7 @@ function toContact(fix: AirFix, unit: SpeedUnit): Contact {
   const card = withSpeed(airFields(fix, extra), fix.speedKt, unit)
   return {
     id: `air:${fix.icao}`,
-    layerId: LAYER,
+    layerId: fix.onGround ? GND : LAYER,
     kind: 'air',
     lat: fix.lat,
     lon: fix.lon,
@@ -127,8 +131,8 @@ export const aircraftPlugin: AllEyesPlugin = {
   layers: [
     {
       id: LAYER,
-      label: 'AIR',
-      description: 'Airborne flights. The view is tiled from the free feeds, and the last good positions stay up for 90 seconds.',
+      label: 'AIRCRAFT',
+      description: 'Airborne flights worldwide. The camera is refreshed first, and a background sweep keeps every other region loaded.',
       defaultOn: true,
       create(ctx) {
         let timer = 0
@@ -169,7 +173,7 @@ export const aircraftPlugin: AllEyesPlugin = {
           const live = Math.abs(sim - Date.now()) < 20_000
           if (!live) return atTime(sim)
           const now = Date.now()
-          return [...held.values()].map((row) => deadReckonFix(row.fix, row.updatedAt, now))
+          return [...held.values()].map((row) => deadReckonFix(row.fix, row.updatedAt, now, FAR_STALE_MS))
         }
 
         const rollStats = (now: number) => {
@@ -178,11 +182,15 @@ export const aircraftPlugin: AllEyesPlugin = {
           stats.clear()
         }
 
+        const lifetimeOk = new Set<string>()
         const bump = (id: string, kind: 'ok' | 'rate' | 'fail') => {
           const row = stats.get(id) ?? { ok: 0, rate: 0, fail: 0 }
           row[kind] += 1
           stats.set(id, row)
+          if (kind === 'ok') lifetimeOk.add(id)
         }
+        const penalty = (id: string, kind: ReturnType<typeof feedFailure>): ReturnType<typeof feedFailure> =>
+          kind === 'denied' && lifetimeOk.has(id) ? 'rate' : kind
 
         const publish = () => {
           const fixes = fixesNow()
@@ -201,7 +209,8 @@ export const aircraftPlugin: AllEyesPlugin = {
             return { id, state: sourceState(row.ok, row.rate, row.fail, backed) }
           })
           const gap = centerFailed(stamps, view.lat, view.lon, view.rangeKm) && visible === 0
-          ctx.status?.(LAYER, feedStatusLine(fixes.length, visible, sources, gap))
+          const sweep = sweepProgress(stamps, now, FAR_STALE_MS)
+          ctx.status?.(LAYER, feedStatusLine(fixes.length, visible, sources, gap, sweep.pct))
           const quiet = fixes.length === 0 && sources.every((row) => row.state === 'OFFLINE' || row.state === 'RATE-LIMITED')
           ctx.log(LAYER, quiet ? 'AIR FEED OFFLINE' : '')
           paintTrail()
@@ -291,35 +300,54 @@ export const aircraftPlugin: AllEyesPlugin = {
           }
         }
 
-        const orderedSources = (): FeedSource[] => {
+        const burstLeft = new Map<string, number>()
+        const takeSource = (): FeedSource | null => {
           const now = Date.now()
-          const ready = FEED_SOURCES.filter((source) => (sourceBackoff.get(source.id) ?? 0) <= now)
-          if (!ready.length) return []
-          const start = rotate % ready.length
+          const ready = FEED_SOURCES.filter((source) => (sourceBackoff.get(source.id) ?? 0) <= now && (sourceNext.get(source.id) ?? 0) <= now)
+          if (!ready.length) return null
+          const source = ready[rotate % ready.length]!
           rotate = (rotate + 1) % FEED_SOURCES.length
-          return [...ready.slice(start), ...ready.slice(0, start)]
+          const left = (burstLeft.get(source.id) ?? SOURCE_BURST) - 1
+          if (left <= 0) {
+            burstLeft.set(source.id, SOURCE_BURST)
+            sourceNext.set(source.id, now + SOURCE_GAP_MS)
+          } else {
+            burstLeft.set(source.id, left)
+          }
+          return source
         }
 
         const fetchTile = async (tile: CoverageTile): Promise<AirFix[]> => {
-          const order = orderedSources()
-          if (!order.length) {
-            stamps.set(tile.key, { at: Date.now(), ok: false, count: 0 })
-            return []
-          }
-          for (const source of order) {
+          const source = takeSource()
+          if (!source) return []
+          try {
+            const parsed = parseAdsb(await getJson(pointUrl(source, tile), ctx.settings, ctx.signal))
+            bump(source.id, 'ok')
+            stamps.set(tile.key, { at: Date.now(), ok: true, count: parsed.length })
+            return parsed
+          } catch (err) {
+            const kind = penalty(source.id, feedFailure(err))
+            sourceBackoff.set(source.id, Date.now() + backoffMs(kind))
+            bump(source.id, kind === 'rate' ? 'rate' : 'fail')
+            if (kind === 'rate') return []
+            const other = takeSource()
+            if (!other || other.id === source.id) {
+              stamps.set(tile.key, { at: Date.now(), ok: false, count: 0 })
+              return []
+            }
             try {
-              const parsed = parseAdsb(await getJson(pointUrl(source, tile), ctx.settings, ctx.signal))
-              bump(source.id, 'ok')
+              const parsed = parseAdsb(await getJson(pointUrl(other, tile), ctx.settings, ctx.signal))
+              bump(other.id, 'ok')
               stamps.set(tile.key, { at: Date.now(), ok: true, count: parsed.length })
               return parsed
-            } catch (err) {
-              const kind = feedFailure(err)
-              sourceBackoff.set(source.id, Date.now() + backoffMs(kind))
-              bump(source.id, kind === 'rate' ? 'rate' : 'fail')
+            } catch (err2) {
+              const again = penalty(other.id, feedFailure(err2))
+              sourceBackoff.set(other.id, Date.now() + backoffMs(again))
+              bump(other.id, again === 'rate' ? 'rate' : 'fail')
+              stamps.set(tile.key, { at: Date.now(), ok: false, count: 0 })
+              return []
             }
           }
-          stamps.set(tile.key, { at: Date.now(), ok: false, count: 0 })
-          return []
         }
 
         const fetchMil = async (): Promise<AirFix[]> => {
@@ -357,7 +385,7 @@ export const aircraftPlugin: AllEyesPlugin = {
             const view = ctx.globe.getView()
             const now = Date.now()
             rollStats(now)
-            const batch = dueTiles(now, view.lat, view.lon, view.rangeKm, stamps, 2, sweepCursor)
+            const batch = dueTiles(now, view.lat, view.lon, view.rangeKm, stamps, 4, sweepCursor)
             sweepCursor = batch.nextCursor
             const [groups, sky, mil] = await Promise.all([
               Promise.all(batch.tiles.map((tile) => fetchTile(tile))),
@@ -367,7 +395,7 @@ export const aircraftPlugin: AllEyesPlugin = {
             const incoming = mergeFixes([...groups, sky, mil])
             const stamped = Date.now()
             if (incoming.length) remember(incoming, stamped)
-            held = mergeHeld(held, incoming.length ? incoming : null, stamped, STALE_MS)
+            held = mergeHeldAged(held, incoming.length ? incoming : null, stamped, () => FAR_STALE_MS)
             if (held.size > RENDER_SOFT_CAP) {
               const kept = new Map<string, HeldContact>()
               for (const fix of trimFarthest([...held.values()].map((row) => row.fix), RENDER_SOFT_CAP, view.lat, view.lon)) {
@@ -389,7 +417,7 @@ export const aircraftPlugin: AllEyesPlugin = {
         const arm = () => {
           if (timer) return
           void pump()
-          timer = window.setInterval(() => void pump(), 900)
+          timer = window.setInterval(() => void pump(), 850)
           drift = window.setInterval(() => { if (airOn || gndOn) publish() }, 2000)
         }
         const disarm = () => {
@@ -446,7 +474,7 @@ export const aircraftPlugin: AllEyesPlugin = {
     },
     {
       id: GND,
-      label: 'GND',
+      label: 'GROUND',
       description: 'Aircraft on the ground, drawn in amber. Turn this off to hide parked and taxiing traffic.',
       defaultOn: true,
       create(ctx) {

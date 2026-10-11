@@ -1,4 +1,5 @@
 import { bearingDeg, distanceKm } from '../core/geo'
+import { layerHex } from '../core/palette'
 import type { Contact, ViewState } from '../core/types'
 
 export interface RadarReadout {
@@ -66,11 +67,13 @@ export function startRadar(canvas: HTMLCanvasElement, label: HTMLElement, read: 
       const x = cx + Math.cos(ang) * rr
       const y = cy + Math.sin(ang) * rr
       const dot = contact.kind === 'quake' || contact.kind === 'storm' ? 2.2 : 1.4
-      ctx.fillStyle = `rgba(216, 255, 230, ${0.25 + trail * contact.brightness})`
+      ctx.fillStyle = layerHex(contact.shape === 'air-gnd' ? 'airground' : contact.layerId)
+      ctx.globalAlpha = 0.35 + trail * 0.65
       ctx.fillRect(x - dot / 2, y - dot / 2, dot, dot)
       shown += 1
       if (shown > 500) break
     }
+    ctx.globalAlpha = 1
     ctx.fillStyle = '#f3fff6'
     ctx.fillRect(cx - 2, cy - 2, 4, 4)
     requestAnimationFrame(frame)

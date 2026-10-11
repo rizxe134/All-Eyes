@@ -84,7 +84,7 @@ export const weatherPlugin: AllEyesPlugin = {
   layers: [
     {
       id: LAYER,
-      label: 'WX',
+      label: 'WEATHER',
       description: 'Global precipitation radar from RainViewer.',
       defaultOn: true,
       create(ctx) {

@@ -12,7 +12,7 @@ export const launchPlugin: AllEyesPlugin = {
   layers: [
     {
       id: LAYER,
-      label: 'LAUNCH',
+      label: 'LAUNCHES',
       description: 'Upcoming orbital launches from The Space Devs.',
       defaultOn: true,
       create(ctx) {

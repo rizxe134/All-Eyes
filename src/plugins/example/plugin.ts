@@ -47,7 +47,7 @@ export const examplePlugin: AllEyesPlugin = {
   layers: [
     {
       id: 'beacons',
-      label: 'BEACON',
+      label: 'BEACONS',
       description: 'Example layer. A few fixed sites, no network.',
       defaultOn: false,
       create(ctx: LayerContext) {

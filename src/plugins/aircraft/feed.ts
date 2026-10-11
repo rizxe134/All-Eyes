@@ -130,17 +130,36 @@ export function hubTiles(): CoverageTile[] {
 
 let sweepCache: CoverageTile[] | null = null
 
-/** Coarse world grid. Free feeds cap a circle at 250 nm, so this cannot be gapless. The camera tiles fill whatever you are looking at. */
+/** How often a world tile is asked again. Far contacts are kept longer than this. */
+export const SWEEP_REFRESH_MS = 4 * 60_000
+
+/**
+ * 250 nm circles on a 5° lattice, plus the busy hubs.
+ * 5° keeps the corner of each cell inside a 250 nm circle (a 6° lattice left
+ * a gap on the diagonal). A 12° lattice left oceans and whole countries
+ * between circles, so a camera on one continent never filled the others.
+ */
 export function worldSweepTiles(): CoverageTile[] {
   if (sweepCache) return sweepCache
   const out: CoverageTile[] = []
-  for (let lat = -54; lat <= 72; lat += 12) {
-    const cos = Math.max(0.45, Math.abs(Math.cos((lat * Math.PI) / 180)))
-    const step = 12 / cos
+  for (let lat = -54; lat <= 74; lat += 5) {
+    const cos = Math.max(0.34, Math.cos((Math.abs(lat) * Math.PI) / 180))
+    const step = 5 / cos
     for (let lon = -180; lon < 180; lon += step) out.push(makeTile(lat, normLon(lon), 250))
   }
-  sweepCache = dedupeTiles(out)
+  sweepCache = dedupeTiles([...hubTiles(), ...out])
   return sweepCache
+}
+
+export function sweepProgress(stamps: ReadonlyMap<string, TileStamp>, now: number, maxAge: number): { covered: number; total: number; pct: number } {
+  const tiles = worldSweepTiles()
+  let covered = 0
+  for (const tile of tiles) {
+    const stamp = stamps.get(tile.key)
+    if (stamp?.ok && now - stamp.at <= maxAge) covered += 1
+  }
+  const total = tiles.length
+  return { covered, total, pct: total ? Math.round((100 * covered) / total) : 0 }
 }
 
 export function dedupeTiles(tiles: readonly CoverageTile[]): CoverageTile[] {
@@ -165,15 +184,19 @@ export function dueTiles(
 ): { tiles: CoverageTile[]; nextCursor: number } {
   const fresh = (key: string, maxAge: number) => {
     const stamp = stamps.get(key)
-    return !!stamp && now - stamp.at < maxAge
+    if (!stamp) return false
+    const age = stamp.ok ? maxAge : Math.min(maxAge, 20_000)
+    return now - stamp.at < age
   }
   const due: CoverageTile[] = []
-  for (const tile of viewTiles(lat, lon, rangeKm)) {
-    if (!fresh(tile.key, 18_000)) due.push(tile)
-  }
-  for (const tile of hubTiles()) {
-    if (due.length >= limit) break
-    if (!fresh(tile.key, 45_000)) due.push(tile)
+  const view = viewTiles(lat, lon, rangeKm)
+  const center = view[0]
+  if (center && !fresh(center.key, 12_000)) due.push(center)
+  if (rangeKm < 1800) {
+    for (const tile of view.slice(1)) {
+      if (due.length >= Math.min(3, Math.max(0, limit))) break
+      if (!fresh(tile.key, 16_000)) due.push(tile)
+    }
   }
   const sweep = worldSweepTiles()
   let cursor = sweep.length ? sweepCursor % sweep.length : 0
@@ -182,9 +205,10 @@ export function dueTiles(
     const tile = sweep[cursor]!
     cursor = (cursor + 1) % sweep.length
     scanned += 1
-    if (!fresh(tile.key, 70_000)) due.push(tile)
+    if (due.some((row) => row.key === tile.key)) continue
+    if (!fresh(tile.key, SWEEP_REFRESH_MS)) due.push(tile)
   }
-  return { tiles: dedupeTiles(due).slice(0, Math.max(0, limit)), nextCursor: cursor }
+  return { tiles: due.slice(0, Math.max(0, limit)), nextCursor: cursor }
 }
 
 export function pointUrl(source: FeedSource, sample: CoverageTile): string {
@@ -284,10 +308,12 @@ export function feedStatusLine(
   inViewCount: number,
   sources: readonly SourceReport[],
   coverageLimit: boolean,
+  sweepPct?: number,
 ): string {
   const src = sources.length ? sources.map((row) => `${row.id} ${row.state}`).join(' · ') : 'NONE'
+  const sweep = sweepPct == null ? '' : ` · SWEEP ${Math.max(0, Math.min(100, Math.round(sweepPct)))}%`
   const tail = coverageLimit ? ' · FEED COVERAGE LIMIT' : ''
-  return `AIR ${loaded} LOADED · ${inViewCount} VIEW · ${src}${tail}`
+  return `AIR ${loaded} LOADED · ${inViewCount} VIEW${sweep} · ${src}${tail}`
 }
 
 /** OpenSky box around the view. A wide view asks for a large slice of the globe. */

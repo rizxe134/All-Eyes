@@ -1,4 +1,5 @@
-import type { GlobeTheme, Settings, SettingsStore as SettingsApi, SpeedUnit } from './types'
+import { applyPalette, parseHex } from './palette'
+import type { GlobeTheme, MarkerStyle, Settings, SettingsStore as SettingsApi, SpeedUnit } from './types'
 
 const KEY = 'alleyes.settings.v1'
 
@@ -17,6 +18,9 @@ const EMPTY: Settings = {
   theme: 'color',
   crt: CRT_DEFAULT,
   speedUnit: 'kt',
+  markerStyle: 'color',
+  colorOverrides: {},
+  radar: true,
 }
 
 function speedUnit(value: unknown): SpeedUnit {
@@ -41,6 +45,21 @@ function crtOf(value: unknown): number | null {
   return Math.min(1, Math.max(0, n))
 }
 
+function styleOf(value: unknown): MarkerStyle {
+  return value === 'mono' ? 'mono' : 'color'
+}
+
+function overridesOf(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object') return {}
+  const out: Record<string, string> = {}
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!/^[a-z0-9-]{2,24}$/i.test(key)) continue
+    const hex = parseHex(String(raw ?? ''))
+    if (hex) out[key] = hex
+  }
+  return out
+}
+
 export class SettingsStore implements SettingsApi {
   private state: Settings
   private listeners = new Set<() => void>()
@@ -49,7 +68,7 @@ export class SettingsStore implements SettingsApi {
     this.state = { ...EMPTY }
     try {
       const raw = localStorage.getItem(KEY)
-      if (!raw) return
+      if (raw) {
       const parsed = JSON.parse(raw) as Partial<Settings>
       const theme = themeOf(parsed.theme)
       const crt = crtOf(parsed.crt)
@@ -66,10 +85,15 @@ export class SettingsStore implements SettingsApi {
         theme: theme ?? 'color',
         crt: crt ?? CRT_DEFAULT,
         speedUnit: speedUnit(parsed.speedUnit),
+        markerStyle: styleOf(parsed.markerStyle),
+        colorOverrides: overridesOf(parsed.colorOverrides),
+        radar: parsed.radar !== false,
+      }
       }
     } catch {
       this.state = { ...EMPTY }
     }
+    applyPalette(this.state.markerStyle, this.state.colorOverrides)
   }
 
   get(): Settings {
@@ -78,6 +102,7 @@ export class SettingsStore implements SettingsApi {
 
   update(patch: Partial<Settings>): void {
     this.state = { ...this.state, ...patch }
+    applyPalette(this.state.markerStyle, this.state.colorOverrides)
     localStorage.setItem(KEY, JSON.stringify(this.state))
     for (const fn of this.listeners) fn()
   }

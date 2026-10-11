@@ -55,7 +55,7 @@ button { cursor: pointer; }
   pointer-events: auto;
 }
 
-.ae-top, .ae-layers, .ae-side, .ae-foot, .ae-card, .ae-radar-wrap, .ae-alerts, .ae-dialog, .ae-boot, .ae-viewer {
+.ae-top, .ae-layers, .ae-side, .ae-foot, .ae-card, .ae-radar-wrap, .ae-legend, .ae-alerts, .ae-dialog, .ae-boot, .ae-viewer {
   background: var(--panel);
   border: 3px solid var(--line);
   box-shadow: 4px 4px 0 var(--shadow);
@@ -69,7 +69,8 @@ button { cursor: pointer; }
   min-height: 46px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  flex-wrap: wrap;
+  gap: 10px 14px;
   padding: 6px 10px;
 }
 
@@ -99,6 +100,7 @@ button { cursor: pointer; }
   letter-spacing: 0.3px;
   color: var(--mid);
   white-space: normal;
+  overflow-wrap: anywhere;
   line-height: 1.15;
   max-width: 48vw;
 }
@@ -108,7 +110,7 @@ button { cursor: pointer; }
   pointer-events: none;
   background: #062615;
   color: var(--hot);
-  border: 2px solid var(--mid);
+  border: 2px solid var(--tip, var(--mid));
   padding: 4px 6px;
   font-size: 16px;
   max-width: 280px;
@@ -160,26 +162,82 @@ button { cursor: pointer; }
 }
 .ae-layer.is-fault { border-style: dashed; }
 
-.ae-layers {
+.ae-dock {
   position: absolute;
   top: 132px;
   left: 10px;
-  width: 148px;
-  max-height: calc(100vh - 300px);
-  overflow: auto;
+  bottom: 96px;
+  width: min(232px, 36vw);
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 8px;
+  z-index: 6;
+  pointer-events: none;
+  min-height: 0;
+}
+.ae-layers {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  pointer-events: auto;
 }
 .ae-layer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
   width: 100%;
+  min-width: 0;
   text-align: left;
+  padding: 1px 6px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #02150c;
 }
-.ae-layer-count { font-family: "Ae Term", monospace; font-size: 18px; }
+.ae-swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border: 1px solid #04140c;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.65);
+}
+.ae-layer-name, .ae-layer-count { flex: 0 0 auto; font-family: "Ae Term", monospace; font-size: 16px; line-height: 1.05; white-space: nowrap; }
+.ae-layer-name { flex: 1 1 auto; min-width: 0; }
+.ae-legend {
+  flex: 0 0 auto;
+  pointer-events: auto;
+  padding: 4px 6px;
+  max-height: 38%;
+  overflow: auto;
+}
+.ae-legend summary {
+  cursor: pointer;
+  font-family: "Ae Pixel", monospace;
+  font-size: 8px;
+  color: var(--hot);
+}
+.ae-legend-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 8px;
+  margin-top: 4px;
+}
+.ae-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "Ae Term", monospace;
+  font-size: 16px;
+  color: var(--ink);
+}
 
 .ae-right {
   position: absolute;
@@ -303,26 +361,35 @@ button { cursor: pointer; }
 .ae-infocard.is-pin header { background: #145c2c; }
 
 .ae-radar-wrap {
-  position: absolute;
-  left: 10px;
-  bottom: 108px;
-  width: 176px;
+  position: relative;
+  left: auto;
+  bottom: auto;
+  flex: 0 0 auto;
+  width: 100%;
   padding: 6px;
+  pointer-events: auto;
 }
+.ae-radar-wrap[hidden] { display: none; }
 .ae-radar {
-  width: 160px;
-  height: 160px;
+  width: 148px;
+  height: 148px;
+  max-width: 100%;
   display: block;
+  margin: 0 auto;
   background: #010a06;
   image-rendering: pixelated;
 }
 .ae-radar-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   font-family: "Ae Pixel", monospace;
   font-size: 7px;
-  text-align: center;
   color: var(--dim);
   margin-top: 4px;
 }
+.ae-radar-label .ae-btn { font-size: 7px; padding: 2px 4px; }
 
 .ae-alerts {
   position: absolute;
@@ -569,8 +636,8 @@ button { cursor: pointer; }
   overflow: auto;
 }
 .ae-flight[hidden] { display: none; }
-.ae-hud.is-flight .ae-layers { left: 356px; }
-.ae-hud.is-flight .ae-radar-wrap { left: 356px; }
+.ae-hud.is-flight .ae-dock { left: 356px; }
+.ae-flight { border-color: var(--accent, var(--line)); }
 .ae-hud.is-flight .ae-alerts { left: 546px; }
 .ae-flight-head {
   display: flex;
@@ -590,10 +657,10 @@ button { cursor: pointer; }
   line-height: 1.4;
 }
 .ae-flight-badge {
-  border: 2px solid var(--hot);
+  border: 2px solid var(--accent, var(--hot));
   padding: 3px 6px;
   font-size: 16px;
-  color: var(--hot);
+  color: var(--accent, var(--hot));
 }
 .ae-flight-photo { margin: 8px 8px 4px; }
 .ae-crt-screen {
@@ -828,15 +895,42 @@ button { cursor: pointer; }
 }
 .ae-flight-menu button:hover { background: #0c3a22; }
 
-@media (max-width: 900px) {
+@media (max-width: 900px), (max-height: 720px) {
   .ae-side { display: none; }
   .ae-alerts { display: none; }
-  .ae-layers { max-height: 180px; }
+  .ae-dock { width: min(440px, calc(100vw - 250px)); top: 108px; bottom: 78px; }
+  .ae-layers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: start;
+  }
+  .ae-layer { padding: 2px 4px; }
+  .ae-layer-name, .ae-layer-count { font-size: 15px; }
+  .ae-feed { font-size: 14px; }
+  .ae-clock, .ae-count, .ae-coords { font-size: 16px; }
   .ae-flight { width: min(336px, calc(100vw - 20px)); max-height: 46vh; }
-  .ae-hud.is-flight .ae-layers { left: 10px; top: auto; bottom: 108px; }
-  .ae-hud.is-flight .ae-alerts { left: 200px; }
+  .ae-hud.is-flight .ae-dock { left: 10px; top: auto; bottom: 78px; max-height: 46vh; }
   .ae-right { width: 220px; }
   .ae-viewer-canvas { height: 128px; }
   .ae-viewer-credit { font-size: 14px; }
   .ae-viewer pre { max-height: 96px; font-size: 16px; }
+}
+
+@media (max-height: 820px), (max-width: 900px) {
+  .ae-dock {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 108px;
+    grid-template-rows: minmax(120px, 1fr) auto;
+    width: min(480px, calc(100vw - 246px));
+  }
+  .ae-layers { grid-column: 1; grid-row: 1; width: auto; max-height: none; }
+  .ae-legend { grid-column: 1; grid-row: 2; max-height: 88px; }
+  .ae-radar-wrap {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    width: 108px;
+    align-self: end;
+    padding: 4px;
+  }
+  .ae-radar { width: 96px; height: 96px; }
 }
