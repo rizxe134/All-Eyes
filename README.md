@@ -182,7 +182,7 @@ cd All-Eyes-2.0.0-Linux-x64
 ## Using it
 
 1. Press `/` to open the command line.
-2. Try `fly tokyo`, `pass iss`, `size 0.8`, or `help`.
+2. Try `fly tokyo`, `city atlanta`, `map hybrid`, `pass iss`, or `help`.
 3. Hover a marker. The top-right viewer shows a realistic 3D model and the card. Click a plane to open the flight panel and follow it. Drag the globe to look around without closing the panel. The **KT** button switches speed units. `viewer off` hides the model viewer.
 4. Click **CFG** to add an optional OpenSky or NASA FIRMS key, or to set marker size, globe theme, and CRT. The globe runs with none of the keys set. `theme green` and `crt 0` are there if you want the old phosphor globe with no overlay.
 
@@ -220,8 +220,12 @@ Keyless upstreams, reached through the local `/api` proxy:
 - NASA EONET, plus optional NASA FIRMS
 - The Space Devs Launch Library 2
 - OpenStreetMap Nominatim, after the bundled city list
+- OpenStreetMap Overpass for city roads, rails, building footprints, and places (ODbL)
+- Esri World Imagery and the Esri reference overlay, plus CARTO basemaps (© OpenStreetMap © CARTO). The OpenStreetMap tile servers are not used
+- Open-Meteo weather and air quality
+- MBTA vehicles and Digitraffic train locations
 
-Earth imagery is NASA Blue Marble and night lights (public domain), stored in `public/textures`. Press Start 2P and VT323 are SIL Open Font License fonts in `public/fonts` and are not covered by the MIT license.
+Earth imagery from space is NASA Blue Marble and night lights (public domain), stored in `public/textures`. City zoom streams tiles instead of bundling them. Press Start 2P and VT323 are SIL Open Font License fonts in `public/fonts` and are not covered by the MIT license.
 
 ## License
 
