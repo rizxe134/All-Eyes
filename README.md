@@ -2,67 +2,7 @@
 
 A live "see the whole world" console. The globe fills the window in natural color, the panels stay green phosphor and 8-bit, and the feeds run with no API keys.
 
-## What's new in 2.1.0
-
-- Zooming into a city no longer crashes the Mac app. 2.0.0 built the street-tile list by stepping the zoom *in* when the view already needed more than 12 tiles. Each step quadrupled the list, so one frame around 900–1,500 km allocated tens of millions of tile records on the renderer thread (about 195 million at 1,500 km) and V8 aborted. The same view now steps *out* to coarser tiles and never builds more than 12.
-- Tile fetches stay at 4 at a time, the queue is capped, and a camera move cancels tiles that have left the view. Textures past the resident cap are disposed, including their bitmaps. The disk cache stays about 48 MB and drops the oldest entries.
-- OpenStreetMap queries wait until the camera rests, and a move cancels the one in flight. The query is a small box with a response cap. Buildings, roads, and simulated vehicles each have a hard maximum.
-- If the renderer runs out of memory, buildings and traffic drop off and the tile budget shrinks. If the renderer process dies or the window stops answering, the app reloads, says **RECOVERED FROM CRASH**, restores the last camera position, and keeps the lighter city detail. Crashes are appended to `all-eyes-crash.log` in the app logs folder.
-
-## What's new in 2.0.0
-
-- Zoom runs from orbit down to a city block (about 220 m). Below a region, the globe picks up a basemap: Esri World Imagery, CARTO streets, a hybrid of imagery plus labels, or CARTO dark. `map sat`, `map streets`, `map hybrid`, and `map dark` switch it. MapTiler and Mapbox stay off until you set a key in **CFG** and choose that source. The credit line is on the city card.
-- Buildings are OpenStreetMap footprints, extruded from the height or the level count. Roads and rails are the same map. There is no global terrain mesh. `city atlanta` (or `city list`) flies in. `place` and the city search box jump to an address through Nominatim.
-- Traffic markers move along those real roads. With no traffic key they are **simulated**, and the city card says TRAFFIC SIMULATED. A TomTom or HERE key, if the call succeeds, recolours that flow from the live speed ratio. The vehicles are still simulated. Green, amber, and red are used only for that live ratio.
-- Live transit, where a keyless feed exists: MBTA vehicles when the view is on Boston, Finnish Digitraffic trains when the view is on Finland. Other cities say there is no keyless feed. Departures boards are NOT AVAILABLE. Weather and air quality are Open-Meteo. Population is shown only when Nominatim has it.
-- The city card is a fixed 210 px slot in the right column, with its own scroll. The left dock, top bar, and model viewer stay put. The CRT overlay eases off as you reach the street so the imagery stays readable. Tiles cache in the browser profile (about 48 MB). **CFG → CLEAR MAP CACHE** drops them.
-
-## What's new in 1.6.1
-
-- The layer list, radar, flight panel, and model viewer stay in fixed slots. Panning and zooming no longer slide them across the globe. A selected flight, ship, or satellite opens in the left dock in place of the layer list, with its own scroll, and **X** brings the list back. The top bar is one fixed row; long feed lines ellipsize. A hover tooltip stays inside the window. **MORE → PIN CARD** is the only floating card, and it stays where you drag it.
-
-## What's new in 1.6.0
-
-- Markers are colour-coded by category (aircraft blue, ground amber, satellites cyan, Starlink violet, ships teal, quakes red, storms magenta, events yellow, weather orange, launches pink, beacons lime), with the same colour on the globe, the layer swatch, the tooltip, and the dock. A thin dark outline stays on every marker. The selection ring stays bright. **LEGEND** sits under the layer list. **CFG** and `colors` switch back to the old phosphor (`colors mono`) or set one layer (`colors aircraft #4da3ff`). `colors reset` clears those overrides.
-- Aircraft stay on the whole globe. A 250 nm grid covers populated airspace and the ocean tracks, and the background sweep keeps refreshing it while the camera tile stays first in line. Contacts still merge by ICAO and coast between polls. Far contacts stay for about seven minutes, so moving the camera does not wipe the other continents. The top bar shows loaded worldwide, in view, sweep coverage, and each source as OK, PARTIAL, RATE-LIMITED, or OFFLINE. It says FEED COVERAGE LIMIT when the free feeds have nothing for the spot you are looking at.
-- The layer list uses full names (AIRCRAFT, GROUND, SATELLITES, STARLINK, QUAKES, WEATHER, SHIPS, STORMS, EVENTS, LAUNCHES, BEACONS, and the satellite groups) with a colour swatch and the count on the right. On a short window it uses two columns and scrolls. The radar sits under that list, so it cannot cover a layer button. `radar off` hides it.
-
-## What's new in 1.5.0
-
-- Every marker is easier to hit: a 14 px pad (larger on a touch screen), nearest-to-cursor picking, a priority tie-break, a pointer, and a small name tooltip. Click again to cycle overlaps. Escape, a click on empty ground, or the lock chip clears the selection, and the lock stays on the same id while the feeds refresh.
-- Ships and satellites open the same left dock as flights: name and type, the flat colour CRT photo (or the no-photo bars), an info grid, a collapsible graph, and **3D VIEW / TRACK / FOLLOW / SHARE / MORE**. Missing fields stay `NOT AVAILABLE`.
-- The public CelesTrak active catalog is on the globe, split into stations, GNSS, weather, science, GEO, the rest, and Starlink (Starlink stays off until you arm it). Positions come from SGP4. `sat iss` and `find` jump to one. A selected satellite draws its past track, future track, and orbit ring.
-- Ships follow the camera with Open Waters tiles, and Finnish Digitraffic stays in the merge. Contacts merge by MMSI and stay for 90 seconds. An AISStream key in **CFG** adds a live global stream. The top bar shows loaded vs in view and OK / PARTIAL / OFFLINE, and says FEED COVERAGE LIMIT where those free feeds have nothing.
-
-## What's new in 1.4.2
-
-- The globe asks for the aircraft you are looking at. Circles tile the camera view, busy airports (Atlanta, Chicago, Dallas, London, and the rest) stay on a refresh list, and a slower sweep fills in the rest of the world. Contacts still merge by ICAO and stay for 90 seconds.
-- Zooming into an airport shows every aircraft there, including ones on the ground. Ground traffic is amber. The **GND** button hides it. Wide-zoom thinning only stacks dots that overlap on screen. It does not erase a region, and there is no stride cap that throws away part of a feed.
-- The top bar shows how many aircraft are loaded, how many are in view, and each source as OK, PARTIAL, RATE-LIMITED, or OFFLINE. If a feed cannot cover the spot you are looking at, it says FEED COVERAGE LIMIT.
-
-## What's new in 1.4.1
-
-- Aircraft stay on the globe. An empty, failed, or rate-limited poll keeps the last good contacts and merges by ICAO. A contact drops off only after 90 seconds without a fresh hit, and positions coast along their last track between polls.
-- Zoomed-out markers stay a solid dot at least 4 px, so the CRT mask no longer rounds them away. The feed tries airplanes.live, adsb.lol, and adsb.fi around the view, then OpenSky. The top bar shows the AIR count, OK / RATE-LIMITED / OFFLINE, and which source answered.
-
-## What's new in 1.4.0
-
-- Plane markers are much smaller. Silhouettes appear only when you are zoomed in (about 640 km). Farther out they are 1–3 px dots. Dense areas thin harder. The hit target stays about 12 px, the nearest contact wins, and another click on the same spot cycles overlaps. The lock cross and the selection ring are smaller. **CFG** and `size` default to 0.45.
-- A flight photo no longer keeps the NO PHOTO label on top of a real picture. The placeholder and colour bars are removed once the image loads, and they return only when there is no photo or the load fails.
-- The globe is natural color (NASA Blue Marble, city lights on the night side) with the same flat CRT treatment as the flight photo: scanlines, a phosphor mask, a little color fringe, and a soft flicker. No curved glass. `theme green` switches the globe back to phosphor. `crt` sets the strength. The panels stay green. Markers stay light green-white with a dark outline.
-
-1.3.1, 1.3.0, 1.2.0, 1.1.0, and 1.0.0 are still on the releases page.
-
-## What's new in 1.3.1
-
-- The flight photo is a flat rectangle in full color, with scanlines, a phosphor mask, a little color fringe, and a soft glow. With no photo, the same frame shows color bars and static. The route row stays under the screen, and the speed list scrolls while **3D VIEW**, **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** stay pinned at the bottom.
-
-## What's new in 1.3.0
-
-- Aircraft on the globe are solid top-down silhouettes, one shape per family (narrowbody, widebody, four-engine, regional, turboprop, light, helicopter, fighter, business jet). They point along their heading and stay small. Ships, satellites, and weather icons use the same filled style. Zoomed out they are still dots. **CFG** and `size` still scale them.
-- Click a plane for the left flight panel: callsign, type-code badge, photo when a free source has one, operator, origin and destination, altitude, speed, track, and squawk. The selected plane is brighter, with a ring, a solid line for where it has been, and a dashed line toward the destination when that airport is known. **3D VIEW** opens the top-right model viewer. **ROUTE**, **FOLLOW**, **SHARE**, and **MORE** sit on the panel. A collapsible graph draws the speed and altitude this contact has already reported.
-- Fields the feeds do not have stay `NOT AVAILABLE`. Airspeeds computed from ground speed are marked `EST`. Nothing is invented.
-- **3D VIEW** opens a realistic model on its own canvas: white airliners, a helicopter, ships, and satellites, with studio light and a credit under the picture. Model authors and licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md). Older builds stay on the [releases page](https://github.com/rizxe134/All-Eyes/releases).
 
 ## Run
 
