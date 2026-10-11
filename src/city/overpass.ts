@@ -1,5 +1,6 @@
 /** Overpass query text and parsers. Roads, rails, extruded footprints, and a few POIs. */
 
+import { MAX_BUILDINGS, MAX_OVERPASS_ELEMENTS, MAX_POIS, MAX_RAILS, MAX_ROADS } from './budget'
 import { cityBand } from './mercator'
 
 export interface LatLon {
@@ -63,7 +64,7 @@ export function cityQuery(lat: number, lon: number, rangeKm: number): string | n
     const places = bbox(lat, lon, 8)
     pois = `node["aeroway"="aerodrome"](${places});node["railway"="station"](${places});`
   }
-  return `[out:json][timeout:18];(${roads}${rails}${buildings}${pois});out geom;`
+  return `[out:json][timeout:18][maxsize:4000000];(${roads}${rails}${buildings}${pois});out geom;`
 }
 
 export function buildingHeightM(tags: Record<string, string> | undefined): number {
@@ -111,7 +112,8 @@ export function parseOverpass(payload: unknown): CityVectors {
   if (!payload || typeof payload !== 'object') return empty
   const elements = (payload as { elements?: unknown }).elements
   if (!Array.isArray(elements)) return empty
-  for (const raw of elements) {
+  const scan = elements.length > MAX_OVERPASS_ELEMENTS ? elements.slice(0, MAX_OVERPASS_ELEMENTS) : elements
+  for (const raw of scan) {
     if (!raw || typeof raw !== 'object') continue
     const el = raw as {
       type?: string
@@ -126,17 +128,17 @@ export function parseOverpass(payload: unknown): CityVectors {
     if (!id) continue
     if (el.type === 'way' && tags.highway) {
       const points = ringOf(el)
-      if (points.length >= 2 && empty.roads.length < 220) empty.roads.push({ id: `road:${id}`, cls: tags.highway, points })
+      if (points.length >= 2 && empty.roads.length < MAX_ROADS) empty.roads.push({ id: `road:${id}`, cls: tags.highway, points })
       continue
     }
     if (el.type === 'way' && tags.railway) {
       const points = ringOf(el)
-      if (points.length >= 2 && empty.rails.length < 80) empty.rails.push({ id: `rail:${id}`, cls: tags.railway, points })
+      if (points.length >= 2 && empty.rails.length < MAX_RAILS) empty.rails.push({ id: `rail:${id}`, cls: tags.railway, points })
       continue
     }
     if (el.type === 'way' && tags.building) {
       const points = ringOf(el)
-      if (points.length >= 3 && empty.buildings.length < 220) {
+      if (points.length >= 3 && empty.buildings.length < MAX_BUILDINGS) {
         empty.buildings.push({ id: `bldg:${id}`, heightM: buildingHeightM(tags), points })
       }
       continue
@@ -147,7 +149,7 @@ export function parseOverpass(payload: unknown): CityVectors {
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
       const kind = tags.aeroway || tags.railway || tags.amenity || tags.tourism || 'place'
       const name = tags.name || tags.ref || kind.toUpperCase()
-      if (empty.pois.length < 40) empty.pois.push({ id: `poi:${id}`, name, kind, lat, lon })
+      if (empty.pois.length < MAX_POIS) empty.pois.push({ id: `poi:${id}`, name, kind, lat, lon })
     }
   }
   return empty

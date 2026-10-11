@@ -1,6 +1,7 @@
 /** Simulated vehicles on real OSM polylines. Positions are a pure function of the roads and the clock. */
 
 import { bearingDeg } from '../core/geo'
+import { MAX_VEHICLES } from './budget'
 import type { CityRoad, LatLon } from './overpass'
 
 export type VehicleKind = 'car' | 'bus' | 'train'
@@ -101,7 +102,7 @@ export function simulateTraffic(roads: readonly CityRoad[], rails: readonly City
   const out: TrafficVehicle[] = []
   const factor = todFactor(unixMs)
   const push = (road: CityRoad, kind: VehicleKind) => {
-    if (out.length >= 240) return
+    if (out.length >= MAX_VEHICLES) return
     const acc = lengthM(road.points)
     const total = acc[acc.length - 1]
     if (total < 40) return
@@ -109,7 +110,7 @@ export function simulateTraffic(roads: readonly CityRoad[], rails: readonly City
     const count = Math.min(5, Math.max(1, Math.round((total / 700) * density(road.cls) * factor)))
     const seed = hash32(road.id)
     for (let n = 0; n < count; n++) {
-      if (out.length >= 240) return
+      if (out.length >= MAX_VEHICLES) return
       const offset = ((seed >>> (n * 3)) % 1000) / 1000
       const dir = (seed & (1 << n)) !== 0 ? 1 : -1
       const traveled = offset * total + dir * (unixMs / 1000) * speed

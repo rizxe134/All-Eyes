@@ -110,6 +110,8 @@ export interface GlobeApi {
   setCityVectors(data: { roads: { id: string; cls: string; points: { lat: number; lon: number }[] }[]; rails: { id: string; cls: string; points: { lat: number; lon: number }[] }[]; buildings: { id: string; heightM: number; points: { lat: number; lon: number }[] }[]; pois: { id: string; name: string; kind: string; lat: number; lon: number }[] } | null): void
   clearCityCache(): void
   cityNote(): string
+  setCityDetail(level: 'full' | 'low'): void
+  cityStats(): { tiles: number; textures: number; queue: number; inflight: number; vehicles: number; buildings: number; roads: number }
 }
 
 export interface Settings {

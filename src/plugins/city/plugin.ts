@@ -3,6 +3,7 @@ import { distanceKm } from '../../core/geo'
 import type { AllEyesPlugin, Contact, LayerContext, PluginContext, ViewState } from '../../core/types'
 import { getJson } from '../../net/http'
 import { parseBasemapMode } from '../../city/basemap'
+import { OSM_DEBOUNCE_MS, createArmFlag, viewMoved } from '../../city/budget'
 import { cityBand } from '../../city/mercator'
 import { cityQuery, parseOverpass, type CityPoi } from '../../city/overpass'
 import {
@@ -33,11 +34,14 @@ const flags: Record<Flag, boolean> = {
 
 let host: PluginContext | null = null
 let armed = false
+const armFlag = createArmFlag()
 let timer = 0
+let osmTimer = 0
 let unview: (() => void) | null = null
 let unsettings: (() => void) | null = null
 let abort = new AbortController()
-let osmBusy = false
+let osmAbort = new AbortController()
+let cam = { lat: 999, lon: 999, range: 0 }
 let infoBusy = false
 let transitBusy = false
 let flowBusy = false
@@ -75,32 +79,54 @@ function pushBasemap(ctx: PluginContext): void {
 
 function arm(ctx: LayerContext): void {
   host = ctx
-  if (armed) return
+  if (!armFlag.arm()) return
   armed = true
   abort = new AbortController()
+  osmAbort = new AbortController()
   pushBasemap(ctx)
   unsettings = ctx.settings.subscribe(() => {
     if (host) pushBasemap(host)
   })
-  unview = ctx.globe.onView(() => {
+  const view = ctx.globe.getView()
+  cam = { lat: view.lat, lon: view.lon, range: view.rangeKm }
+  unview = ctx.globe.onView((next) => {
+    scheduleOsm(ctx, next)
     void tick(ctx)
   })
   timer = window.setInterval(() => {
     void tick(ctx)
+    if (Date.now() - lastOsm >= 8 * 60_000) void pullOsm(ctx, ctx.globe.getView(), osmAbort.signal)
   }, 15000)
   void tick(ctx)
+  void pullOsm(ctx, view, osmAbort.signal)
+}
+
+function scheduleOsm(ctx: LayerContext, view: ViewState): void {
+  if (!viewMoved(cam, { lat: view.lat, lon: view.lon, range: view.rangeKm })) return
+  cam = { lat: view.lat, lon: view.lon, range: view.rangeKm }
+  window.clearTimeout(osmTimer)
+  osmAbort.abort()
+  osmAbort = new AbortController()
+  const signal = osmAbort.signal
+  osmTimer = window.setTimeout(() => {
+    void pullOsm(ctx, ctx.globe.getView(), signal)
+  }, OSM_DEBOUNCE_MS)
 }
 
 function disarm(): void {
   if (anyOn()) return
   armed = false
+  armFlag.disarm()
   if (timer) window.clearInterval(timer)
   timer = 0
+  window.clearTimeout(osmTimer)
+  osmTimer = 0
   unview?.()
   unview = null
   unsettings?.()
   unsettings = null
   abort.abort()
+  osmAbort.abort()
 }
 
 function bind(flag: Flag, ctx: LayerContext) {
@@ -131,12 +157,6 @@ function tick(ctx: LayerContext): void {
   pushBasemap(ctx)
   const view = ctx.globe.getView()
   const signal = abort.signal
-  if (!osmBusy) {
-    osmBusy = true
-    void pullOsm(ctx, view, signal).catch((err) => {
-      if (!signal.aborted) ctx.log('roads', err instanceof Error ? err.message : 'CITY FEED')
-    }).finally(() => { osmBusy = false })
-  }
   if (!infoBusy) {
     infoBusy = true
     void pullInfo(ctx, view, signal).finally(() => { infoBusy = false })
@@ -158,14 +178,19 @@ async function pullOsm(ctx: LayerContext, view: ViewState, signal: AbortSignal):
   const bandChanged = cityBand(anchor.range) !== cityBand(view.rangeKm)
   if (!bandChanged && moved < Math.max(0.35, view.rangeKm * 0.3) && Date.now() - lastOsm < 8 * 60_000) return
   const query = cityQuery(view.lat, view.lon, view.rangeKm)
-  if (!query) return
-  const parsed = parseOverpass(await getJson(`/api/overpass?data=${encodeURIComponent(query)}`, ctx.settings, signal))
-  pois = parsed.pois
-  ctx.globe.setCityVectors(parsed)
-  anchor = { lat: view.lat, lon: view.lon, range: view.rangeKm }
-  lastOsm = Date.now()
-  publishPois(ctx)
-  ctx.log('roads', '')
+  if (!query || signal.aborted) return
+  try {
+    const parsed = parseOverpass(await getJson(`/api/overpass?data=${encodeURIComponent(query)}`, ctx.settings, signal))
+    if (signal.aborted) return
+    pois = parsed.pois
+    ctx.globe.setCityVectors(parsed)
+    anchor = { lat: view.lat, lon: view.lon, range: view.rangeKm }
+    lastOsm = Date.now()
+    publishPois(ctx)
+    ctx.log('roads', '')
+  } catch (err) {
+    if (!signal.aborted) ctx.log('roads', err instanceof Error ? err.message : 'CITY FEED')
+  }
 }
 
 async function pullInfo(ctx: LayerContext, view: ViewState, signal: AbortSignal): Promise<void> {
@@ -492,7 +517,7 @@ function def(id: string, labelText: string, description: string, flag: Flag) {
 export const cityPlugin: AllEyesPlugin = {
   id: 'city',
   name: 'City',
-  version: '2.0.0',
+  version: '2.1.0',
   layers: [
     def('imagery', 'CITY MAP', 'Satellite or street tiles once the view is inside a region.', 'imagery'),
     def('buildings', 'BUILDINGS', 'OSM footprints extruded by height or level count.', 'buildings'),

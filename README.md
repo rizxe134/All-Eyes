@@ -2,6 +2,13 @@
 
 A live "see the whole world" console. The globe fills the window in natural color, the panels stay green phosphor and 8-bit, and the feeds run with no API keys.
 
+## What's new in 2.1.0
+
+- Zooming into a city no longer crashes the Mac app. 2.0.0 built the street-tile list by stepping the zoom *in* when the view already needed more than 12 tiles. Each step quadrupled the list, so one frame around 900–1,500 km allocated tens of millions of tile records on the renderer thread (about 195 million at 1,500 km) and V8 aborted. The same view now steps *out* to coarser tiles and never builds more than 12.
+- Tile fetches stay at 4 at a time, the queue is capped, and a camera move cancels tiles that have left the view. Textures past the resident cap are disposed, including their bitmaps. The disk cache stays about 48 MB and drops the oldest entries.
+- OpenStreetMap queries wait until the camera rests, and a move cancels the one in flight. The query is a small box with a response cap. Buildings, roads, and simulated vehicles each have a hard maximum.
+- If the renderer runs out of memory, buildings and traffic drop off and the tile budget shrinks. If the renderer process dies or the window stops answering, the app reloads, says **RECOVERED FROM CRASH**, restores the last camera position, and keeps the lighter city detail. Crashes are appended to `all-eyes-crash.log` in the app logs folder.
+
 ## What's new in 2.0.0
 
 - Zoom runs from orbit down to a city block (about 220 m). Below a region, the globe picks up a basemap: Esri World Imagery, CARTO streets, a hybrid of imagery plus labels, or CARTO dark. `map sat`, `map streets`, `map hybrid`, and `map dark` switch it. MapTiler and Mapbox stay off until you set a key in **CFG** and choose that source. The credit line is on the city card.
@@ -76,23 +83,23 @@ Apple menu, then **About This Mac**: Chip is Apple M1 or later for Apple Silicon
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-2.0.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
-| Intel | `All-Eyes-2.0.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
+| Apple Silicon (M1/M2/M3/M4), recommended | `All-Eyes-2.1.0-macOS-AppleSilicon-arm64.zip` | Zip of All Eyes.app |
+| Intel | `All-Eyes-2.1.0-macOS-Intel-x64.zip` | Zip of All Eyes.app |
 
 ### Windows
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Windows, recommended | `All-Eyes-2.0.0-Windows-x64-Installer.exe` | Installer |
-| 64-bit Windows, no install | `All-Eyes-2.0.0-Windows-x64-Portable.exe` | Portable exe |
+| 64-bit Windows, recommended | `All-Eyes-2.1.0-Windows-x64-Installer.exe` | Installer |
+| 64-bit Windows, no install | `All-Eyes-2.1.0-Windows-x64-Portable.exe` | Portable exe |
 
 ### Linux
 
 | Your computer | Download this file | What it is |
 | --- | --- | --- |
-| 64-bit Linux, recommended | `All-Eyes-2.0.0-Linux-x64.AppImage` | AppImage |
-| Debian or Ubuntu | `All-Eyes-2.0.0-Linux-x64.deb` | Debian package |
-| Any 64-bit Linux | `All-Eyes-2.0.0-Linux-x64.tar.gz` | Archive |
+| 64-bit Linux, recommended | `All-Eyes-2.1.0-Linux-x64.AppImage` | AppImage |
+| Debian or Ubuntu | `All-Eyes-2.1.0-Linux-x64.deb` | Debian package |
+| Any 64-bit Linux | `All-Eyes-2.1.0-Linux-x64.tar.gz` | Archive |
 
 ## How to install
 
@@ -102,7 +109,7 @@ Open the section for your computer. The desktop builds are unsigned, so the firs
 <summary>macOS</summary>
 
 1. Click the Apple menu, then **About This Mac**.
-2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-2.0.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-2.0.0-macOS-Intel-x64.zip`.
+2. If **Chip** says Apple M1, M2, M3, or M4, download `All-Eyes-2.1.0-macOS-AppleSilicon-arm64.zip`. If the processor line says Intel, download `All-Eyes-2.1.0-macOS-Intel-x64.zip`.
 3. Double-click the zip. macOS unpacks it and shows `All Eyes.app`.
 4. Drag `All Eyes.app` into **Applications**.
 5. First launch: right-click `All Eyes.app`, choose **Open**, then **Open** again. macOS says it cannot verify the developer. That warning is expected, because the app is unsigned.
@@ -118,11 +125,11 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 <details>
 <summary>Windows</summary>
 
-1. Download `All-Eyes-2.0.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-2.0.0-Windows-x64-Portable.exe` if you do not want to install.
+1. Download `All-Eyes-2.1.0-Windows-x64-Installer.exe` (recommended), or `All-Eyes-2.1.0-Windows-x64-Portable.exe` if you do not want to install.
 2. Double-click the file you downloaded.
 3. If you see **Windows protected your PC**, choose **More info**, then **Run anyway**. That warning is expected, because the app is unsigned.
 4. Installer: step through the setup. It adds an **All Eyes** shortcut to the Start menu and the desktop. Open the app from either shortcut.
-5. Portable: nothing is installed. Double-click `All-Eyes-2.0.0-Windows-x64-Portable.exe` each time you want the globe.
+5. Portable: nothing is installed. Double-click `All-Eyes-2.1.0-Windows-x64-Portable.exe` each time you want the globe.
 
 </details>
 
@@ -131,12 +138,12 @@ xattr -dr com.apple.quarantine "/Applications/All Eyes.app"
 
 **AppImage (any distro)**
 
-1. Download `All-Eyes-2.0.0-Linux-x64.AppImage`.
+1. Download `All-Eyes-2.1.0-Linux-x64.AppImage`.
 2. In that folder, run:
 
 ```bash
-chmod +x All-Eyes-2.0.0-Linux-x64.AppImage
-./All-Eyes-2.0.0-Linux-x64.AppImage
+chmod +x All-Eyes-2.1.0-Linux-x64.AppImage
+./All-Eyes-2.1.0-Linux-x64.AppImage
 ```
 
 Or right-click the file, choose **Properties**, turn on **Allow executing file as a program**, and double-click it.
@@ -150,28 +157,28 @@ sudo apt install libfuse2
 Or skip FUSE and run:
 
 ```bash
-./All-Eyes-2.0.0-Linux-x64.AppImage --appimage-extract-and-run
+./All-Eyes-2.1.0-Linux-x64.AppImage --appimage-extract-and-run
 ```
 
 **Debian or Ubuntu package**
 
-1. Download `All-Eyes-2.0.0-Linux-x64.deb`.
+1. Download `All-Eyes-2.1.0-Linux-x64.deb`.
 2. In that folder, run:
 
 ```bash
-sudo apt install ./All-Eyes-2.0.0-Linux-x64.deb
+sudo apt install ./All-Eyes-2.1.0-Linux-x64.deb
 ```
 
 3. Open **All Eyes** from the applications menu. The package name is `all-eyes`. The program file is `/opt/All Eyes/all-eyes`.
 
 **Archive**
 
-1. Download `All-Eyes-2.0.0-Linux-x64.tar.gz`.
-2. Unpack it and start the program. The folder inside the archive is `All-Eyes-2.0.0-Linux-x64`:
+1. Download `All-Eyes-2.1.0-Linux-x64.tar.gz`.
+2. Unpack it and start the program. The folder inside the archive is `All-Eyes-2.1.0-Linux-x64`:
 
 ```bash
-tar -xzf All-Eyes-2.0.0-Linux-x64.tar.gz
-cd All-Eyes-2.0.0-Linux-x64
+tar -xzf All-Eyes-2.1.0-Linux-x64.tar.gz
+cd All-Eyes-2.1.0-Linux-x64
 ./all-eyes
 ```
 

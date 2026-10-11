@@ -1,8 +1,10 @@
 import { createServer } from 'node:http'
+import { appendFileSync, mkdirSync } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow } from 'electron'
+import { allowRecover, heapAction, rendererAction } from './guard.mjs'
 import { applyEnvFile, handleApi } from '../server/proxy.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -67,6 +69,16 @@ function startServer() {
   })
 }
 
+function logCrash(line) {
+  try {
+    const dir = app.getPath('logs')
+    mkdirSync(dir, { recursive: true })
+    appendFileSync(path.join(dir, 'all-eyes-crash.log'), `${new Date().toISOString()} ${line}\n`)
+  } catch (err) {
+    console.error('crash log', err)
+  }
+}
+
 async function open() {
   applyEnvFile(path.join(process.cwd(), '.env'))
   applyEnvFile(path.join(app.getPath('userData'), '.env'))
@@ -86,6 +98,75 @@ async function open() {
       sandbox: true,
     },
   })
+  let lastView = null
+  let recovers = []
+  let hung = null
+  let recovering = false
+
+  function recover(why) {
+    if (recovering || win.isDestroyed()) return
+    const now = Date.now()
+    const gate = allowRecover(recovers, now)
+    recovers = gate.recent
+    const view = lastView ? `lat=${lastView.lat} lon=${lastView.lon} range=${lastView.rangeKm}` : 'no-view'
+    logCrash(`${why} ${view}`)
+    if (!gate.ok) {
+      logCrash('stopped after repeated crashes')
+      recovering = true
+      void win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent('<body style="margin:0;background:#010a06;color:#d8ffe6;font-family:monospace;padding:24px"><p>RECOVERED FROM CRASH</p><p>The city view crashed again. Quit All Eyes and open it once more.</p></body>')}`)
+      return
+    }
+    recovers.push(now)
+    recovering = true
+    const q = new URLSearchParams({ recovered: '1' })
+    if (lastView && Number.isFinite(lastView.lat) && Number.isFinite(lastView.lon)) {
+      q.set('lat', String(lastView.lat))
+      q.set('lon', String(lastView.lon))
+      q.set('range', String(lastView.rangeKm || 12))
+    }
+    void win.loadURL(`http://127.0.0.1:${port}/?${q}`).finally(() => {
+      recovering = false
+    })
+  }
+
+  win.webContents.on('render-process-gone', (_event, details) => {
+    if (details.reason === 'clean-exit') return
+    recover(`render-process-gone ${details.reason} code=${details.exitCode}`)
+  })
+  win.on('unresponsive', () => {
+    clearTimeout(hung)
+    hung = setTimeout(() => recover('unresponsive'), 8000)
+  })
+  win.on('responsive', () => clearTimeout(hung))
+
+  const watch = async () => {
+    if (win.isDestroyed() || recovering) return
+    let health = null
+    try {
+      health = await win.webContents.executeJavaScript('window.__aeHealth ? window.__aeHealth() : null', true)
+    } catch {
+      return
+    }
+    if (!health || typeof health !== 'object') return
+    lastView = health
+    const metrics = app.getAppMetrics()
+    const tab = metrics.find((row) => row.type === 'Tab' || row.type === 'Renderer')
+    const rss = rendererAction(tab?.memory?.workingSetSize ?? 0)
+    const heap = heapAction(health.heap, health.limit)
+    if (heap === 'reload' || rss === 'reload') {
+      recover(`memory heap=${health.heap} rssKb=${tab?.memory?.workingSetSize ?? 0}`)
+      return
+    }
+    if (heap === 'shed' || rss === 'shed') {
+      try {
+        await win.webContents.executeJavaScript('window.__aeShed && window.__aeShed()', true)
+      } catch {
+        /* the page sheds on its own timer too */
+      }
+    }
+  }
+  const memoryTimer = setInterval(() => { void watch() }, 3000)
+  win.on('closed', () => clearInterval(memoryTimer))
   await win.loadURL(`http://127.0.0.1:${port}/`)
 }
 

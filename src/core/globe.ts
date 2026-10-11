@@ -644,6 +644,14 @@ export class Globe implements GlobeApi {
     return this.city.note
   }
 
+  setCityDetail(level: 'full' | 'low'): void {
+    this.city.setDetail(level)
+  }
+
+  cityStats(): { tiles: number; textures: number; queue: number; inflight: number; vehicles: number; buildings: number; roads: number } {
+    return this.city.stats()
+  }
+
   private resize = () => {
     const w = window.innerWidth
     const h = window.innerHeight

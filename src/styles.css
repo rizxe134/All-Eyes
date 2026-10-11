@@ -61,6 +61,25 @@ button { cursor: pointer; }
   box-shadow: 4px 4px 0 var(--shadow);
 }
 
+.ae-recover {
+  position: absolute;
+  top: 82px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: none;
+  pointer-events: none;
+  padding: 4px 10px;
+  background: rgba(2, 16, 9, 0.92);
+  border: 2px solid var(--line);
+  color: var(--hot);
+  font-family: "Ae Term", monospace;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.ae-recover.is-on { display: block; }
+
 .ae-top {
   position: absolute;
   top: 10px;

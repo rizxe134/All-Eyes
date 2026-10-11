@@ -46,6 +46,7 @@ export interface Shell {
   infoBody: HTMLElement
   infoSpeed: HTMLButtonElement
   infoUnpin: HTMLButtonElement
+  recover: HTMLElement
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) {
@@ -250,7 +251,9 @@ export function buildShell(root: HTMLElement): Shell {
   settings.append(dialog)
 
   right.append(side)
-  hud.append(top, dock, right, alerts, foot, track)
+  const recover = el('div', 'ae-recover', '')
+  recover.hidden = true
+  hud.append(top, dock, right, alerts, foot, track, recover)
   const info = el('div', 'ae-infocard')
   info.hidden = true
   const infoHead = el('header')
@@ -317,6 +320,7 @@ export function buildShell(root: HTMLElement): Shell {
     infoBody,
     infoSpeed,
     infoUnpin,
+    recover,
   }
 }
 

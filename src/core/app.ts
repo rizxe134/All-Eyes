@@ -23,11 +23,13 @@ import { airAheadOn, airFixNow, airMetaFor, airTrail, setAirAhead } from '../plu
 import { formatShip, onShipDetail, shipDetailText, shipMeta, shipNow, shipTrackOn, shipTrail, toggleShipTrack } from '../plugins/ships/plugin'
 import { formatSat, onSatDetail, satSeries, satTrackOn, toggleSatTrack } from '../plugins/satellites/plugin'
 import { parseNominatim } from '../city/feeds'
+import { heapAction } from '../city/budget'
 import { clearTileCache } from '../city/cache'
 import { crtForZoom } from './range'
 
 const LAYER_KEY = 'alleyes.layers.v1'
 const VIEWER_KEY = 'alleyes.viewer.v1'
+const VIEW_KEY = 'alleyes.view.v1'
 
 function loadLayerPrefs(): Record<string, boolean> {
   try {
@@ -994,6 +996,70 @@ export function boot(root: HTMLElement): void {
   for (const layer of registry.layers()) {
     if (state.enabled.get(layer.id)) handles.get(layer.id)?.setEnabled(true)
   }
+
+  let shed = false
+  function shedDetail(notice: string) {
+    if (!shed) {
+      shed = true
+      setLayer('buildings', false)
+      setLayer('traffic', false)
+      globe.setCityDetail('low')
+    }
+    shell.recover.hidden = false
+    shell.recover.textContent = notice
+    shell.recover.classList.add('is-on')
+  }
+  function rememberView() {
+    const view = globe.getView()
+    try {
+      localStorage.setItem(VIEW_KEY, JSON.stringify({ lat: view.lat, lon: view.lon, rangeKm: view.rangeKm }))
+    } catch {
+      /* storage can be blocked; the main process keeps its own sample */
+    }
+    return view
+  }
+  const bootParams = new URLSearchParams(location.search)
+  if (bootParams.get('recovered') === '1') {
+    const lat = Number(bootParams.get('lat'))
+    const lon = Number(bootParams.get('lon'))
+    const range = Number(bootParams.get('range'))
+    if (Number.isFinite(lat) && Number.isFinite(lon)) globe.setView(lat, lon, Number.isFinite(range) && range > 0 ? range : 12)
+    else {
+      try {
+        const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null') as { lat?: number; lon?: number; rangeKm?: number } | null
+        if (saved && Number.isFinite(saved.lat) && Number.isFinite(saved.lon)) globe.setView(Number(saved.lat), Number(saved.lon), Number(saved.rangeKm) || 12)
+      } catch {
+        /* stay on the default view */
+      }
+    }
+    shedDetail('RECOVERED FROM CRASH')
+  }
+  const readHealth = () => {
+    const view = rememberView()
+    const mem = (performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory
+    const action = mem ? heapAction(mem.usedJSHeapSize, mem.jsHeapSizeLimit) : 'ok'
+    return {
+      lat: view.lat,
+      lon: view.lon,
+      rangeKm: view.rangeKm,
+      heap: mem?.usedJSHeapSize ?? 0,
+      limit: mem?.jsHeapSizeLimit ?? 0,
+      action,
+      stats: globe.cityStats(),
+    }
+  }
+  const page = window as unknown as { __aeHealth?: () => unknown; __aeShed?: () => void }
+  page.__aeHealth = readHealth
+  page.__aeShed = () => shedDetail('DETAIL REDUCED · MEMORY')
+  ;(window as unknown as { __aeGo?: (lat: number, lon: number, range: number, fly?: boolean) => void }).__aeGo = (lat, lon, range, fly) => {
+    if (fly) globe.flyTo(lat, lon, range)
+    else globe.setView(lat, lon, range)
+  }
+  window.setInterval(() => {
+    const snap = readHealth()
+    if (snap.action === 'ok') return
+    shedDetail(snap.action === 'reload' ? 'RECOVERED FROM CRASH' : 'DETAIL REDUCED · MEMORY')
+  }, 2000)
 
   startRadar(shell.radar, shell.radarLabel, () => ({
     view: globe.getView(),

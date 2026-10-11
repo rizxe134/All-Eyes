@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { cameraNear, crtForZoom, MIN_RANGE_KM } from '../src/core/range'
 import { basemapCredit, effectiveSource, parseBasemapMode, tileStack } from '../src/city/basemap'
 import { buildingHeightM, cityQuery, parseOverpass } from '../src/city/overpass'
-import { latToTileY, lonToTileX, tileBounds, tilesForView, zoomForRange } from '../src/city/mercator'
+import { latToTileY, lonToTileX, tileBounds, tileFootprintCount, tilesForView, zoomForRange } from '../src/city/mercator'
+import { MAX_BUILDINGS, MAX_OVERPASS_ELEMENTS, MAX_VEHICLES, allowRecover, createArmFlag, heapAction, keysToEvict, rendererAction, viewMoved } from '../src/city/budget'
 import { simulateTraffic } from '../src/city/traffic'
 import { localClock, parseAir, parseFiTrains, parseHereFlow, parseMbta, parseMeteo, parseNominatim, parseNominatimAll, parseTomTomFlow, weatherWord } from '../src/city/feeds'
 import { evictTileCacheForTest, tileCacheBytes, tileCachePut } from '../src/city/cache'
@@ -41,6 +42,25 @@ describe('mercator tiles', () => {
     const x = lonToTileX(-84.388, z)
     const y = latToTileY(33.749, z)
     expect(tiles.some((tile) => tile.x === Math.floor(x) && tile.y === Math.floor(y))).toBe(true)
+  })
+
+  it('steps zoom out instead of allocating the footprint at z=18', () => {
+    const started = performance.now()
+    for (let range = 1500; range >= 0.3; range *= 0.85) {
+      const tiles = tilesForView(40.71, -74.01, range, 12)
+      expect(tiles.length).toBeLessThanOrEqual(12)
+      expect(tiles.length).toBeGreaterThan(0)
+      expect(tiles[0].z).toBeLessThanOrEqual(zoomForRange(range, 40.71))
+    }
+    expect(performance.now() - started).toBeLessThan(80)
+    const wide = tilesForView(40.71, -74.01, 900, 12)
+    expect(wide[0].z).toBeLessThan(12)
+    expect(tileFootprintCount(40.71, -74.01, 900, 18)).toBeGreaterThan(1_000_000)
+    for (const [lat, lon] of [[40.71, -74.01], [35.68, 139.69], [51.51, -0.13]] as const) {
+      const street = tilesForView(lat, lon, 0.4, 12)
+      expect(street.length).toBeLessThanOrEqual(12)
+      expect(street.length).toBeGreaterThan(0)
+    }
   })
 })
 
@@ -84,6 +104,15 @@ describe('overpass and geocoder', () => {
     expect(parsed.buildings.map((row) => row.heightM)).toEqual([32, 40])
     expect(parsed.pois[0].name).toBe('GENERAL')
     expect(buildingHeightM({})).toBe(9)
+    const flood = {
+      elements: Array.from({ length: MAX_OVERPASS_ELEMENTS + 40 }, (_, index) => ({
+        type: 'way',
+        id: index + 1,
+        tags: { building: 'yes', height: '20' },
+        geometry: [{ lat: 1, lon: 2 }, { lat: 1.001, lon: 2 }, { lat: 1.001, lon: 2.001 }],
+      })),
+    }
+    expect(parseOverpass(flood).buildings).toHaveLength(MAX_BUILDINGS)
   })
 
   it('parses a nominatim search and a reverse object', () => {
@@ -130,6 +159,19 @@ describe('traffic simulation', () => {
     expect(live.every((row) => row.color === '#ff4b4b')).toBe(true)
     const free = simulateTraffic(roads, [], 1_700_000_000_000, 0.9)
     expect(free[0].color).toBe('#3dd68c')
+  })
+
+  it('stops at the vehicle cap on a dense road set', () => {
+    const many = Array.from({ length: 800 }, (_, index) => ({
+      id: `road:${index}`,
+      cls: 'motorway',
+      points: [
+        { lat: 40.7, lon: -74 },
+        { lat: 40.71, lon: -74 },
+      ],
+    }))
+    const rows = simulateTraffic(many, [], 1_700_000_000_000, null)
+    expect(rows).toHaveLength(MAX_VEHICLES)
   })
 })
 
@@ -186,5 +228,44 @@ describe('tile cache cap', () => {
     expect(before).toBeGreaterThanOrEqual(2000)
     evictTileCacheForTest(1000)
     expect(tileCacheBytes()).toBeLessThanOrEqual(1000)
+  })
+})
+
+describe('city memory budgets', () => {
+  it('evicts the oldest textures and keeps the ones on screen', () => {
+    const entries = [
+      { key: 'old', at: 1 },
+      { key: 'mid', at: 2 },
+      { key: 'shown', at: 3 },
+      { key: 'new', at: 4 },
+    ]
+    expect(keysToEvict(entries, new Set(['shown']), 2)).toEqual(['old', 'mid'])
+    expect(keysToEvict(entries, new Set(['old', 'mid', 'shown', 'new']), 2)).toEqual([])
+  })
+
+  it('sheds and reloads on heap and renderer RSS thresholds', () => {
+    expect(heapAction(0, 0)).toBe('ok')
+    expect(heapAction(400 * 1024 * 1024, 4 * 1024 * 1024 * 1024)).toBe('ok')
+    expect(heapAction(450 * 1024 * 1024, 4 * 1024 * 1024 * 1024)).toBe('shed')
+    expect(heapAction(950 * 1024 * 1024, 4 * 1024 * 1024 * 1024)).toBe('reload')
+    expect(rendererAction(800_000)).toBe('ok')
+    expect(rendererAction(1_200_000)).toBe('shed')
+    expect(rendererAction(2_000_000)).toBe('reload')
+    const first = allowRecover([], 1_000)
+    expect(first.ok).toBe(true)
+    const full = allowRecover([1_000, 1_100, 1_200], 1_300)
+    expect(full.ok).toBe(false)
+    expect(allowRecover([1_000, 1_100, 1_200], 1_000 + 120_000).ok).toBe(true)
+  })
+
+  it('ignores a still camera and refuses a second listener arm', () => {
+    const here = { lat: 40.7, lon: -74, range: 12 }
+    expect(viewMoved(here, { ...here })).toBe(false)
+    expect(viewMoved(here, { ...here, range: 4 })).toBe(true)
+    const flag = createArmFlag()
+    expect(flag.arm()).toBe(true)
+    expect(flag.arm()).toBe(false)
+    flag.disarm()
+    expect(flag.arm()).toBe(true)
   })
 })

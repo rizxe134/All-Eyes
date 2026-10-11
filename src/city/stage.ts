@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { EARTH_KM, enuBasis, latLonToVec } from '../core/geo'
 import type { ViewState } from '../core/types'
 import { OSM_CREDIT, basemapCredit, effectiveSource, tileStack, type BasemapKeys, type BasemapMode, type BasemapSource } from './basemap'
+import { MAX_RESIDENT_TEXTURES, MAX_TILE_FETCHES, MAX_TILE_QUEUE, MAX_TILES, MAX_TILES_LOW, MAX_VEHICLES, keysToEvict } from './budget'
 import { tileCacheGet, tileCachePut } from './cache'
 import { tileBounds, tilesForView, type TileId } from './mercator'
 import type { CityBuilding, CityRoad, CityVectors } from './overpass'
@@ -29,6 +30,9 @@ export class CityStage {
   private loading = new Set<string>()
   private queue: string[] = []
   private active = 0
+  private maxTiles = MAX_TILES
+  private wantedUrls = new Set<string>()
+  private jobs = new Map<string, AbortController>()
   private failed = new Map<string, number>()
   private roadLine: THREE.LineSegments | null = null
   private buildingMesh: THREE.Mesh | null = null
@@ -63,6 +67,26 @@ export class CityStage {
     this.draw = draw
   }
 
+  /** Low detail drops the tile budget after a memory shed or a crash recovery. */
+  setDetail(level: 'full' | 'low'): void {
+    const next = level === 'low' ? MAX_TILES_LOW : MAX_TILES
+    if (next === this.maxTiles) return
+    this.maxTiles = next
+    this.tileKey = ''
+  }
+
+  stats(): { tiles: number; textures: number; queue: number; inflight: number; vehicles: number; buildings: number; roads: number } {
+    return {
+      tiles: this.tiles.size,
+      textures: this.textures.size,
+      queue: this.queue.length,
+      inflight: this.active,
+      vehicles: this.trafficMesh?.visible ? this.trafficMesh.count : 0,
+      buildings: this.buildingMesh?.visible ? this.vectors.buildings.length : 0,
+      roads: this.roadLine?.visible ? this.vectors.roads.length + this.vectors.rails.length : 0,
+    }
+  }
+
   setVectors(data: CityVectors | null): void {
     this.vectors = data ?? { roads: [], rails: [], buildings: [], pois: [] }
     this.vectorKey = ''
@@ -70,10 +94,13 @@ export class CityStage {
   }
 
   clearGpu(): void {
-    for (const tex of this.textures.values()) tex.dispose()
+    for (const job of this.jobs.values()) job.abort()
+    this.jobs.clear()
+    this.queue = []
+    this.wantedUrls.clear()
+    for (const tex of this.textures.values()) disposeTexture(tex)
     this.textures.clear()
     this.failed.clear()
-    this.queue = []
     for (const mesh of this.tiles.values()) {
       mesh.geometry.dispose()
       const mat = mesh.material
@@ -89,35 +116,45 @@ export class CityStage {
     const showTiles = this.draw.imagery && view.rangeKm < 1600
     this.tileRoot.visible = showTiles
     if (showTiles) this.syncTiles(view)
-    else this.note = view.rangeKm < 1600 ? 'MAP OFF' : 'MAP ABOVE CITY'
+    else {
+      this.releaseTiles()
+      this.note = view.rangeKm < 1600 ? 'MAP OFF' : 'MAP ABOVE CITY'
+    }
     this.syncRoads(view)
     this.syncBuildings(view)
     this.syncTraffic(view, unixMs)
   }
 
   private syncTiles(view: ViewState): void {
-    const tiles = tilesForView(view.lat, view.lon, view.rangeKm, 12)
-    const key = `${this.mode}|${this.source}|${this.keys.maptiler ? 1 : 0}|${this.keys.mapbox ? 1 : 0}|${tiles.map((tile) => `${tile.z}/${tile.x}/${tile.y}`).join(',')}`
-    if (key === this.tileKey) {
-      this.pump()
-      return
-    }
-    this.tileKey = key
-    const keep = new Set<string>()
+    const tiles = tilesForView(view.lat, view.lon, view.rangeKm, this.maxTiles)
+    const wanted: { id: string; tile: TileId; url: string; overlay: boolean }[] = []
     for (const tile of tiles) {
       const stack = tileStack(this.mode, this.source, this.keys, tile.z, tile.x, tile.y)
-      keep.add(this.ensureTile(`${tile.z}/${tile.x}/${tile.y}`, tile, stack.base, false))
-      if (stack.overlay) keep.add(this.ensureTile(`${tile.z}/${tile.x}/${tile.y}/ov`, tile, stack.overlay, true))
+      wanted.push({ id: `${tile.z}/${tile.x}/${tile.y}`, tile, url: stack.base, overlay: false })
+      if (stack.overlay) wanted.push({ id: `${tile.z}/${tile.x}/${tile.y}/ov`, tile, url: stack.overlay, overlay: true })
     }
-    for (const [id, mesh] of this.tiles) {
-      if (keep.has(id)) continue
-      this.tileRoot.remove(mesh)
-      mesh.geometry.dispose()
-      const mat = mesh.material
-      if (!Array.isArray(mat)) mat.dispose()
-      this.tiles.delete(id)
+    this.wantedUrls = new Set(wanted.map((row) => row.url))
+    this.queue = this.queue.filter((url) => this.wantedUrls.has(url)).slice(0, MAX_TILE_QUEUE)
+    for (const [url, job] of this.jobs) {
+      if (this.wantedUrls.has(url)) continue
+      job.abort()
+      this.jobs.delete(url)
     }
-    this.pruneTextures(keep)
+    const key = `${this.mode}|${this.source}|${this.maxTiles}|${this.keys.maptiler ? 1 : 0}|${this.keys.mapbox ? 1 : 0}|${wanted.map((row) => row.id).join(',')}`
+    if (key !== this.tileKey) {
+      this.tileKey = key
+      const keep = new Set<string>()
+      for (const row of wanted) keep.add(this.ensureTile(row.id, row.tile, row.url, row.overlay))
+      for (const [id, mesh] of this.tiles) {
+        if (keep.has(id)) continue
+        this.tileRoot.remove(mesh)
+        mesh.geometry.dispose()
+        const mat = mesh.material
+        if (!Array.isArray(mat)) mat.dispose()
+        this.tiles.delete(id)
+      }
+    }
+    this.pruneTextures()
     this.pump()
     const credit = `${basemapCredit(this.mode, effectiveSource(this.source, this.keys))} · ${OSM_CREDIT}`
     this.note = this.misses > 2 ? `MAP OFFLINE · ${credit}` : credit
@@ -129,10 +166,10 @@ export class CityStage {
       mesh = new THREE.Mesh(tileGeometry(tile), tileMaterial(overlay))
       mesh.renderOrder = overlay ? 3 : 2
       mesh.frustumCulled = false
-      mesh.userData.url = url
       this.tileRoot.add(mesh)
       this.tiles.set(id, mesh)
     }
+    mesh.userData.url = url
     const mat = mesh.material as THREE.MeshBasicMaterial
     const tex = this.textures.get(url)
     if (tex) {
@@ -152,37 +189,50 @@ export class CityStage {
   }
 
   private pump(): void {
-    while (this.active < 4 && this.queue.length) {
+    while (this.active < MAX_TILE_FETCHES && this.queue.length) {
       const url = this.queue.shift()
-      if (!url || this.textures.has(url) || this.loading.has(url)) continue
+      if (!url || !this.wantedUrls.has(url) || this.textures.has(url) || this.jobs.has(url)) continue
+      const job = new AbortController()
+      this.jobs.set(url, job)
       this.loading.add(url)
       this.active += 1
-      void this.fetchTex(url).finally(() => {
+      void this.fetchTex(url, job.signal).finally(() => {
+        this.jobs.delete(url)
         this.loading.delete(url)
-        this.active -= 1
+        this.active = Math.max(0, this.active - 1)
         this.pump()
       })
     }
   }
 
-  private async fetchTex(url: string): Promise<void> {
+  private async fetchTex(url: string, signal: AbortSignal): Promise<void> {
     try {
+      if (signal.aborted || !this.wantedUrls.has(url)) return
       let blob = await tileCacheGet(url)
+      if (signal.aborted || !this.wantedUrls.has(url)) return
       if (!blob) {
-        const res = await fetch(url)
+        const res = await fetch(url, { signal })
         if (!res.ok) throw new Error(String(res.status))
         blob = await res.blob()
         if (blob.size < 32) throw new Error('empty')
         void tileCachePut(url, blob)
       }
+      if (signal.aborted || !this.wantedUrls.has(url)) return
       const bitmap = await createImageBitmap(blob)
+      if (signal.aborted || !this.wantedUrls.has(url)) {
+        bitmap.close()
+        return
+      }
       const tex = new THREE.Texture(bitmap)
       tex.colorSpace = THREE.SRGBColorSpace
       tex.magFilter = THREE.LinearFilter
       tex.minFilter = THREE.LinearFilter
       tex.generateMipmaps = false
       tex.needsUpdate = true
+      const prev = this.textures.get(url)
+      if (prev) disposeTexture(prev)
       this.textures.set(url, tex)
+      this.pruneTextures()
       this.failed.delete(url)
       this.misses = 0
       for (const mesh of this.tiles.values()) {
@@ -192,26 +242,58 @@ export class CityStage {
         mat.needsUpdate = true
       }
     } catch {
+      if (signal.aborted) return
       this.misses += 1
       this.failed.set(url, Date.now() + 20_000)
+      if (this.failed.size > 200) {
+        for (const key of this.failed.keys()) {
+          this.failed.delete(key)
+          break
+        }
+      }
     }
   }
 
-  private pruneTextures(keep: Set<string>): void {
-    if (this.textures.size < 140) return
-    const used = new Set<string>()
-    for (const id of keep) {
-      const mesh = this.tiles.get(id)
-      const map = (mesh?.material as THREE.MeshBasicMaterial | undefined)?.map
-      if (map) {
-        for (const [url, tex] of this.textures) if (tex === map) used.add(url)
+  /** Drop GPU tiles once the camera is above the city. Disk cache can still serve the next visit. */
+  private releaseTiles(): void {
+    if (!this.tiles.size && !this.textures.size && !this.jobs.size && !this.queue.length) return
+    this.wantedUrls.clear()
+    this.queue = []
+    for (const job of this.jobs.values()) job.abort()
+    this.jobs.clear()
+    this.loading.clear()
+    this.active = 0
+    for (const mesh of this.tiles.values()) {
+      this.tileRoot.remove(mesh)
+      mesh.geometry.dispose()
+      const mat = mesh.material
+      if (!Array.isArray(mat)) mat.dispose()
+    }
+    this.tiles.clear()
+    for (const tex of this.textures.values()) disposeTexture(tex)
+    this.textures.clear()
+    this.tileKey = ''
+  }
+
+  private pruneTextures(): void {
+    if (this.textures.size <= MAX_RESIDENT_TEXTURES) return
+    const entries = [...this.textures.keys()].map((key) => ({ key, at: 0 }))
+    for (const mesh of this.tiles.values()) {
+      const map = (mesh.material as THREE.MeshBasicMaterial).map
+      if (!map) continue
+      for (const entry of entries) {
+        if (this.textures.get(entry.key) === map) entry.at = Number.MAX_SAFE_INTEGER
       }
     }
-    for (const [url, tex] of this.textures) {
-      if (used.has(url)) continue
-      tex.dispose()
-      this.textures.delete(url)
-      if (this.textures.size < 96) break
+    let order = 0
+    for (const entry of entries) {
+      if (entry.at === 0) entry.at = order++
+    }
+    for (const key of keysToEvict(entries, this.wantedUrls, MAX_RESIDENT_TEXTURES)) {
+      const tex = this.textures.get(key)
+      if (!tex) continue
+      disposeTexture(tex)
+      this.textures.delete(key)
     }
   }
 
@@ -263,7 +345,7 @@ export class CityStage {
     if (!this.trafficMesh) {
       const geo = new THREE.BoxGeometry(1, 1, 1)
       const mat = new THREE.MeshBasicMaterial({ toneMapped: false, vertexColors: false })
-      this.trafficMesh = new THREE.InstancedMesh(geo, mat, 240)
+      this.trafficMesh = new THREE.InstancedMesh(geo, mat, MAX_VEHICLES)
       this.trafficMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
       this.trafficMesh.frustumCulled = false
       this.trafficMesh.renderOrder = 5
@@ -282,6 +364,12 @@ export class CityStage {
     this.trafficMesh.instanceMatrix.needsUpdate = true
     if (this.trafficMesh.instanceColor) this.trafficMesh.instanceColor.needsUpdate = true
   }
+}
+
+function disposeTexture(tex: THREE.Texture): void {
+  const image = tex.image as { close?: () => void } | undefined
+  tex.dispose()
+  image?.close?.()
 }
 
 function tileMaterial(overlay: boolean): THREE.MeshBasicMaterial {
