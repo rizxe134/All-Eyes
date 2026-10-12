@@ -12,6 +12,8 @@ export function authHeaders(url: string, settings: SettingsStore): Record<string
   }
   if (url.includes('/api/traffic/tomtom') && current.tomtomKey) headers['x-tomtom-key'] = current.tomtomKey
   if (url.includes('/api/traffic/here') && current.hereKey) headers['x-here-key'] = current.hereKey
+  if (url.includes('/api/geocode/maptiler') && current.maptilerKey) headers['x-maptiler-key'] = current.maptilerKey
+  if (url.includes('/api/geocode/mapbox') && current.mapboxKey) headers['x-mapbox-key'] = current.mapboxKey
   return headers
 }
 

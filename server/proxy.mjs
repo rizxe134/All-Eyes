@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 
-const UA = 'AllEyes/2.1.2 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/2.2.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -220,6 +220,33 @@ async function route(req, url) {
     return upstream(target, { ttl: 12000, timeout: 8000 })
   }
 
+  if (path === '/api/adsb/callsign' || path === '/api/adsbfi/callsign' || path === '/api/airplanes/callsign') {
+    const cs = (url.searchParams.get('cs') || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (!/^[A-Z0-9]{3,8}$/.test(cs)) return jsonError(400, 'bad callsign')
+    const host = path === '/api/adsb/callsign'
+      ? 'https://api.adsb.lol'
+      : path === '/api/airplanes/callsign'
+        ? 'https://api.airplanes.live'
+        : 'https://opendata.adsb.fi/api'
+    return upstream(`${host}/v2/callsign/${encodeURIComponent(cs)}`, {
+      ttl: 15000,
+      timeout: 10000,
+      key: `cs:${host}:${cs}`,
+    })
+  }
+
+  if (path === '/api/adsb/hex') {
+    const hex = (url.searchParams.get('hex') || '').toLowerCase()
+    if (!/^[0-9a-f]{6}$/.test(hex)) return jsonError(400, 'bad hex')
+    return upstream(`https://api.adsb.lol/v2/hex/${hex}`, { ttl: 15000, timeout: 10000, key: `hex:${hex}` })
+  }
+
+  if (path === '/api/adsb/reg') {
+    const reg = (url.searchParams.get('reg') || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (!/^[A-Z0-9]{3,8}$/.test(reg)) return jsonError(400, 'bad registration')
+    return upstream(`https://api.adsb.lol/v2/reg/${encodeURIComponent(reg)}`, { ttl: 15000, timeout: 10000, key: `reg:${reg}` })
+  }
+
   if (path === '/api/celestrak') {
     const group = url.searchParams.get('group') || ''
     if (!CELESTRAK_GROUPS.has(group)) return jsonError(400, 'unknown satellite group')
@@ -380,13 +407,56 @@ async function route(req, url) {
     const boxed = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(viewbox)
       ? `&viewbox=${viewbox}&bounded=1`
       : ''
+    const limit = Math.min(5, Math.max(1, Number(url.searchParams.get('limit')) || 1))
     const target = reverse
       ? `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&extratags=1&zoom=12&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`
-      : `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=1&q=${encodeURIComponent(q)}${boxed}`
+      : `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=${limit}&q=${encodeURIComponent(q)}${boxed}`
     return upstream(target, {
       ttl: 6 * 60 * 60 * 1000,
-      key: reverse ? `geo:${lat.toFixed(2)},${lon.toFixed(2)}` : `geo:${q.toLowerCase()}:${viewbox}`,
+      key: reverse ? `geo:${lat.toFixed(2)},${lon.toFixed(2)}` : `geo:${limit}:${q.toLowerCase()}:${viewbox}`,
       timeout: 12000,
+    })
+  }
+
+  if (path === '/api/photon') {
+    const q = (url.searchParams.get('q') || '').trim()
+    if (!q || q.length > 80) return jsonError(400, 'bad query')
+    return upstream(`https://photon.komoot.io/api/?limit=6&q=${encodeURIComponent(q)}`, {
+      ttl: 60 * 60 * 1000,
+      timeout: 8000,
+      key: `photon:${q.toLowerCase()}`,
+      headers: { accept: 'application/json', 'user-agent': UA },
+    })
+  }
+
+  if (path === '/api/geocode/meteo') {
+    const q = (url.searchParams.get('q') || '').trim()
+    if (!q || q.length > 80) return jsonError(400, 'bad query')
+    return upstream(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5`, {
+      ttl: 60 * 60 * 1000,
+      timeout: 8000,
+      key: `mgeo:${q.toLowerCase()}`,
+    })
+  }
+
+  if (path === '/api/geocode/maptiler' || path === '/api/geocode/mapbox') {
+    const q = (url.searchParams.get('q') || '').trim()
+    if (!q || q.length > 80) return jsonError(400, 'bad query')
+    if (path === '/api/geocode/maptiler') {
+      const key = header(req, 'x-maptiler-key') || ''
+      if (!/^[A-Za-z0-9._-]{8,160}$/.test(key)) return jsonError(404, 'no maptiler key')
+      return upstream(`https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json?key=${encodeURIComponent(key)}&limit=5`, {
+        ttl: 60 * 60 * 1000,
+        timeout: 8000,
+        key: `mtgeo:${q.toLowerCase()}`,
+      })
+    }
+    const key = header(req, 'x-mapbox-key') || ''
+    if (!/^[A-Za-z0-9._-]{8,200}$/.test(key)) return jsonError(404, 'no mapbox key')
+    return upstream(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?access_token=${encodeURIComponent(key)}&limit=5`, {
+      ttl: 60 * 60 * 1000,
+      timeout: 8000,
+      key: `mbgeo:${q.toLowerCase()}`,
     })
   }
 

@@ -83,5 +83,6 @@ export function satSprite(name: string, group: string): string {
   if (/DEBRIS|\bDEB\b|R\/B|OBJECT [A-Z]/.test(text)) return 'sat-debris'
   if (/HST|HUBBLE/.test(text)) return 'sat-scope'
   if (group === 'science' || /CHANDRA|FERMI|SWIFT|XMM/.test(text)) return 'sat-science'
+  if (group === 'starlink' || text.includes('STARLINK')) return 'sat-starlink'
   return 'sat-comms'
 }

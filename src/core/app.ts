@@ -9,7 +9,8 @@ import { PluginRegistry } from './registry'
 import { decodeShare, encodeShare } from './share'
 import { MARKER_MAX, MARKER_MIN, SettingsStore } from './settings'
 import { Sfx } from './audio'
-import { LEGEND, layerHex } from './palette'
+import { layerHex } from './palette'
+import { LEGEND_ROWS, spriteForLayer } from './legend'
 import { toMarker, type CommandContext, type GlobeTheme, type LayerHandle, type MarkerStyle, type PluginContext, type WatchRule } from './types'
 import { builtinPlugins } from '../plugins'
 import { getJson } from '../net/http'
@@ -21,7 +22,14 @@ import { startRadar } from '../ui/radar'
 import { mountViewer } from '../ui/viewer'
 import { mountFlightPanel } from '../ui/flight-panel'
 import { flightText, formatFlight } from '../plugins/aircraft/detail'
+import { callsignMatch, parseFlightQuery } from '../plugins/aircraft/callsign'
+import { parseAdsbRoute } from '../plugins/aircraft/lookup'
 import { airAheadOn, airFixNow, airMetaFor, airTrail, setAirAhead } from '../plugins/aircraft/plugin'
+import { seekAircraft } from '../plugins/aircraft/seek'
+import { pushRecent, readRecent } from '../search/cache'
+import { coordinateHit, geocodeQuery } from '../search/geocode'
+import { matchContacts, suggestHits, type FindHit } from '../search/suggest'
+import { paintGlyph } from '../ui/glyph'
 import { formatShip, onShipDetail, shipDetailText, shipMeta, shipNow, shipTrackOn, shipTrail, toggleShipTrack } from '../plugins/ships/plugin'
 import { formatSat, onSatDetail, satSeries, satTrackOn, toggleSatTrack } from '../plugins/satellites/plugin'
 import { parseNominatim } from '../city/feeds'
@@ -217,9 +225,9 @@ export function boot(root: HTMLElement): void {
       button.type = 'button'
       button.className = `ae-layer${on ? ' is-on' : ''}${state.faults.has(layer.id) ? ' is-fault' : ''}`
       button.title = state.faults.get(layer.id) || layer.description
-      const swatch = document.createElement('i')
+      const swatch = document.createElement('canvas')
       swatch.className = 'ae-swatch'
-      swatch.style.background = layerHex(layer.id)
+      paintGlyph(swatch, spriteForLayer(layer.id), layerHex(layer.id))
       const name = document.createElement('span')
       name.className = 'ae-layer-name'
       name.textContent = layer.label
@@ -237,13 +245,31 @@ export function boot(root: HTMLElement): void {
 
   function renderLegend() {
     shell.legend.replaceChildren()
-    for (const row of LEGEND) {
+    for (const row of LEGEND_ROWS) {
       const line = document.createElement('div')
       line.className = 'ae-legend-row'
-      const swatch = document.createElement('i')
-      swatch.className = 'ae-swatch'
-      swatch.style.background = layerHex(row.id)
-      line.append(swatch, document.createTextNode(row.name))
+      if (row.kind === 'icon') {
+        const swatch = document.createElement('canvas')
+        swatch.className = 'ae-swatch'
+        paintGlyph(swatch, row.sprite, layerHex(row.id))
+        line.append(swatch)
+      } else if (row.id === 'select') {
+        line.append(Object.assign(document.createElement('i'), { className: 'ae-legend-ring' }))
+      } else {
+        const mark = document.createElement('i')
+        mark.className = row.dashed ? 'ae-legend-dash' : 'ae-legend-solid'
+        line.append(mark)
+      }
+      const copy = document.createElement('div')
+      copy.className = 'ae-legend-copy'
+      const name = document.createElement('div')
+      name.className = 'ae-legend-name'
+      name.textContent = row.name
+      const meaning = document.createElement('div')
+      meaning.className = 'ae-legend-mean'
+      meaning.textContent = row.meaning
+      copy.append(name, meaning)
+      line.append(copy)
       shell.legend.append(line)
     }
   }
@@ -562,6 +588,201 @@ export function boot(root: HTMLElement): void {
     if (themeInput) themeInput.value = current.theme
   }
 
+  let findHits: FindHit[] = []
+  let findAt = 0
+  let findTimer = 0
+  let findAbort = new AbortController()
+
+  function showFindCard(text: string) {
+    shell.findCard.hidden = !text
+    shell.findCard.textContent = text
+  }
+
+  function paintFind(hits: FindHit[], keep = false) {
+    findHits = hits
+    if (!keep) findAt = 0
+    if (findAt >= hits.length) findAt = 0
+    shell.findList.replaceChildren()
+    if (!hits.length) {
+      shell.findList.hidden = true
+      return
+    }
+    shell.findList.hidden = false
+    let group = ''
+    hits.forEach((hit, index) => {
+      if (hit.group !== group) {
+        group = hit.group
+        const label = document.createElement('div')
+        label.className = 'ae-find-group'
+        label.textContent = group.toUpperCase()
+        shell.findList.append(label)
+      }
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = `ae-find-hit${index === findAt ? ' is-on' : ''}`
+      const icon = document.createElement('canvas')
+      icon.className = 'ae-swatch'
+      paintGlyph(icon, hit.sprite, layerHex(hit.layerId))
+      const title = document.createElement('span')
+      title.textContent = hit.title
+      const detail = document.createElement('small')
+      detail.textContent = hit.detail
+      button.append(icon, title, detail)
+      button.addEventListener('mousedown', (event) => event.preventDefault())
+      button.addEventListener('click', () => {
+        void pickFind(hit).then((line) => showOutput(line))
+      })
+      shell.findList.append(button)
+    })
+  }
+
+  function dropSearchPin(lat: number, lon: number) {
+    setPin(lat, lon)
+    globe.setMarkers('searchpin', [{
+      id: 'search:pin',
+      lat,
+      lon,
+      altKm: 0,
+      heading: 0,
+      pitch: 0,
+      brightness: 1,
+      shape: 'drop',
+      scale: 1.35,
+    }])
+  }
+
+  function armStreet(rangeKm: number) {
+    if (rangeKm <= 12 && state.enabled.get('imagery') !== true) setLayer('imagery', true)
+    if (rangeKm <= 2) {
+      if (state.enabled.get('roads') !== true) setLayer('roads', true)
+      if (state.enabled.get('buildings') !== true) setLayer('buildings', true)
+    }
+  }
+
+  function lockContact(id: string, lat?: number, lon?: number): string {
+    if (id.startsWith('air:')) {
+      if (state.enabled.get('aircraft') !== true) setLayer('aircraft', true)
+      if (state.enabled.get('airground') !== true) setLayer('airground', true)
+    }
+    setTrack(id)
+    const contact = entities.get(id)
+    const atLat = contact?.lat ?? lat
+    const atLon = contact?.lon ?? lon
+    if (atLat != null && atLon != null) {
+      const range = id.startsWith('sat:') ? 1800 : id.startsWith('ship:') ? 40 : 420
+      globe.flyTo(atLat, atLon, range)
+    }
+    const label = contact?.label || id
+    showFindCard(label)
+    return `LOCK ${label}`
+  }
+
+  async function seekAndLock(query: string): Promise<string> {
+    const parsed = parseFlightQuery(query)
+    const local = entities.all().find((contact) => {
+      if (contact.kind !== 'air') return false
+      const reg = contact.card?.find((row) => row.k === 'REG')?.v ?? ''
+      const hex = contact.id.startsWith('air:') ? contact.id.slice(4) : ''
+      return callsignMatch(contact.callsign ?? '', reg, hex, parsed)
+    })
+    if (local) return lockContact(local.id)
+    if (state.enabled.get('aircraft') !== true) setLayer('aircraft', true)
+    const fix = await seekAircraft(parsed, settings)
+    if (fix) return lockContact(`air:${fix.icao}`, fix.lat, fix.lon)
+    const cs = (parsed.candidates.find((item) => /^[A-Z]{3}/.test(item)) || parsed.raw).toUpperCase()
+    let routeText = ''
+    if (/^[A-Z0-9]{3,8}$/.test(cs)) {
+      try {
+        const route = parseAdsbRoute(await getJson(`/api/adsbdb/callsign?cs=${encodeURIComponent(cs)}`, settings))
+        if (route?.origin || route?.destination) {
+          routeText = `\n${route.origin || '----'} ${route.originCity || ''} -> ${route.destination || '----'} ${route.destCity || ''}`.trimEnd()
+        }
+      } catch {
+        /* route stays blank when adsbdb has nothing */
+      }
+    }
+    const text = `NOT CURRENTLY TRACKED\n${cs}${routeText}`
+    showFindCard(text)
+    return 'NOT CURRENTLY TRACKED'
+  }
+
+  async function flyPlace(lat: number, lon: number, rangeKm: number, label: string): Promise<string> {
+    armStreet(rangeKm)
+    dropSearchPin(lat, lon)
+    globe.flyTo(lat, lon, rangeKm)
+    showFindCard(`${label}\n${lat.toFixed(4)}  ${lon.toFixed(4)}\n${Math.round(rangeKm)} KM`)
+    return `FLY ${label.toUpperCase()}`
+  }
+
+  async function pickFind(hit: FindHit): Promise<string> {
+    shell.findList.hidden = true
+    if (hit.group === 'Recent' && hit.query) {
+      shell.find.value = hit.query
+      await refreshFind(hit.query)
+      return hit.query.toUpperCase()
+    }
+    pushRecent(hit.title)
+    if (hit.seek && hit.query) return seekAndLock(hit.query)
+    if (hit.contactId) return lockContact(hit.contactId, hit.lat, hit.lon)
+    if (hit.lat != null && hit.lon != null && hit.rangeKm != null) return flyPlace(hit.lat, hit.lon, hit.rangeKm, hit.title)
+    showFindCard('NO RESULTS')
+    return 'NO RESULTS'
+  }
+
+  async function refreshFind(query: string) {
+    const text = query.trim()
+    if (!text) {
+      paintFind(suggestHits('', entities.all(), [], readRecent()))
+      return
+    }
+    const coord = coordinateHit(text)
+    if (coord) {
+      paintFind(suggestHits(text, entities.all(), [coord], []))
+      return
+    }
+    paintFind(suggestHits(text, entities.all(), [], []))
+    findAbort.abort()
+    findAbort = new AbortController()
+    const signal = findAbort.signal
+    window.clearTimeout(findTimer)
+    findTimer = window.setTimeout(() => {
+      void geocodeQuery(text, settings, signal).then((places) => {
+        if (signal.aborted || shell.find.value.trim() !== text) return
+        const hits = suggestHits(text, entities.all(), places, [])
+        paintFind(hits)
+        if (!hits.length) {
+          shell.findList.hidden = false
+          const empty = document.createElement('div')
+          empty.className = 'ae-find-group'
+          empty.textContent = 'NO RESULTS'
+          shell.findList.replaceChildren(empty)
+        }
+      })
+    }, 280)
+  }
+
+  async function goQuery(query: string): Promise<string> {
+    const text = query.trim()
+    if (!text) return 'USAGE: GO <QUERY>'
+    pushRecent(text)
+    shell.find.value = text
+    const coord = coordinateHit(text)
+    if (coord) return flyPlace(coord.lat, coord.lon, coord.rangeKm, coord.label)
+    const known = matchContacts(text, entities.all()).find((hit) => hit.contactId)
+    if (known?.contactId) return lockContact(known.contactId, known.lat, known.lon)
+    const flight = parseFlightQuery(text)
+    if (flight.kind === 'iata' || flight.kind === 'icao' || flight.kind === 'hex' || flight.kind === 'reg') {
+      return seekAndLock(text)
+    }
+    const places = await geocodeQuery(text, settings)
+    const place = places[0]
+    if (!place) {
+      showFindCard('NO RESULTS')
+      return `NO RESULTS "${text.toUpperCase()}"`
+    }
+    return flyPlace(place.lat, place.lon, place.rangeKm, place.label)
+  }
+
   const commands: CommandContext = {
     flyTo: (lat, lon, range) => globe.flyTo(lat, lon, range),
     getView: () => globe.getView(),
@@ -576,6 +797,7 @@ export function boot(root: HTMLElement): void {
       }
     },
     findContact: (query) => entities.find(query),
+    go: (query) => goQuery(query),
     contacts: () => entities.all(),
     setTimeMinutes(mins) {
       if (mins === 'live') clock.setOffsetMs(0)
@@ -696,6 +918,31 @@ export function boot(root: HTMLElement): void {
     })
   }
 
+  shell.find.form?.addEventListener('submit', (event) => {
+    event.preventDefault()
+    const picked = !shell.findList.hidden ? findHits[findAt] : undefined
+    const job = picked ? pickFind(picked) : goQuery(shell.find.value)
+    void job.then((line) => showOutput(line))
+  })
+  shell.find.addEventListener('input', () => {
+    void refreshFind(shell.find.value)
+  })
+  shell.find.addEventListener('focus', () => {
+    void refreshFind(shell.find.value)
+  })
+  shell.find.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (!findHits.length || shell.findList.hidden) return
+      event.preventDefault()
+      findAt = event.key === 'ArrowDown'
+        ? (findAt + 1) % findHits.length
+        : (findAt - 1 + findHits.length) % findHits.length
+      paintFind(findHits, true)
+    } else if (event.key === 'Escape') {
+      shell.findList.hidden = true
+      shell.find.blur()
+    }
+  })
   shell.prompt.form?.addEventListener('submit', (event) => {
     event.preventDefault()
     void runPrompt(shell.prompt.value)
@@ -821,7 +1068,18 @@ export function boot(root: HTMLElement): void {
   })
 
   window.addEventListener('keydown', (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault()
+      shell.find.focus()
+      shell.find.select()
+      return
+    }
     if (event.key !== 'Escape') return
+    if (!shell.findList.hidden) {
+      shell.findList.hidden = true
+      event.stopPropagation()
+      return
+    }
     const open = panel !== null || !shell.output.hidden || !shell.suggest.hidden || flight.moreOpen()
     if (!open) return
     shell.suggest.hidden = true
@@ -848,6 +1106,7 @@ export function boot(root: HTMLElement): void {
   globe.onClick((hit) => {
     audio.unlock()
     if (hit.marker) {
+      if (hit.marker.id === 'search:pin') return
       setTrack(hit.marker.id)
       audio.play('lock')
       return
@@ -1003,6 +1262,7 @@ export function boot(root: HTMLElement): void {
           : 'away'
     const next = pointerPanels({ panel, radar: settings.get().radar, sound: !settings.get().mute, viewer: viewer.isOpen() }, hit)
     if (hit === 'away' && !shell.suggest.hidden) shell.suggest.hidden = true
+    if (!target.closest('.ae-find')) shell.findList.hidden = true
     if (hit === 'away' && panel !== 'cfg' && !shell.output.hidden && next.panel === null) shell.output.hidden = true
     if (next.panel !== panel) openPanel(next.panel)
   })

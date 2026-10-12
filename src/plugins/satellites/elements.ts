@@ -73,7 +73,7 @@ export function viewerShape(name: string, group: SatGroup): string {
   const text = name.toUpperCase()
   if (/ISS|ZARYA|TIANHE|TIANGONG/.test(text)) return 'sat-station'
   if (/HST|HUBBLE/.test(text)) return 'sat-scope'
-  if (group === 'starlink' || text.startsWith('STARLINK')) return 'sat-comms'
+  if (group === 'starlink' || text.startsWith('STARLINK')) return 'sat-starlink'
   if (group === 'gnss') return 'sat-nav'
   if (group === 'weather') return 'sat-wx'
   if (group === 'science') return 'sat-science'

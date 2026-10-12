@@ -74,7 +74,7 @@ describe('other contact sprites', () => {
     expect(satSprite('ISS (ZARYA)', 'stations')).toBe('sat-station')
     expect(satSprite('GPS BIIR-2', 'gps-ops')).toBe('sat-nav')
     expect(satSprite('NOAA 19', 'weather')).toBe('sat-wx')
-    expect(satSprite('STARLINK-100', 'starlink')).toBe('sat-comms')
+    expect(satSprite('STARLINK-100', 'starlink')).toBe('sat-starlink')
     expect(satSprite('HST', 'visual')).toBe('sat-scope')
     expect(satSprite('COSMOS 2251 DEB', 'visual')).toBe('sat-debris')
     expect(classifyShip(70)).toEqual({ sprite: 'ship-cargo', name: 'CARGO' })

@@ -34,6 +34,16 @@ export const systemPlugin: AllEyesPlugin = {
       },
     },
     {
+      name: 'go',
+      usage: 'go <query>',
+      summary: 'Search a place, flight, ship, or satellite',
+      async run(args, ctx) {
+        const query = args.join(' ').trim()
+        if (!query) return 'USAGE: GO <QUERY>'
+        return ctx.go(query)
+      },
+    },
+    {
       name: 'fly',
       usage: 'fly <place>',
       summary: 'Fly to a city or place',

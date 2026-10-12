@@ -5,6 +5,10 @@ export interface PlaceHit {
   lon: number
   label: string
   population: string | null
+  /** Nominatim addresstype or type, when the feed sent one. */
+  kind: string | null
+  /** Nominatim class, when the feed sent one. */
+  klass: string | null
 }
 
 export interface MeteoNow {
@@ -41,6 +45,9 @@ export function parseNominatimAll(payload: unknown): PlaceHit[] {
       lon?: unknown
       display_name?: unknown
       name?: unknown
+      addresstype?: unknown
+      class?: unknown
+      type?: unknown
       address?: { city?: string; town?: string; village?: string; state?: string }
       extratags?: { population?: unknown }
     }
@@ -50,7 +57,9 @@ export function parseNominatimAll(payload: unknown): PlaceHit[] {
     const place = row.address?.city || row.address?.town || row.address?.village
     const label = String(row.display_name || row.name || place || `${lat.toFixed(2)}, ${lon.toFixed(2)}`)
     const population = row.extratags?.population != null ? String(row.extratags.population) : null
-    out.push({ lat, lon, label, population })
+    const kind = String(row.addresstype || row.type || '').trim().toLowerCase() || null
+    const klass = String(row.class || '').trim().toLowerCase() || null
+    out.push({ lat, lon, label, population, kind, klass })
   }
   return out
 }

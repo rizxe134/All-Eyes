@@ -26,6 +26,11 @@ export const LAYER_COLORS: Record<string, string> = {
   beacons: '#c6ff4a',
   transit: '#7dffb3',
   poi: '#ffd36a',
+  imagery: '#9ecbff',
+  buildings: '#e4d2b0',
+  roads: '#f4f1ea',
+  traffic: '#8dff6a',
+  searchpin: '#c6ff4a',
 }
 
 /** Short legend. Satellite families share the cyan family; Starlink is called out. */

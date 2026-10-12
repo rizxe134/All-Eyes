@@ -71,6 +71,7 @@ const NAMES: Record<string, string> = {
   'sat-station': 'space station',
   'sat-scope': 'space telescope',
   'sat-comms': 'communications satellite',
+  'sat-starlink': 'Starlink satellite',
   'sat-debris': 'debris',
 }
 

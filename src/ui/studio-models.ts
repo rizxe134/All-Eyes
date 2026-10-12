@@ -468,7 +468,7 @@ export function buildProcedural(id: string): THREE.Group {
   if (id.startsWith('ship-')) return buildShip(id)
   if (id === 'sat-station') return buildStation()
   if (id === 'sat-scope') return buildScope()
-  if (id === 'sat-comms') return buildCommsSat()
+  if (id === 'sat-comms' || id === 'sat-starlink') return buildCommsSat()
   if (id === 'sat-debris') return buildDebris()
   if (id.startsWith('ico-') || id === 'dot' || id === 'chevron' || id === 'diamond' || id === 'ring' || id === 'box' || id === 'drop') {
     return buildMarker(id)

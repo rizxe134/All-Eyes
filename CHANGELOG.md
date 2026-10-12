@@ -2,6 +2,12 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 2.2.0
+
+- Search sits at the top of the layer dock. Ctrl+K or Cmd+K focuses it, and `go <query>` does the same from the command line. It takes a street address, city, landmark, airport code, country, postcode, or coordinates in decimal or degrees-minutes-seconds, then flies there and drops a pin. Suggestions appear as you type. Places, flights, ships, and satellites are grouped. Photon is tried first, then Open-Meteo, then Nominatim at one request per second. A MapTiler or Mapbox key in CFG is used only when you have set one.
+- A flight number such as DL123, AA 100, or UA2402 is turned into the ICAO callsign and looked up on the live aircraft list. If that aircraft is not loaded, the callsign feeds are asked directly. The camera follows it and the flight panel opens. The dashed route runs from the origin through the current position to the destination, with progress, distance flown, distance remaining, and an ETA marked EST from the ground speed. If the flight is not airborne, the panel says NOT CURRENTLY TRACKED and shows the route only when adsbdb has it. Airline prefixes come from OpenFlights under the Open Database License.
+- The layer list and the LEGEND use the same sprites as the globe: aircraft, ground, satellite classes, Starlink, ships, quakes, storms, weather, launches, events, beacons, and the city layers. Each legend row has a one-line meaning, plus the selection ring, the solid track, and the dashed route.
+
 ## 2.1.2
 
 - The top-bar buttons toggle. CFG, LINK, SHOT, LEGEND, and MORE open on the first click and close on the second. The open button stays lit. Escape closes the open panel. A click outside closes a small popover, and a click on the globe still selects a contact. Opening one panel closes the others. SND stays the mute switch, lit while sound is on. The settings panel has an X and sits beside the model viewer with its own scroll.

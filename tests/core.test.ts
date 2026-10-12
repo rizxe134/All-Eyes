@@ -19,6 +19,7 @@ function fakeCtx(over: Partial<CommandContext> = {}): CommandContext {
     layers: () => [],
     searchPlace: async () => null,
     findContact: () => null,
+    go: async () => '',
     contacts: () => [],
     setTimeMinutes() {},
     getTimeMinutes: () => 0,

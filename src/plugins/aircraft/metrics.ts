@@ -134,6 +134,43 @@ export function estimateAirspeeds(gsKt: number, altFt: number): AirEstimates {
   return { tasKt: Math.max(0, gsKt), iasKt, mach }
 }
 
+const KT_TO_KMH = 1.852
+
+export interface RouteSpan {
+  flownKm: number
+  remainKm: number
+  progress: number | null
+}
+
+/** Distance already flown, distance left, and the fraction of the path. */
+export function routeSpan(
+  originLat: number,
+  originLon: number,
+  lat: number,
+  lon: number,
+  destLat: number,
+  destLon: number,
+): RouteSpan {
+  const flownKm = distanceKm(originLat, originLon, lat, lon)
+  const remainKm = distanceKm(lat, lon, destLat, destLon)
+  return { flownKm, remainKm, progress: routeProgress(originLat, originLon, lat, lon, destLat, destLon) }
+}
+
+/**
+ * Clock time at the destination from ground speed and the remaining great-circle distance.
+ * Null when the speed is missing or too slow to mean a cruise. The caller labels it EST.
+ */
+export function etaFromGroundSpeed(remainKm: number, gsKt: number | null, now = Date.now()): string | null {
+  if (gsKt == null || !Number.isFinite(gsKt) || gsKt < 40) return null
+  if (!Number.isFinite(remainKm) || remainKm < 1) return null
+  const hours = remainKm / (gsKt * KT_TO_KMH)
+  if (!Number.isFinite(hours) || hours <= 0 || hours > 30) return null
+  const eta = new Date(now + hours * 3_600_000)
+  const hh = String(eta.getUTCHours()).padStart(2, '0')
+  const mm = String(eta.getUTCMinutes()).padStart(2, '0')
+  return `${hh}:${mm}Z`
+}
+
 export function routeProgress(
   originLat: number,
   originLon: number,

@@ -7,8 +7,9 @@ import {
   countryFromHex,
   countryFromReg,
   estimateAirspeeds,
+  etaFromGroundSpeed,
   flightLevel,
-  routeProgress,
+  routeSpan,
   trackCompass,
 } from './metrics'
 import type { AirFix } from './parse'
@@ -90,9 +91,11 @@ export function formatFlight(fix: AirFix, meta: AirMeta | undefined, unit: Speed
   const typeName = meta?.typeName || fix.desc || glyph.name
   const origin = airport(meta?.origin || '', meta?.originCity, meta?.originLat, meta?.originLon)
   const dest = airport(meta?.destination || '', meta?.destCity, meta?.destLat, meta?.destLon)
-  const progress = origin.lat != null && origin.lon != null && dest.lat != null && dest.lon != null
-    ? routeProgress(origin.lat, origin.lon, fix.lat, fix.lon, dest.lat, dest.lon)
+  const span = origin.lat != null && origin.lon != null && dest.lat != null && dest.lon != null
+    ? routeSpan(origin.lat, origin.lon, fix.lat, fix.lon, dest.lat, dest.lon)
     : null
+  const progress = span?.progress ?? null
+  const eta = span ? etaFromGroundSpeed(span.remainKm, fix.onGround ? null : fix.speedKt, now) : null
   const baro = fix.altBaroFt
   const gps = fix.altGpsFt
   const est = estimateAirspeeds(fix.speedKt, baro ?? gps ?? 0)
@@ -115,6 +118,10 @@ export function formatFlight(fix: AirFix, meta: AirMeta | undefined, unit: Speed
     { k: 'MACH', v: fix.mach != null ? fix.mach.toFixed(2) : `${est.mach.toFixed(2)} EST` },
     { k: 'SQUAWK', v: fix.squawk || NA },
     { k: 'POSITION', v: `${fix.lat.toFixed(3)} ${fix.lon.toFixed(3)}` },
+    { k: 'FLOWN', v: span ? `${Math.round(span.flownKm)} KM` : NA },
+    { k: 'REMAINING', v: span ? `${Math.round(span.remainKm)} KM` : NA },
+    { k: 'PROGRESS', v: progress == null ? NA : `${Math.round(progress * 100)}%` },
+    { k: 'ETA', v: eta ? `${eta} EST` : NA },
     { k: 'LAST SEEN', v: seen },
   ]
   return {
@@ -131,7 +138,33 @@ export function formatFlight(fix: AirFix, meta: AirMeta | undefined, unit: Speed
     photoUrl: meta?.photoUrl || '',
     photoLink: meta?.photoLink || '',
     photoCredit: meta?.photoCredit || '',
+    times: [
+      { k: 'SCHED', v: NA },
+      { k: 'ACTUAL', v: NA },
+      { k: 'EST', v: eta ?? NA },
+    ],
   }
+}
+
+/** Origin through the current fix to the destination. Falls back to the known end only. */
+export function routeLine(
+  lat: number,
+  lon: number,
+  meta: AirMeta | undefined,
+): { lat: number; lon: number }[] | null {
+  if (!meta) return null
+  const dest = meta.destination ? airport(meta.destination, meta.destCity, meta.destLat, meta.destLon) : null
+  const origin = meta.origin ? airport(meta.origin, meta.originCity, meta.originLat, meta.originLon) : null
+  const hasDest = dest?.lat != null && dest.lon != null
+  const hasOrigin = origin?.lat != null && origin.lon != null
+  if (hasOrigin && hasDest && origin && dest) {
+    const flown = greatCircle(origin.lat!, origin.lon!, lat, lon, 18)
+    const left = greatCircle(lat, lon, dest.lat!, dest.lon!, 18)
+    return [...flown, ...left.slice(1)]
+  }
+  if (hasDest && dest) return greatCircle(lat, lon, dest.lat!, dest.lon!, 28)
+  if (hasOrigin && origin) return greatCircle(origin.lat!, origin.lon!, lat, lon, 18)
+  return null
 }
 
 export function routeAhead(

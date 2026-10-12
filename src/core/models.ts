@@ -378,6 +378,7 @@ const builders: Record<string, () => THREE.BufferGeometry> = {
   'sat-nav': satNav,
   'sat-wx': satWx,
   'sat-comms': satComms,
+  'sat-starlink': satComms,
   'sat-science': satScience,
   'sat-scope': satScope,
   'sat-debris': satDebris,
@@ -409,6 +410,7 @@ const spins: Record<string, ModelSpin> = {
   'sat-nav': 'yaw',
   'sat-wx': 'yaw',
   'sat-comms': 'yaw',
+  'sat-starlink': 'yaw',
   'sat-science': 'yaw',
   'sat-debris': 'yaw',
 }

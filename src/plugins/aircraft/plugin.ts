@@ -2,7 +2,7 @@ import { ageLabel, formatCard, withSpeed } from '../../core/cards'
 import type { AllEyesPlugin, CardField, Contact, SpeedUnit } from '../../core/types'
 import { getJson } from '../../net/http'
 import { pitchDeg } from '../../core/models'
-import { routeAhead } from './detail'
+import { routeLine } from './detail'
 import { mergeAirMeta, parseAdsbDb, parseAdsbRoute, parseSpotters, readAirCache, writeAirCache, type AirMeta } from './lookup'
 import {
   FEED_SOURCES,
@@ -53,6 +53,15 @@ const lookedPhoto = new Set<string>()
 const trails = new Map<string, Sample[]>()
 let showAhead = true
 let repaintTrail = () => {}
+let acceptFixes: ((fixes: AirFix[]) => void) | null = null
+const queuedFixes: AirFix[] = []
+
+/** Drop a callsign lookup into the live set, even if that hex was outside the camera sweep. */
+export function ingestAirFixes(fixes: AirFix[]): void {
+  if (!fixes.length) return
+  if (acceptFixes) acceptFixes(fixes)
+  else queuedFixes.push(...fixes)
+}
 
 export function airTrail(icao: string): readonly Sample[] {
   return trails.get(icao) ?? []
@@ -237,7 +246,7 @@ export const aircraftPlugin: AllEyesPlugin = {
             altKm: alt(sample),
           })))
           const fix = row[row.length - 1]
-          const ahead = showAhead && fix ? routeAhead(fix.lat, fix.lon, airMeta.get(hex)) : null
+          const ahead = showAhead && fix ? routeLine(fix.lat, fix.lon, airMeta.get(hex)) : null
           const height = fix ? alt(fix) : 8
           ctx.globe.setRoute(ahead ? ahead.map((point) => ({ ...point, altKm: height })) : null)
         }
@@ -427,6 +436,13 @@ export const aircraftPlugin: AllEyesPlugin = {
           timer = 0
           drift = 0
         }
+        acceptFixes = (fixes) => {
+          const stamped = Date.now()
+          remember(fixes, stamped)
+          held = mergeHeldAged(held, fixes, stamped, () => FAR_STALE_MS)
+          if (airOn || gndOn) publish()
+        }
+        if (queuedFixes.length) acceptFixes(queuedFixes.splice(0))
         republish = publish
         armPoll = arm
         disarmPoll = disarm
@@ -464,6 +480,7 @@ export const aircraftPlugin: AllEyesPlugin = {
             republish = () => {}
             armPoll = () => {}
             disarmPoll = () => {}
+            acceptFixes = null
             offClock()
             offTrack()
             offHover()
