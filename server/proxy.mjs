@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 
-const UA = 'AllEyes/2.1.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/2.1.1 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',

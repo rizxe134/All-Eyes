@@ -2,6 +2,11 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 2.1.1
+
+- Street imagery sat in the wrong place. The tile bitmaps ignore the usual GPU flip, so each tile was drawn with north and south swapped and the photo drifted off the buildings and roads as the camera moved. Tiles are now oriented north-up and draped on the Web Mercator latitude, so the image lines up with the OpenStreetMap footprints.
+- Place names were doubled by the CRT fringe. At city scale (55 km and closer) the overlay, including the red/cyan color shift, is off. Hybrid still draws one Esri label layer. Streets and dark do not add a second one.
+
 ## 2.1.0
 
 - Zooming into a city no longer crashes the Mac app. 2.0.0 built the street-tile list by stepping the zoom *in* when the view already needed more than 12 tiles. Each step quadrupled the list, so one frame around 900–1,500 km allocated tens of millions of tile records on the renderer thread (about 195 million at 1,500 km) and V8 aborted. The same view now steps *out* to coarser tiles and never builds more than 12.

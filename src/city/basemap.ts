@@ -10,6 +10,9 @@ export interface BasemapKeys {
 
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services'
 
+/** Raster tiles are 256 px. A 512 px or `@2x` request is a different zoom and would shift the drape. */
+export const TILE_PX = 256
+
 export function parseBasemapMode(value: string): BasemapMode | null {
   const text = value.toLowerCase()
   if (text === 'sat' || text === 'satellite' || text === 'imagery' || text === 'aerial') return 'sat'
@@ -37,15 +40,15 @@ function carto(style: string, z: number, x: number, y: number): string {
 
 function maptiler(mode: BasemapMode, z: number, x: number, y: number, key: string): string {
   const token = encodeURIComponent(key)
-  if (mode === 'streets') return `https://api.maptiler.com/maps/streets-v2/256/${z}/${x}/${y}.png?key=${token}`
-  if (mode === 'dark') return `https://api.maptiler.com/maps/basic-v2-dark/256/${z}/${x}/${y}.png?key=${token}`
-  if (mode === 'hybrid') return `https://api.maptiler.com/maps/hybrid/256/${z}/${x}/${y}.jpg?key=${token}`
+  if (mode === 'streets') return `https://api.maptiler.com/maps/streets-v2/${TILE_PX}/${z}/${x}/${y}.png?key=${token}`
+  if (mode === 'dark') return `https://api.maptiler.com/maps/basic-v2-dark/${TILE_PX}/${z}/${x}/${y}.png?key=${token}`
+  if (mode === 'hybrid') return `https://api.maptiler.com/maps/hybrid/${TILE_PX}/${z}/${x}/${y}.jpg?key=${token}`
   return `https://api.maptiler.com/tiles/satellite-v2/${z}/${x}/${y}.jpg?key=${token}`
 }
 
 function mapbox(mode: BasemapMode, z: number, x: number, y: number, key: string): string {
   const style = mode === 'streets' ? 'streets-v12' : mode === 'dark' ? 'dark-v11' : mode === 'hybrid' ? 'satellite-streets-v12' : 'satellite-v9'
-  return `https://api.mapbox.com/styles/v1/mapbox/${style}/tiles/256/${z}/${x}/${y}?access_token=${encodeURIComponent(key)}`
+  return `https://api.mapbox.com/styles/v1/mapbox/${style}/tiles/${TILE_PX}/${z}/${x}/${y}?access_token=${encodeURIComponent(key)}`
 }
 
 export interface TileStack {
@@ -58,6 +61,11 @@ export function effectiveSource(source: BasemapSource, keys: BasemapKeys): Basem
   if (source === 'maptiler' && keys.maptiler) return 'maptiler'
   if (source === 'mapbox' && keys.mapbox) return 'mapbox'
   return 'free'
+}
+
+/** Extra label rasters drawn on top of the base tile. At most one, and only for free hybrid. */
+export function labelLayerCount(mode: BasemapMode, source: BasemapSource, keys: BasemapKeys): number {
+  return tileStack(mode, source, keys, 0, 0, 0).overlay ? 1 : 0
 }
 
 export function tileStack(mode: BasemapMode, source: BasemapSource, keys: BasemapKeys, z: number, x: number, y: number): TileStack {

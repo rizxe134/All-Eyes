@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { cameraNear, crtForZoom, MIN_RANGE_KM } from '../src/core/range'
-import { basemapCredit, effectiveSource, parseBasemapMode, tileStack } from '../src/city/basemap'
+import { TILE_PX, basemapCredit, effectiveSource, labelLayerCount, parseBasemapMode, tileStack } from '../src/city/basemap'
 import { buildingHeightM, cityQuery, parseOverpass } from '../src/city/overpass'
-import { latToTileY, lonToTileX, tileBounds, tileFootprintCount, tilesForView, zoomForRange } from '../src/city/mercator'
+import { drapeVertex, imageryPoint, latToTileY, lonToTileX, tileBounds, tileFootprintCount, tileGridRows, tileXToLon, tileYToLat, tilesForView, wrapTileX, zoomForRange } from '../src/city/mercator'
 import { MAX_BUILDINGS, MAX_OVERPASS_ELEMENTS, MAX_VEHICLES, allowRecover, createArmFlag, heapAction, keysToEvict, rendererAction, viewMoved } from '../src/city/budget'
 import { simulateTraffic } from '../src/city/traffic'
 import { localClock, parseAir, parseFiTrains, parseHereFlow, parseMbta, parseMeteo, parseNominatim, parseNominatimAll, parseTomTomFlow, weatherWord } from '../src/city/feeds'
@@ -62,6 +62,83 @@ describe('mercator tiles', () => {
       expect(street.length).toBeGreaterThan(0)
     }
   })
+
+  it('round-trips landmarks through mercator xyz at street zoom', () => {
+    const marks = [
+      [33.749, -84.388],
+      [40.758, -73.9855],
+      [48.8584, 2.2945],
+    ] as const
+    for (const [lat, lon] of marks) {
+      for (const z of [12, 15, 18]) {
+        const x = lonToTileX(lon, z)
+        const y = latToTileY(lat, z)
+        const xi = Math.floor(x)
+        const yi = Math.floor(y)
+        const back = imageryPoint(z, xi, yi, x - xi, 1 - (y - yi))
+        expect(back.lat).toBeCloseTo(lat, 5)
+        expect(back.lon).toBeCloseTo(lon, 5)
+        expect(tileXToLon(x, z)).toBeCloseTo(lon, 5)
+        expect(tileYToLat(y, z)).toBeCloseTo(lat, 5)
+        const box = tileBounds(z, xi, yi)
+        expect(lat).toBeGreaterThan(box.south)
+        expect(lat).toBeLessThan(box.north)
+      }
+    }
+  })
+
+  it('drapes the tile center on the mercator latitude, not the linear midpoint', () => {
+    const z = 8
+    const y = Math.floor(latToTileY(48.8584, z))
+    const x = Math.floor(lonToTileX(2.2945, z))
+    const rows = tileGridRows(z)
+    const mid = drapeVertex(z, x, y, rows / 2, rows / 2, rows)
+    const box = tileBounds(z, x, y)
+    const linear = (box.north + box.south) / 2
+    expect(mid.lat).toBeCloseTo(tileYToLat(y + 0.5, z), 8)
+    expect(Math.abs(mid.lat - linear) * 111320).toBeGreaterThan(20)
+    expect(mid.v).toBeCloseTo(0.5)
+    expect(mid.u).toBeCloseTo(0.5)
+    expect(tileGridRows(18)).toBe(4)
+    expect(TILE_PX).toBe(256)
+  })
+
+  it('wraps tile x across the antimeridian and still caps the list', () => {
+    expect(wrapTileX(-1, 4)).toBe(15)
+    expect(wrapTileX(16, 4)).toBe(0)
+    const tiles = tilesForView(0, 179.95, 20, 12)
+    expect(tiles.length).toBeGreaterThan(0)
+    expect(tiles.length).toBeLessThanOrEqual(12)
+    const z = tiles[0].z
+    const n = 2 ** z
+    expect(tiles.every((tile) => tile.z === z)).toBe(true)
+    expect(tiles.some((tile) => tile.x <= 1)).toBe(true)
+    expect(tiles.some((tile) => tile.x >= n - 2)).toBe(true)
+  })
+
+  it('keeps one zoom under a landmark while the camera pans', () => {
+    const spots = [
+      [33.749, -84.388],
+      [40.758, -73.9855],
+      [48.8584, 2.2945],
+    ] as const
+    for (const [lat, lon] of spots) {
+      for (const range of [40, 8, 0.45]) {
+        for (const shift of [0, 0.00015, -0.00015]) {
+          const tiles = tilesForView(lat, lon + shift, range, 12)
+          expect(tiles.length).toBeLessThanOrEqual(12)
+          expect(new Set(tiles.map((tile) => tile.z)).size).toBe(1)
+          const z = tiles[0].z
+          const x = Math.floor(lonToTileX(lon, z))
+          const y = Math.floor(latToTileY(lat, z))
+          expect(tiles.some((tile) => tile.x === x && tile.y === y)).toBe(true)
+          const hit = imageryPoint(z, x, y, lonToTileX(lon, z) - x, 1 - (latToTileY(lat, z) - y))
+          expect(hit.lat).toBeCloseTo(lat, 5)
+          expect(hit.lon).toBeCloseTo(lon, 5)
+        }
+      }
+    }
+  })
 })
 
 describe('basemap', () => {
@@ -71,6 +148,29 @@ describe('basemap', () => {
     expect(stack.overlay).toContain('World_Reference_Overlay')
     expect(basemapCredit('hybrid', 'free')).toContain('Esri')
     expect(parseBasemapMode('satellite')).toBe('sat')
+  })
+
+  it('draws at most one label layer, and never stacks CARTO on the Esri overlay', () => {
+    const keys = { maptiler: '', mapbox: '' }
+    expect(labelLayerCount('hybrid', 'free', keys)).toBe(1)
+    expect(labelLayerCount('sat', 'free', keys)).toBe(0)
+    expect(labelLayerCount('streets', 'free', keys)).toBe(0)
+    expect(labelLayerCount('dark', 'free', keys)).toBe(0)
+    expect(labelLayerCount('hybrid', 'maptiler', { maptiler: 'k', mapbox: '' })).toBe(0)
+    expect(labelLayerCount('hybrid', 'mapbox', { maptiler: '', mapbox: 'k' })).toBe(0)
+    const hybrid = tileStack('hybrid', 'free', keys, 16, 100, 200)
+    const streets = tileStack('streets', 'free', keys, 16, 100, 200)
+    expect(hybrid.overlay).toContain('World_Reference_Overlay/MapServer/tile/16/200/100')
+    expect(hybrid.base).toContain('World_Imagery/MapServer/tile/16/200/100')
+    expect(hybrid.base).not.toContain('carto')
+    expect(hybrid.overlay).not.toContain('carto')
+    expect(streets.overlay).toBeNull()
+    expect(streets.base).toContain('/16/100/200.png')
+    for (const mode of ['sat', 'streets', 'hybrid', 'dark'] as const) {
+      const stack = tileStack(mode, 'free', keys, 15, 3, 4)
+      expect([stack.base, stack.overlay].filter(Boolean).join(' ')).not.toMatch(/@2x|\/512\//)
+      expect(labelLayerCount(mode, 'free', keys)).toBeLessThanOrEqual(1)
+    }
   })
 
   it('keeps Mapbox off until that source is selected and a token is present', () => {
@@ -212,10 +312,13 @@ describe('street zoom clip and crt', () => {
     expect(near).toBeGreaterThan(0)
   })
 
-  it('eases the CRT overlay as range falls, without changing the stored value', () => {
+  it('turns the CRT overlay off at city scale, without changing the stored value', () => {
     expect(crtForZoom(0.4, 800)).toBeCloseTo(0.4)
-    expect(crtForZoom(0.4, 0.4)).toBeLessThan(0.1)
-    expect(crtForZoom(0.4, 0.4)).toBeGreaterThan(0)
+    expect(crtForZoom(0.4, 140)).toBeCloseTo(0.4)
+    expect(crtForZoom(0.4, 97.5)).toBeCloseTo(0.2)
+    expect(crtForZoom(0.4, 55)).toBe(0)
+    expect(crtForZoom(0.4, 0.4)).toBe(0)
+    expect(crtForZoom(1, 12)).toBe(0)
   })
 })
 

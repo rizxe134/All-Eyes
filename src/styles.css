@@ -643,7 +643,15 @@ button { cursor: pointer; }
   mix-blend-mode: multiply;
   animation: ae-globe-flicker 2.8s steps(2, end) infinite;
 }
-.ae-globe-crt.is-off { opacity: 0; animation: none; }
+.ae-globe-crt.is-off,
+.ae-globe-crt.is-off::before,
+.ae-globe-crt.is-off::after {
+  opacity: 0;
+  animation: none;
+  background: none;
+  box-shadow: none;
+  mix-blend-mode: normal;
+}
 .ae-globe-crt::before {
   content: "";
   position: absolute;

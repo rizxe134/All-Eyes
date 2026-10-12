@@ -15,10 +15,14 @@ export function cameraNear(camDist: number, radius: number): number {
   return Math.min(wide, Math.max(0.00004, alt * 0.18))
 }
 
-/** Stored CRT stays put. Street zoom eases the overlay so imagery stays readable. */
+/**
+ * Stored CRT stays put. From 140 km down to a city (55 km) the overlay fades
+ * to zero, including the RGB phosphor dots and the red/cyan fringe. Closer
+ * than that the overlay is off so street labels are not doubled.
+ */
 export function crtForZoom(base: number, rangeKm: number): number {
   const stored = Math.min(1, Math.max(0, base))
   if (rangeKm >= 140) return stored
-  const t = Math.max(0, rangeKm) / 140
-  return stored * (0.12 + 0.88 * t)
+  if (rangeKm <= 55) return 0
+  return stored * ((rangeKm - 55) / (140 - 55))
 }

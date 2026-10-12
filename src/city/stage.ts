@@ -6,7 +6,7 @@ import type { ViewState } from '../core/types'
 import { OSM_CREDIT, basemapCredit, effectiveSource, tileStack, type BasemapKeys, type BasemapMode, type BasemapSource } from './basemap'
 import { MAX_RESIDENT_TEXTURES, MAX_TILE_FETCHES, MAX_TILE_QUEUE, MAX_TILES, MAX_TILES_LOW, MAX_VEHICLES, keysToEvict } from './budget'
 import { tileCacheGet, tileCachePut } from './cache'
-import { tileBounds, tilesForView, type TileId } from './mercator'
+import { drapeVertex, tileGridRows, tilesForView, type TileId } from './mercator'
 import type { CityBuilding, CityRoad, CityVectors } from './overpass'
 import { simulateTraffic } from './traffic'
 
@@ -177,7 +177,14 @@ export class CityStage {
         mat.map = tex
         mat.needsUpdate = true
       }
-    } else this.enqueue(url)
+    } else {
+      // Drop a texture from another zoom or basemap instead of leaving it on this mesh.
+      if (mat.map) {
+        mat.map = null
+        mat.needsUpdate = true
+      }
+      this.enqueue(url)
+    }
     return id
   }
 
@@ -218,16 +225,23 @@ export class CityStage {
         void tileCachePut(url, blob)
       }
       if (signal.aborted || !this.wantedUrls.has(url)) return
-      const bitmap = await createImageBitmap(blob)
+      // ImageBitmap uploads ignore UNPACK_FLIP_Y, so the default flip leaves the
+      // tile upside down (north imagery on the south edge). Pre-flip the bitmap
+      // and leave flipY off. No mipmaps: they blur place-name text.
+      const bitmap = await createImageBitmap(blob, { imageOrientation: 'flipY' })
       if (signal.aborted || !this.wantedUrls.has(url)) {
         bitmap.close()
         return
       }
       const tex = new THREE.Texture(bitmap)
+      tex.flipY = false
       tex.colorSpace = THREE.SRGBColorSpace
       tex.magFilter = THREE.LinearFilter
       tex.minFilter = THREE.LinearFilter
       tex.generateMipmaps = false
+      tex.anisotropy = 1
+      tex.wrapS = THREE.ClampToEdgeWrapping
+      tex.wrapT = THREE.ClampToEdgeWrapping
       tex.needsUpdate = true
       const prev = this.textures.get(url)
       if (prev) disposeTexture(prev)
@@ -386,19 +400,16 @@ function tileMaterial(overlay: boolean): THREE.MeshBasicMaterial {
 }
 
 function tileGeometry(tile: TileId): THREE.BufferGeometry {
-  const bounds = tileBounds(tile.z, tile.x, tile.y)
-  const rows = 4
+  const rows = tileGridRows(tile.z)
   const positions: number[] = []
   const uvs: number[] = []
   const indices: number[] = []
   for (let r = 0; r <= rows; r++) {
-    const lat = bounds.north + ((bounds.south - bounds.north) * r) / rows
-    const v = 1 - r / rows
     for (let c = 0; c <= rows; c++) {
-      const lon = bounds.west + ((bounds.east - bounds.west) * c) / rows
-      const p = latLonToVec(lat, lon, TILE_LIFT_M / 1000, R)
+      const vert = drapeVertex(tile.z, tile.x, tile.y, r, c, rows)
+      const p = latLonToVec(vert.lat, vert.lon, TILE_LIFT_M / 1000, R)
       positions.push(p.x, p.y, p.z)
-      uvs.push(c / rows, v)
+      uvs.push(vert.u, vert.v)
     }
   }
   const stride = rows + 1
