@@ -7,12 +7,13 @@ const RECENT_KEY = 'alleyes.find.v1'
 const TTL = 12 * 60 * 60 * 1000
 const memory = new Map<string, { at: number; hits: GeoHit[] }>()
 
-function keyOf(query: string): string {
-  return query.trim().toLowerCase()
+function keyOf(query: string, scope = ''): string {
+  const text = query.trim().toLowerCase()
+  return scope ? `${text}|${scope}` : text
 }
 
-export function geoCacheGet(query: string, now = Date.now()): GeoHit[] | null {
-  const key = keyOf(query)
+export function geoCacheGet(query: string, now = Date.now(), scope = ''): GeoHit[] | null {
+  const key = keyOf(query, scope)
   if (!key) return null
   const mem = memory.get(key)
   if (mem && now - mem.at < TTL) return mem.hits
@@ -30,8 +31,8 @@ export function geoCacheGet(query: string, now = Date.now()): GeoHit[] | null {
   }
 }
 
-export function geoCachePut(query: string, hits: GeoHit[], now = Date.now()): void {
-  const key = keyOf(query)
+export function geoCachePut(query: string, hits: GeoHit[], now = Date.now(), scope = ''): void {
+  const key = keyOf(query, scope)
   if (!key || !hits.length) return
   memory.set(key, { at: now, hits })
   try {

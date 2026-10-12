@@ -27,6 +27,7 @@ export interface Shell {
   suggest: HTMLElement
   output: HTMLElement
   find: HTMLInputElement
+  findGhost: HTMLElement
   findList: HTMLElement
   findCard: HTMLElement
   track: HTMLElement
@@ -90,19 +91,25 @@ export function buildShell(root: HTMLElement): Shell {
 
   const dock = el('div', 'ae-dock')
   const findForm = el('form', 'ae-find') as HTMLFormElement
+  const findBox = el('div', 'ae-find-box')
+  const findGhost = el('div', 'ae-find-ghost')
+  findGhost.hidden = true
+  findGhost.setAttribute('aria-hidden', 'true')
   const find = el('input', 'ae-find-input') as HTMLInputElement
-  find.type = 'search'
+  find.type = 'text'
   find.autocomplete = 'off'
   find.spellcheck = false
   find.placeholder = 'Search place, flight, ship, satellite'
   find.setAttribute('aria-label', 'Search the world')
   find.setAttribute('aria-keyshortcuts', 'Control+K Meta+K')
+  find.setAttribute('aria-autocomplete', 'list')
+  findBox.append(findGhost, find)
   const findList = el('div', 'ae-find-list')
   findList.hidden = true
   findList.setAttribute('role', 'listbox')
   const findCard = el('div', 'ae-find-card')
   findCard.hidden = true
-  findForm.append(find, findList, findCard)
+  findForm.append(findBox, findList, findCard)
   const layers = el('aside', 'ae-layers')
   const legend = el('details', 'ae-legend') as HTMLDetailsElement
   const legendSummary = el('summary', '', 'LEGEND')
@@ -324,6 +331,7 @@ export function buildShell(root: HTMLElement): Shell {
     suggest,
     output,
     find,
+    findGhost,
     findList,
     findCard,
     track,

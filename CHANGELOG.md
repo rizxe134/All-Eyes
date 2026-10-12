@@ -2,6 +2,11 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 2.2.1
+
+- Address suggestions appear as you type, after a short pause, and a newer keystroke cancels the previous lookup. Photon is biased toward the camera. A house and street rank above a city. Each row shows the house number, street, city, state, and country. Arrow keys and Enter pick a row. Tab fills the top guess, and the rest of that guess sits in the field as dim text.
+- A full US address is read as house, street, city, state, and ZIP, then checked with Photon, Nominatim, and the US Census geocoder. The camera flies to the house. The card says EXACT when the point is the building, INTERPOLATED when the Census range placed it on the block, or STREET ONLY / CITY ONLY when that is all that matched. If the house is not found, the card says NO EXACT MATCH and the closest rows stay in the list.
+
 ## 2.2.0
 
 - Search sits at the top of the layer dock. Ctrl+K or Cmd+K focuses it, and `go <query>` does the same from the command line. It takes a street address, city, landmark, airport code, country, postcode, or coordinates in decimal or degrees-minutes-seconds, then flies there and drops a pin. Suggestions appear as you type. Places, flights, ships, and satellites are grouped. Photon is tried first, then Open-Meteo, then Nominatim at one request per second. A MapTiler or Mapbox key in CFG is used only when you have set one.

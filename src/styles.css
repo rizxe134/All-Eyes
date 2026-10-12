@@ -269,18 +269,39 @@ button { cursor: pointer; }
   pointer-events: auto;
   min-width: 0;
 }
+.ae-find-box {
+  position: relative;
+  background: #02150c;
+  border: 2px solid var(--line);
+}
+.ae-find-box:focus-within { border-color: var(--hot); }
+.ae-find-ghost {
+  position: absolute;
+  inset: 0;
+  padding: 4px 6px;
+  overflow: hidden;
+  white-space: pre;
+  pointer-events: none;
+  font-family: "Ae Term", monospace;
+  font-size: 16px;
+  line-height: 1.2;
+  color: transparent;
+}
+.ae-find-ghost[hidden] { display: none; }
+.ae-find-ghost-rest { color: #6f9a7c; }
 .ae-find-input {
+  position: relative;
   width: 100%;
   box-sizing: border-box;
   font-family: "Ae Term", monospace;
   font-size: 16px;
   line-height: 1.2;
   color: var(--ink);
-  background: #02150c;
-  border: 2px solid var(--line);
+  background: transparent;
+  border: 0;
   padding: 4px 6px;
 }
-.ae-find-input:focus { outline: none; border-color: var(--hot); }
+.ae-find-input:focus { outline: none; }
 .ae-find-list {
   position: absolute;
   z-index: 8;

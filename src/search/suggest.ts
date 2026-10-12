@@ -19,6 +19,7 @@ export interface FindHit {
   contactId?: string
   query?: string
   seek?: boolean
+  quality?: string
 }
 
 const SPRITE: Record<string, string> = {
@@ -35,7 +36,8 @@ function placeHit(row: GeoHit, index: number): FindHit {
     group: 'Places',
     key: `place:${index}:${row.lat.toFixed(3)}`,
     title: row.label,
-    detail: row.scale.toUpperCase(),
+    detail: row.quality ?? row.scale.toUpperCase(),
+    quality: row.quality,
     sprite: SPRITE[row.scale] ?? 'drop',
     layerId: 'poi',
     lat: row.lat,

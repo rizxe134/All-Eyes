@@ -27,7 +27,8 @@ import { parseAdsbRoute } from '../plugins/aircraft/lookup'
 import { airAheadOn, airFixNow, airMetaFor, airTrail, setAirAhead } from '../plugins/aircraft/plugin'
 import { seekAircraft } from '../plugins/aircraft/seek'
 import { pushRecent, readRecent } from '../search/cache'
-import { coordinateHit, geocodeQuery } from '../search/geocode'
+import { ghostSuffix, isFullUsAddress, parseAddress } from '../search/address'
+import { coordinateHit, geocodeQuery, resolveAddress } from '../search/geocode'
 import { matchContacts, suggestHits, type FindHit } from '../search/suggest'
 import { paintGlyph } from '../ui/glyph'
 import { formatShip, onShipDetail, shipDetailText, shipMeta, shipNow, shipTrackOn, shipTrail, toggleShipTrack } from '../plugins/ships/plugin'
@@ -590,6 +591,7 @@ export function boot(root: HTMLElement): void {
 
   let findHits: FindHit[] = []
   let findAt = 0
+  let findQuery = ''
   let findTimer = 0
   let findAbort = new AbortController()
 
@@ -598,11 +600,32 @@ export function boot(root: HTMLElement): void {
     shell.findCard.textContent = text
   }
 
+  function paintGhost() {
+    const typed = shell.find.value
+    const top = findHits.find((hit) => hit.group === 'Places')
+    const suffix = top && document.activeElement === shell.find ? ghostSuffix(typed, top.title) : ''
+    shell.findGhost.replaceChildren()
+    if (!suffix) {
+      shell.findGhost.hidden = true
+      return
+    }
+    shell.findGhost.hidden = false
+    const pad = document.createElement('span')
+    pad.className = 'ae-find-ghost-pad'
+    pad.textContent = typed
+    const rest = document.createElement('span')
+    rest.className = 'ae-find-ghost-rest'
+    rest.textContent = suffix
+    shell.findGhost.append(pad, rest)
+  }
+
   function paintFind(hits: FindHit[], keep = false) {
     findHits = hits
+    findQuery = shell.find.value.trim()
     if (!keep) findAt = 0
     if (findAt >= hits.length) findAt = 0
     shell.findList.replaceChildren()
+    paintGhost()
     if (!hits.length) {
       shell.findList.hidden = true
       return
@@ -706,13 +729,21 @@ export function boot(root: HTMLElement): void {
     return 'NOT CURRENTLY TRACKED'
   }
 
-  async function flyPlace(lat: number, lon: number, rangeKm: number, label: string): Promise<string> {
+  async function flyPlace(lat: number, lon: number, rangeKm: number, label: string, quality?: string): Promise<string> {
+    shell.findList.hidden = true
+    shell.findGhost.hidden = true
     armStreet(rangeKm)
     dropSearchPin(lat, lon)
     globe.flyTo(lat, lon, rangeKm)
     const range = rangeKm < 10 ? `${rangeKm.toFixed(2)} KM` : `${Math.round(rangeKm)} KM`
-    showFindCard(`${label}\n${lat.toFixed(4)}  ${lon.toFixed(4)}\n${range}`)
-    return `FLY ${label.toUpperCase()}`
+    const note = quality ? `\n${quality}` : ''
+    showFindCard(`${label}\n${lat.toFixed(4)}  ${lon.toFixed(4)}\n${range}${note}`)
+    return `FLY ${label.toUpperCase()}${quality ? ` ${quality}` : ''}`
+  }
+
+  function cameraBias() {
+    const view = globe.getView()
+    return { lat: view.lat, lon: view.lon }
   }
 
   async function pickFind(hit: FindHit): Promise<string> {
@@ -725,7 +756,7 @@ export function boot(root: HTMLElement): void {
     pushRecent(hit.title)
     if (hit.seek && hit.query) return seekAndLock(hit.query)
     if (hit.contactId) return lockContact(hit.contactId, hit.lat, hit.lon)
-    if (hit.lat != null && hit.lon != null && hit.rangeKm != null) return flyPlace(hit.lat, hit.lon, hit.rangeKm, hit.title)
+    if (hit.lat != null && hit.lon != null && hit.rangeKm != null) return flyPlace(hit.lat, hit.lon, hit.rangeKm, hit.title, hit.quality)
     showFindCard('NO RESULTS')
     return 'NO RESULTS'
   }
@@ -747,7 +778,7 @@ export function boot(root: HTMLElement): void {
     const signal = findAbort.signal
     window.clearTimeout(findTimer)
     findTimer = window.setTimeout(() => {
-      void geocodeQuery(text, settings, signal).then((places) => {
+      void geocodeQuery(text, settings, signal, cameraBias()).then((places) => {
         if (signal.aborted || shell.find.value.trim() !== text) return
         const hits = suggestHits(text, entities.all(), places, [])
         paintFind(hits)
@@ -759,7 +790,7 @@ export function boot(root: HTMLElement): void {
           shell.findList.replaceChildren(empty)
         }
       })
-    }, 280)
+    }, 200)
   }
 
   async function goQuery(query: string): Promise<string> {
@@ -775,13 +806,34 @@ export function boot(root: HTMLElement): void {
     if (flight.kind === 'iata' || flight.kind === 'icao' || flight.kind === 'hex' || flight.kind === 'reg') {
       return seekAndLock(text)
     }
-    const places = await geocodeQuery(text, settings)
+    const parsed = parseAddress(text)
+    const full = isFullUsAddress(parsed)
+    findAbort.abort()
+    findAbort = new AbortController()
+    const signal = findAbort.signal
+    const places = full
+      ? await resolveAddress(text, settings, signal, cameraBias())
+      : await geocodeQuery(text, settings, signal, cameraBias())
+    if (signal.aborted || shell.find.value.trim() !== text) return ''
     const place = places[0]
     if (!place) {
       showFindCard('NO RESULTS')
       return `NO RESULTS "${text.toUpperCase()}"`
     }
-    return flyPlace(place.lat, place.lon, place.rangeKm, place.label)
+    if (full && place.quality !== 'EXACT' && place.quality !== 'INTERPOLATED') {
+      showFindCard(`NO EXACT MATCH\n${place.label}\n${place.quality ?? 'CITY ONLY'}`)
+      const hits = suggestHits(text, entities.all(), places, [])
+      paintFind(hits)
+      if (!hits.length) {
+        shell.findList.hidden = false
+        const empty = document.createElement('div')
+        empty.className = 'ae-find-group'
+        empty.textContent = 'NO EXACT MATCH'
+        shell.findList.replaceChildren(empty)
+      }
+      return 'NO EXACT MATCH'
+    }
+    return flyPlace(place.lat, place.lon, place.rangeKm, place.label, place.quality)
   }
 
   const commands: CommandContext = {
@@ -921,8 +973,13 @@ export function boot(root: HTMLElement): void {
 
   shell.find.form?.addEventListener('submit', (event) => {
     event.preventDefault()
-    const picked = !shell.findList.hidden ? findHits[findAt] : undefined
-    const job = picked ? pickFind(picked) : goQuery(shell.find.value)
+    const text = shell.find.value
+    const full = isFullUsAddress(parseAddress(text))
+    const current = !shell.findList.hidden && findQuery === text.trim()
+    const picked = current ? findHits[findAt] : undefined
+    const pickedHouse = picked?.quality === 'EXACT' || picked?.quality === 'INTERPOLATED'
+    const usePick = Boolean(picked && (!full || findAt !== 0 || pickedHouse))
+    const job = usePick && picked ? pickFind(picked) : goQuery(text)
     void job.then((line) => showOutput(line))
   })
   shell.find.addEventListener('input', () => {
@@ -939,8 +996,15 @@ export function boot(root: HTMLElement): void {
         ? (findAt + 1) % findHits.length
         : (findAt - 1 + findHits.length) % findHits.length
       paintFind(findHits, true)
+    } else if (event.key === 'Tab') {
+      const top = findHits.find((hit) => hit.group === 'Places')
+      if (!top || shell.findList.hidden) return
+      event.preventDefault()
+      shell.find.value = top.title
+      void refreshFind(top.title)
     } else if (event.key === 'Escape') {
       shell.findList.hidden = true
+      shell.findGhost.hidden = true
       shell.find.blur()
     }
   })

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 
-const UA = 'AllEyes/2.2.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/2.2.1 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -400,9 +400,16 @@ async function route(req, url) {
     const lat = latRaw == null || latRaw === '' ? NaN : Number(latRaw)
     const lon = lonRaw == null || lonRaw === '' ? NaN : Number(lonRaw)
     const q = (url.searchParams.get('q') || '').trim()
+    const street = (url.searchParams.get('street') || '').trim()
+    const city = (url.searchParams.get('city') || '').trim()
+    const state = (url.searchParams.get('state') || '').trim()
+    const postalcode = (url.searchParams.get('postalcode') || '').trim()
+    const country = (url.searchParams.get('country') || '').trim()
+    const structured = [street, city, state, postalcode, country].some(Boolean)
     // Number(null) is 0, which would reverse-geocode the search as Null Island.
     const reverse = Number.isFinite(lat) && Number.isFinite(lon)
-    if (!reverse && (!q || q.length > 80)) return jsonError(400, 'bad query')
+    if (!reverse && !structured && (!q || q.length > 140)) return jsonError(400, 'bad query')
+    if ([q, street, city, state, country].some((part) => part.length > 140)) return jsonError(400, 'bad query')
     const wait = 1100 - (Date.now() - lastNominatim)
     if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
     lastNominatim = Date.now()
@@ -411,23 +418,48 @@ async function route(req, url) {
       ? `&viewbox=${viewbox}&bounded=1`
       : ''
     const limit = Math.min(5, Math.max(1, Number(url.searchParams.get('limit')) || 1))
+    const fields = [
+      street ? `street=${encodeURIComponent(street)}` : '',
+      city ? `city=${encodeURIComponent(city)}` : '',
+      state ? `state=${encodeURIComponent(state)}` : '',
+      postalcode ? `postalcode=${encodeURIComponent(postalcode)}` : '',
+      country ? `country=${encodeURIComponent(country)}` : '',
+    ].filter(Boolean).join('&')
     const target = reverse
       ? `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&extratags=1&zoom=12&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`
-      : `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=${limit}&q=${encodeURIComponent(q)}${boxed}`
+      : structured
+        ? `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=${limit}&${fields}`
+        : `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=${limit}&q=${encodeURIComponent(q)}${boxed}`
     return upstream(target, {
       ttl: 6 * 60 * 60 * 1000,
-      key: reverse ? `geo:${lat.toFixed(2)},${lon.toFixed(2)}` : `geo:${limit}:${q.toLowerCase()}:${viewbox}`,
+      key: reverse ? `geo:${lat.toFixed(2)},${lon.toFixed(2)}` : `geo:${limit}:${structured ? fields : q.toLowerCase()}:${viewbox}`,
       timeout: 12000,
     })
   }
 
   if (path === '/api/photon') {
     const q = (url.searchParams.get('q') || '').trim()
-    if (!q || q.length > 80) return jsonError(400, 'bad query')
-    return upstream(`https://photon.komoot.io/api/?limit=6&q=${encodeURIComponent(q)}`, {
+    if (!q || q.length > 140) return jsonError(400, 'bad query')
+    const lat = Number(url.searchParams.get('lat'))
+    const lon = Number(url.searchParams.get('lon'))
+    const bias = Number.isFinite(lat) && Math.abs(lat) <= 90 && Number.isFinite(lon) && Math.abs(lon) <= 180
+    const where = bias ? `&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&location_bias_scale=0.35` : ''
+    return upstream(`https://photon.komoot.io/api/?limit=6&q=${encodeURIComponent(q)}${where}`, {
       ttl: 60 * 60 * 1000,
       timeout: 8000,
-      key: `photon:${q.toLowerCase()}`,
+      key: `photon:${q.toLowerCase()}:${bias ? `${lat.toFixed(0)},${lon.toFixed(0)}` : ''}`,
+      headers: { accept: 'application/json', 'user-agent': UA },
+    })
+  }
+
+  if (path === '/api/geocode/census') {
+    const q = (url.searchParams.get('q') || '').trim()
+    if (!q || q.length > 140 || !/\d/.test(q)) return jsonError(400, 'bad query')
+    const target = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(q)}&benchmark=Public_AR_Current&format=json`
+    return upstream(target, {
+      ttl: 24 * 60 * 60 * 1000,
+      timeout: 12000,
+      key: `census:${q.toLowerCase()}`,
       headers: { accept: 'application/json', 'user-agent': UA },
     })
   }
