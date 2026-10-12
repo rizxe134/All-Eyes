@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import '../src/plugins/glyphs'
 import { parseCoordinates } from '../src/search/coords'
 import { coordinateHit } from '../src/search/geocode'
-import { nominatimHits, parseMeteoGeo, parsePhoton } from '../src/search/parse'
+import { nominatimHits, parseMeteoGeo, parsePhoton, preferQuery } from '../src/search/parse'
 import { rangeForCoordinate, rangeForScale, scaleFromTags } from '../src/search/zoom'
 import { matchContacts } from '../src/search/suggest'
 import { LEGEND_ROWS, spriteForLayer } from '../src/core/legend'
@@ -54,6 +54,13 @@ describe('coordinates and zoom', () => {
       }],
     })
     expect(photon[0]).toMatchObject({ lat: 40.758, lon: -73.9855, scale: 'landmark', source: 'photon' })
+    const house = parsePhoton({
+      features: [{
+        geometry: { coordinates: [-0.1277, 51.5035] },
+        properties: { housenumber: '10', street: 'Downing Street', name: '10 Downing Street', city: 'London', osm_key: 'office', osm_value: 'government', type: 'house' },
+      }],
+    })
+    expect(house[0]).toMatchObject({ scale: 'street', rangeKm: 0.45 })
     const named = nominatimHits([{
       lat: '51.5',
       lon: '-0.12',
@@ -69,6 +76,11 @@ describe('coordinates and zoom', () => {
     const meteo = parseMeteoGeo({ results: [{ name: 'Paris', latitude: 48.85, longitude: 2.35, country: 'France', feature_code: 'PPLC' }] })
     expect(meteo[0]).toMatchObject({ scale: 'city', label: 'Paris, France' })
     expect(parsePhoton({})).toEqual([])
+    const ranked = preferQuery('350 Fifth Avenue', [
+      { lat: 1, lon: 1, label: '650 Fifth Avenue, New York', scale: 'street', rangeKm: 0.45, source: 'photon' },
+      { lat: 2, lon: 2, label: '350 Fifth Avenue, New York', scale: 'street', rangeKm: 0.45, source: 'nominatim' },
+    ])
+    expect(ranked[0]?.label.startsWith('350')).toBe(true)
   })
 })
 

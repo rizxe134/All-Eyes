@@ -45,8 +45,10 @@ export function parsePhoton(payload: unknown): GeoHit[] {
     const lat = Number(coords[1])
     const props = feature.properties ?? {}
     const osmKey = String(props.osm_key ?? '')
-    const osmValue = String(props.osm_value ?? props.type ?? '')
-    const scale = scaleFromTags({ kind: osmValue, osmKey, klass: osmKey })
+    const osmValue = String(props.osm_value ?? '')
+    const typed = String(props.type ?? '')
+    let scale = scaleFromTags({ kind: typed || osmValue, osmKey, osmValue, klass: osmKey })
+    if (props.housenumber) scale = 'street'
     const parts = [props.housenumber, props.street, props.name, props.city || props.locality, props.state, props.country]
       .map((part) => (part == null ? '' : String(part).trim()))
       .filter(Boolean)
@@ -102,6 +104,17 @@ export function parseKeyedGeo(payload: unknown, source: string): GeoHit[] {
     if (next) out.push(next)
   }
   return out
+}
+
+/** A typed house number should lead the list when any result contains it. */
+export function preferQuery(query: string, rows: GeoHit[]): GeoHit[] {
+  const house = query.match(/\b(\d{1,6}[a-z]?)\b/i)?.[1]?.toLowerCase()
+  if (!house) return rows
+  return [...rows].sort((a, b) => {
+    const as = a.label.toLowerCase().includes(house) ? 1 : 0
+    const bs = b.label.toLowerCase().includes(house) ? 1 : 0
+    return bs - as
+  })
 }
 
 export function dedupeHits(rows: GeoHit[]): GeoHit[] {

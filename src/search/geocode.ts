@@ -4,7 +4,7 @@ import type { SettingsStore } from '../core/types'
 import { getJson } from '../net/http'
 import { geoCacheGet, geoCachePut } from './cache'
 import { parseCoordinates } from './coords'
-import { dedupeHits, nominatimHits, parseKeyedGeo, parseMeteoGeo, parsePhoton, type GeoHit } from './parse'
+import { dedupeHits, nominatimHits, parseKeyedGeo, parseMeteoGeo, parsePhoton, preferQuery, type GeoHit } from './parse'
 import { rangeForCoordinate } from './zoom'
 
 export function coordinateHit(query: string): GeoHit | null {
@@ -38,8 +38,12 @@ export async function geocodeQuery(query: string, settings: SettingsStore, signa
     }
   }
   await pull(`/api/photon?q=${encodeURIComponent(text)}`, parsePhoton)
+  const house = text.match(/\b(\d{1,6}[a-z]?)\b/i)?.[1]?.toLowerCase() ?? ''
+  const houseHit = house && bag.some((row) => row.label.toLowerCase().includes(house))
   if (!bag.length) await pull(`/api/geocode/meteo?q=${encodeURIComponent(text)}`, parseMeteoGeo)
-  if (!bag.length) await pull(`/api/nominatim?limit=5&q=${encodeURIComponent(text)}`, nominatimHits)
+  if (!bag.length || (house && !houseHit)) {
+    await pull(`/api/nominatim?limit=5&q=${encodeURIComponent(text)}`, nominatimHits)
+  }
   const current = settings.get()
   if (current.maptilerKey) {
     await pull(`/api/geocode/maptiler?q=${encodeURIComponent(text)}`, (body) => parseKeyedGeo(body, 'maptiler'))
@@ -47,7 +51,7 @@ export async function geocodeQuery(query: string, settings: SettingsStore, signa
   if (current.mapboxKey) {
     await pull(`/api/geocode/mapbox?q=${encodeURIComponent(text)}`, (body) => parseKeyedGeo(body, 'mapbox'))
   }
-  const hits = dedupeHits(bag)
+  const hits = preferQuery(text, dedupeHits(bag))
   if (hits.length) geoCachePut(text, hits)
   return hits
 }

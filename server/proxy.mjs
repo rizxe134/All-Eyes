@@ -395,9 +395,12 @@ async function route(req, url) {
   }
 
   if (path === '/api/nominatim') {
-    const lat = Number(url.searchParams.get('lat'))
-    const lon = Number(url.searchParams.get('lon'))
+    const latRaw = url.searchParams.get('lat')
+    const lonRaw = url.searchParams.get('lon')
+    const lat = latRaw == null || latRaw === '' ? NaN : Number(latRaw)
+    const lon = lonRaw == null || lonRaw === '' ? NaN : Number(lonRaw)
     const q = (url.searchParams.get('q') || '').trim()
+    // Number(null) is 0, which would reverse-geocode the search as Null Island.
     const reverse = Number.isFinite(lat) && Number.isFinite(lon)
     if (!reverse && (!q || q.length > 80)) return jsonError(400, 'bad query')
     const wait = 1100 - (Date.now() - lastNominatim)

@@ -710,7 +710,8 @@ export function boot(root: HTMLElement): void {
     armStreet(rangeKm)
     dropSearchPin(lat, lon)
     globe.flyTo(lat, lon, rangeKm)
-    showFindCard(`${label}\n${lat.toFixed(4)}  ${lon.toFixed(4)}\n${Math.round(rangeKm)} KM`)
+    const range = rangeKm < 10 ? `${rangeKm.toFixed(2)} KM` : `${Math.round(rangeKm)} KM`
+    showFindCard(`${label}\n${lat.toFixed(4)}  ${lon.toFixed(4)}\n${range}`)
     return `FLY ${label.toUpperCase()}`
   }
 
