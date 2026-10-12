@@ -27,7 +27,6 @@ export interface Shell {
   suggest: HTMLElement
   output: HTMLElement
   find: HTMLInputElement
-  findGhost: HTMLElement
   findList: HTMLElement
   findCard: HTMLElement
   track: HTMLElement
@@ -92,18 +91,15 @@ export function buildShell(root: HTMLElement): Shell {
   const dock = el('div', 'ae-dock')
   const findForm = el('form', 'ae-find') as HTMLFormElement
   const findBox = el('div', 'ae-find-box')
-  const findGhost = el('div', 'ae-find-ghost')
-  findGhost.hidden = true
-  findGhost.setAttribute('aria-hidden', 'true')
   const find = el('input', 'ae-find-input') as HTMLInputElement
   find.type = 'text'
   find.autocomplete = 'off'
   find.spellcheck = false
-  find.placeholder = 'Search place, flight, ship, satellite'
-  find.setAttribute('aria-label', 'Search the world')
-  find.setAttribute('aria-keyshortcuts', 'Control+K Meta+K')
+  find.placeholder = 'Search flight, ship, satellite…'
+  find.setAttribute('aria-label', 'Search flights, ships, and satellites')
+  find.setAttribute('aria-keyshortcuts', 'Control+F Meta+F')
   find.setAttribute('aria-autocomplete', 'list')
-  findBox.append(findGhost, find)
+  findBox.append(find)
   const findList = el('div', 'ae-find-list')
   findList.hidden = true
   findList.setAttribute('role', 'listbox')
@@ -176,7 +172,7 @@ export function buildShell(root: HTMLElement): Shell {
   const prompt = el('input', 'ae-prompt') as HTMLInputElement
   prompt.autocomplete = 'off'
   prompt.spellcheck = false
-  prompt.placeholder = 'go times square   go DL123   city atlanta   help'
+  prompt.placeholder = 'go times square   city atlanta   help'
   prompt.setAttribute('aria-label', 'Command')
   form.append(gt, prompt)
   foot.append(scrubRow, output, suggest, form)
@@ -331,7 +327,6 @@ export function buildShell(root: HTMLElement): Shell {
     suggest,
     output,
     find,
-    findGhost,
     findList,
     findCard,
     track,

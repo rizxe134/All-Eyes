@@ -444,6 +444,50 @@ button { cursor: pointer; }
   white-space: normal;
 }
 .ae-city-find { display: flex; gap: 4px; height: 22px; }
+.ae-city-suggest {
+  position: fixed;
+  z-index: 50;
+  max-height: 220px;
+  overflow: auto;
+  background: #02150c;
+  border: 2px solid var(--line);
+  box-shadow: 3px 3px 0 #02150c;
+  pointer-events: auto;
+}
+.ae-city-suggest[hidden] { display: none; }
+.ae-city-suggest button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 3px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: "Ae Term", monospace;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ae-city-suggest button.is-on,
+.ae-city-suggest button:hover { background: #0c3a22; }
+.ae-city-suggest button span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ae-city-suggest button small { margin-left: auto; color: var(--dim); font-size: 12px; flex: 0 0 auto; }
+.ae-city-suggest-empty {
+  padding: 4px 6px;
+  font-family: "Ae Pixel", monospace;
+  font-size: 8px;
+  color: var(--hot);
+}
+.ae-city-result {
+  margin-top: 4px;
+  font-family: "Ae Term", monospace;
+  font-size: 13px;
+  line-height: 1.25;
+  white-space: pre-wrap;
+  color: var(--ink);
+}
+.ae-city-result[hidden] { display: none; }
 .ae-city-find input, .ae-city-pick {
   flex: 1;
   min-width: 0;

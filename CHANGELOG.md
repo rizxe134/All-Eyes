@@ -2,6 +2,11 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 2.3.0
+
+- The top search is flights, ships, and satellites. Ctrl+F or Cmd+F focuses it. Places and addresses are not listed there.
+- PLACE OR ADDRESS in the CITY panel suggests as you type. Photon answers after about 250 ms, and a newer keystroke cancels the previous lookup. GO, Enter, and `go <query>` look up that text as typed. Ctrl+K or Cmd+K focuses that box. A US house number is also sent, unchanged, to the Census geocoder and to Nominatim. A mapped house is EXACT. A Census range is INTERPOLATED. If neither has the house, the card says NO EXACT MATCH and the camera still flies to the closest hit.
+
 ## 2.2.1
 
 - Address suggestions appear as you type, after a short pause, and a newer keystroke cancels the previous lookup. Photon is biased toward the camera. A house and street rank above a city. Each row shows the house number, street, city, state, and country. Arrow keys and Enter pick a row. Tab fills the top guess, and the rest of that guess sits in the field as dim text.

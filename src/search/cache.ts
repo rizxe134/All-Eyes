@@ -1,10 +1,11 @@
-/** Short memory of geocodes and the last searches. Nominatim stays at 1 request per second in the proxy. */
+/** Five-minute memory of geocodes, plus the last contact searches. Nominatim stays at 1 request per second in the proxy. */
 
 import type { GeoHit } from './parse'
 
 const GEO_KEY = 'alleyes.geocode.v1'
 const RECENT_KEY = 'alleyes.find.v1'
-const TTL = 12 * 60 * 60 * 1000
+const CONTACT_KEY = 'alleyes.contacts.v1'
+const TTL = 5 * 60 * 1000
 const memory = new Map<string, { at: number; hits: GeoHit[] }>()
 
 function keyOf(query: string, scope = ''): string {
@@ -66,6 +67,31 @@ export function pushRecent(query: string): string[] {
   const next = [text, ...readRecent().filter((row) => row.toLowerCase() !== text.toLowerCase())].slice(0, 8)
   try {
     if (typeof localStorage !== 'undefined') localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+  } catch {
+    /* quota */
+  }
+  return next
+}
+
+export function readContactRecent(): string[] {
+  try {
+    if (typeof localStorage === 'undefined') return []
+    const raw = localStorage.getItem(CONTACT_KEY)
+    if (!raw) return []
+    const rows = JSON.parse(raw) as unknown
+    if (!Array.isArray(rows)) return []
+    return rows.filter((row) => typeof row === 'string' && row.trim()).slice(0, 8)
+  } catch {
+    return []
+  }
+}
+
+export function pushContactRecent(query: string): string[] {
+  const text = query.trim()
+  if (!text) return readContactRecent()
+  const next = [text, ...readContactRecent().filter((row) => row.toLowerCase() !== text.toLowerCase())].slice(0, 8)
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(CONTACT_KEY, JSON.stringify(next))
   } catch {
     /* quota */
   }

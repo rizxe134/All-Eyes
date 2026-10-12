@@ -231,7 +231,7 @@ export interface CommandContext {
   layers(): { id: string; label: string; on: boolean }[]
   searchPlace(query: string): Promise<{ lat: number; lon: number; label: string } | null>
   findContact(query: string): Contact | null
-  /** Place, flight number, ship, or satellite. */
+  /** Place or address. Flights, ships, and satellites stay in the top search. */
   go(query: string): Promise<string>
   contacts(): readonly Contact[]
   setTimeMinutes(mins: number | 'live'): void

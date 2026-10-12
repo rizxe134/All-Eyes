@@ -290,6 +290,72 @@ export function rankPlaces(query: string, rows: readonly GeoHit[]): GeoHit[] {
   }).sort((a, b) => b.score - a.score || a.index - b.index).map((item) => item.row)
 }
 
+/** Trim and collapse whitespace. Reject URLs and control characters. The query is not rewritten. */
+export function collapseQuery(raw: string): string | null {
+  if (typeof raw !== 'string') return null
+  const query = raw.trim().replace(/\s+/g, ' ')
+  if (query.length < 2 || query.length > 200) return null
+  if (/[\u0000-\u001F\u007F]/.test(query)) return null
+  if (/^https?:\/\//i.test(query)) return null
+  return query
+}
+
+export function houseToken(query: string): string {
+  const match = query.match(/\b(\d{1,6}[a-z]?)\b/i)
+  return match?.[1]?.toLowerCase() ?? ''
+}
+
+/** A house number plus a US state, ZIP, or country word. The original text is left intact. */
+export function looksLikeUsAddress(query: string): boolean {
+  if (!houseToken(query)) return false
+  if (/\b(united states|u\.s\.a?\.?|usa)\b/i.test(query)) return true
+  if (/\b\d{5}(?:-\d{4})?\b/.test(query)) return true
+  const tokens = query.replace(/[.,#]/g, ' ').split(/\s+/).filter(Boolean)
+  for (let i = 0; i < tokens.length; i += 1) {
+    const one = tokens[i] ?? ''
+    const two = tokens.slice(i, i + 2).join(' ')
+    const three = tokens.slice(i, i + 3).join(' ')
+    if (normalizeState(three) || normalizeState(two)) return true
+    if (one.length === 2 && normalizeState(one)) return true
+  }
+  return false
+}
+
+export function countryHint(query: string): string {
+  if (looksLikeUsAddress(query)) return 'us'
+  if (/\b(united kingdom|england|scotland|wales|london)\b/i.test(query)) return 'gb'
+  if (/\b(tokyo|osaka|kyoto|日本|東京)\b/i.test(query)) return 'jp'
+  if (/\b(paris|france)\b/i.test(query)) return 'fr'
+  return ''
+}
+
+function sameHouse(query: string, hit: GeoHit): boolean {
+  const want = houseToken(query)
+  const got = (hit.parts?.house ?? '').toLowerCase()
+  return Boolean(want && got && want === got)
+}
+
+/**
+ * House-number matches lead, then a Census range, then everything else.
+ * Photon order is kept inside a tier. No row is removed.
+ */
+export function orderPlaces(query: string, rows: readonly GeoHit[]): GeoHit[] {
+  return rows.map((row, index) => {
+    let tier = 2
+    let quality: MatchQuality | undefined = row.quality
+    if (row.source !== 'census' && sameHouse(query, row)) {
+      tier = 0
+      quality = 'EXACT'
+    } else if (row.source === 'census') {
+      tier = 1
+      quality = 'INTERPOLATED'
+    } else if (!quality) {
+      quality = row.parts?.street || row.scale === 'street' ? 'STREET ONLY' : 'CITY ONLY'
+    }
+    return { row: quality ? { ...row, quality } : row, tier, index }
+  }).sort((a, b) => a.tier - b.tier || a.index - b.index).map((item) => item.row)
+}
+
 /** Dim completion after the caret. Empty when the top guess does not continue the text. */
 export function ghostSuffix(typed: string, suggestion: string): string {
   if (!typed.trim() || !suggestion) return ''

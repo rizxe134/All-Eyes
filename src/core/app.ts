@@ -26,14 +26,14 @@ import { callsignMatch, parseFlightQuery } from '../plugins/aircraft/callsign'
 import { parseAdsbRoute } from '../plugins/aircraft/lookup'
 import { airAheadOn, airFixNow, airMetaFor, airTrail, setAirAhead } from '../plugins/aircraft/plugin'
 import { seekAircraft } from '../plugins/aircraft/seek'
-import { pushRecent, readRecent } from '../search/cache'
-import { ghostSuffix, isFullUsAddress, parseAddress } from '../search/address'
-import { coordinateHit, geocodeQuery, resolveAddress } from '../search/geocode'
-import { matchContacts, suggestHits, type FindHit } from '../search/suggest'
+import { pushContactRecent, readContactRecent } from '../search/cache'
+import { collapseQuery } from '../search/address'
+import { resolvePlaces } from '../search/geocode'
+import { citySearch, registerPlaceFly } from '../search/focus'
+import { matchContacts, recentHits, type FindHit } from '../search/suggest'
 import { paintGlyph } from '../ui/glyph'
 import { formatShip, onShipDetail, shipDetailText, shipMeta, shipNow, shipTrackOn, shipTrail, toggleShipTrack } from '../plugins/ships/plugin'
 import { formatSat, onSatDetail, satSeries, satTrackOn, toggleSatTrack } from '../plugins/satellites/plugin'
-import { parseNominatim } from '../city/feeds'
 import { heapAction } from '../city/budget'
 import { clearTileCache } from '../city/cache'
 import { crtForZoom } from './range'
@@ -592,31 +592,10 @@ export function boot(root: HTMLElement): void {
   let findHits: FindHit[] = []
   let findAt = 0
   let findQuery = ''
-  let findTimer = 0
-  let findAbort = new AbortController()
 
   function showFindCard(text: string) {
     shell.findCard.hidden = !text
     shell.findCard.textContent = text
-  }
-
-  function paintGhost() {
-    const typed = shell.find.value
-    const top = findHits.find((hit) => hit.group === 'Places')
-    const suffix = top && document.activeElement === shell.find ? ghostSuffix(typed, top.title) : ''
-    shell.findGhost.replaceChildren()
-    if (!suffix) {
-      shell.findGhost.hidden = true
-      return
-    }
-    shell.findGhost.hidden = false
-    const pad = document.createElement('span')
-    pad.className = 'ae-find-ghost-pad'
-    pad.textContent = typed
-    const rest = document.createElement('span')
-    rest.className = 'ae-find-ghost-rest'
-    rest.textContent = suffix
-    shell.findGhost.append(pad, rest)
   }
 
   function paintFind(hits: FindHit[], keep = false) {
@@ -625,7 +604,6 @@ export function boot(root: HTMLElement): void {
     if (!keep) findAt = 0
     if (findAt >= hits.length) findAt = 0
     shell.findList.replaceChildren()
-    paintGhost()
     if (!hits.length) {
       shell.findList.hidden = true
       return
@@ -729,111 +707,71 @@ export function boot(root: HTMLElement): void {
     return 'NOT CURRENTLY TRACKED'
   }
 
-  async function flyPlace(lat: number, lon: number, rangeKm: number, label: string, quality?: string): Promise<string> {
-    shell.findList.hidden = true
-    shell.findGhost.hidden = true
-    armStreet(rangeKm)
-    dropSearchPin(lat, lon)
-    globe.flyTo(lat, lon, rangeKm)
-    const range = rangeKm < 10 ? `${rangeKm.toFixed(2)} KM` : `${Math.round(rangeKm)} KM`
-    const note = quality ? `\n${quality}` : ''
-    showFindCard(`${label}\n${lat.toFixed(4)}  ${lon.toFixed(4)}\n${range}${note}`)
-    return `FLY ${label.toUpperCase()}${quality ? ` ${quality}` : ''}`
-  }
-
-  function cameraBias() {
-    const view = globe.getView()
-    return { lat: view.lat, lon: view.lon }
-  }
-
   async function pickFind(hit: FindHit): Promise<string> {
     shell.findList.hidden = true
     if (hit.group === 'Recent' && hit.query) {
       shell.find.value = hit.query
-      await refreshFind(hit.query)
+      refreshFind(hit.query)
       return hit.query.toUpperCase()
     }
-    pushRecent(hit.title)
+    pushContactRecent(hit.title)
     if (hit.seek && hit.query) return seekAndLock(hit.query)
     if (hit.contactId) return lockContact(hit.contactId, hit.lat, hit.lon)
-    if (hit.lat != null && hit.lon != null && hit.rangeKm != null) return flyPlace(hit.lat, hit.lon, hit.rangeKm, hit.title, hit.quality)
     showFindCard('NO RESULTS')
     return 'NO RESULTS'
   }
 
-  async function refreshFind(query: string) {
+  function refreshFind(query: string) {
     const text = query.trim()
-    if (!text) {
-      paintFind(suggestHits('', entities.all(), [], readRecent()))
-      return
+    const hits = text ? matchContacts(text, entities.all()) : recentHits(readContactRecent())
+    paintFind(hits)
+    if (text && !hits.length) {
+      shell.findList.hidden = false
+      const empty = document.createElement('div')
+      empty.className = 'ae-find-group'
+      empty.textContent = 'NO RESULTS'
+      shell.findList.replaceChildren(empty)
     }
-    const coord = coordinateHit(text)
-    if (coord) {
-      paintFind(suggestHits(text, entities.all(), [coord], []))
-      return
+  }
+
+  async function goContact(query: string): Promise<string> {
+    const text = query.trim()
+    if (!text) return 'USAGE: SEARCH A FLIGHT, SHIP, OR SATELLITE'
+    const hits = matchContacts(text, entities.all())
+    const known = hits.find((hit) => hit.contactId)
+    if (known?.contactId) {
+      pushContactRecent(text)
+      return lockContact(known.contactId, known.lat, known.lon)
     }
-    paintFind(suggestHits(text, entities.all(), [], []))
-    findAbort.abort()
-    findAbort = new AbortController()
-    const signal = findAbort.signal
-    window.clearTimeout(findTimer)
-    findTimer = window.setTimeout(() => {
-      void geocodeQuery(text, settings, signal, cameraBias()).then((places) => {
-        if (signal.aborted || shell.find.value.trim() !== text) return
-        const hits = suggestHits(text, entities.all(), places, [])
-        paintFind(hits)
-        if (!hits.length) {
-          shell.findList.hidden = false
-          const empty = document.createElement('div')
-          empty.className = 'ae-find-group'
-          empty.textContent = 'NO RESULTS'
-          shell.findList.replaceChildren(empty)
-        }
-      })
-    }, 200)
+    const seek = hits.find((hit) => hit.seek)
+    if (seek?.query) {
+      pushContactRecent(text)
+      return seekAndLock(seek.query)
+    }
+    const flight = parseFlightQuery(text)
+    if (flight.kind === 'iata' || flight.kind === 'icao' || flight.kind === 'hex' || flight.kind === 'reg') {
+      pushContactRecent(text)
+      return seekAndLock(text)
+    }
+    showFindCard('NO RESULTS')
+    return 'NO RESULTS'
   }
 
   async function goQuery(query: string): Promise<string> {
     const text = query.trim()
-    if (!text) return 'USAGE: GO <QUERY>'
-    pushRecent(text)
-    shell.find.value = text
-    const coord = coordinateHit(text)
-    if (coord) return flyPlace(coord.lat, coord.lon, coord.rangeKm, coord.label)
-    const known = matchContacts(text, entities.all()).find((hit) => hit.contactId)
-    if (known?.contactId) return lockContact(known.contactId, known.lat, known.lon)
-    const flight = parseFlightQuery(text)
-    if (flight.kind === 'iata' || flight.kind === 'icao' || flight.kind === 'hex' || flight.kind === 'reg') {
-      return seekAndLock(text)
-    }
-    const parsed = parseAddress(text)
-    const full = isFullUsAddress(parsed)
-    findAbort.abort()
-    findAbort = new AbortController()
-    const signal = findAbort.signal
-    const places = full
-      ? await resolveAddress(text, settings, signal, cameraBias())
-      : await geocodeQuery(text, settings, signal, cameraBias())
-    if (signal.aborted || shell.find.value.trim() !== text) return ''
+    if (!text) return 'USAGE: GO <PLACE>'
+    const api = citySearch()
+    if (api) return api.run(text)
+    const collapsed = collapseQuery(text)
+    if (!collapsed) return 'NO RESULTS'
+    const places = await resolvePlaces(collapsed, settings)
     const place = places[0]
-    if (!place) {
-      showFindCard('NO RESULTS')
-      return `NO RESULTS "${text.toUpperCase()}"`
-    }
-    if (full && place.quality !== 'EXACT' && place.quality !== 'INTERPOLATED') {
-      showFindCard(`NO EXACT MATCH\n${place.label}\n${place.quality ?? 'CITY ONLY'}`)
-      const hits = suggestHits(text, entities.all(), places, [])
-      paintFind(hits)
-      if (!hits.length) {
-        shell.findList.hidden = false
-        const empty = document.createElement('div')
-        empty.className = 'ae-find-group'
-        empty.textContent = 'NO EXACT MATCH'
-        shell.findList.replaceChildren(empty)
-      }
-      return 'NO EXACT MATCH'
-    }
-    return flyPlace(place.lat, place.lon, place.rangeKm, place.label, place.quality)
+    if (!place) return `NO RESULTS "${collapsed.toUpperCase()}"`
+    armStreet(place.rangeKm)
+    dropSearchPin(place.lat, place.lon)
+    globe.flyTo(place.lat, place.lon, place.rangeKm)
+    const miss = Boolean(place.quality) && place.quality !== 'EXACT' && place.quality !== 'INTERPOLATED'
+    return miss ? `NO EXACT MATCH ${place.label.toUpperCase()}` : `FLY ${place.label.toUpperCase()}`
   }
 
   const commands: CommandContext = {
@@ -844,7 +782,8 @@ export function boot(root: HTMLElement): void {
     layers: () => registry.layers().map((layer) => ({ id: layer.id, label: layer.label, on: state.enabled.get(layer.id) === true })),
     async searchPlace(query) {
       try {
-        return parseNominatim(await getJson(`/api/nominatim?q=${encodeURIComponent(query)}`, settings))
+        const hit = (await resolvePlaces(query, settings))[0]
+        return hit ? { lat: hit.lat, lon: hit.lon, label: hit.label } : null
       } catch {
         return null
       }
@@ -973,13 +912,12 @@ export function boot(root: HTMLElement): void {
 
   shell.find.form?.addEventListener('submit', (event) => {
     event.preventDefault()
-    const text = shell.find.value
-    const full = isFullUsAddress(parseAddress(text))
-    const current = !shell.findList.hidden && findQuery === text.trim()
+    const text = shell.find.value.trim()
+    const current = !shell.findList.hidden && findQuery === text
     const picked = current ? findHits[findAt] : undefined
-    const pickedHouse = picked?.quality === 'EXACT' || picked?.quality === 'INTERPOLATED'
-    const usePick = Boolean(picked && (!full || findAt !== 0 || pickedHouse))
-    const job = usePick && picked ? pickFind(picked) : goQuery(text)
+    const job = picked && (picked.contactId || picked.seek || picked.group === 'Recent')
+      ? pickFind(picked)
+      : goContact(text)
     void job.then((line) => showOutput(line))
   })
   shell.find.addEventListener('input', () => {
@@ -996,15 +934,8 @@ export function boot(root: HTMLElement): void {
         ? (findAt + 1) % findHits.length
         : (findAt - 1 + findHits.length) % findHits.length
       paintFind(findHits, true)
-    } else if (event.key === 'Tab') {
-      const top = findHits.find((hit) => hit.group === 'Places')
-      if (!top || shell.findList.hidden) return
-      event.preventDefault()
-      shell.find.value = top.title
-      void refreshFind(top.title)
     } else if (event.key === 'Escape') {
       shell.findList.hidden = true
-      shell.findGhost.hidden = true
       shell.find.blur()
     }
   })
@@ -1133,10 +1064,15 @@ export function boot(root: HTMLElement): void {
   })
 
   window.addEventListener('keydown', (event) => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
       event.preventDefault()
       shell.find.focus()
       shell.find.select()
+      return
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault()
+      citySearch()?.focus()
       return
     }
     if (event.key !== 'Escape') return
@@ -1419,6 +1355,12 @@ export function boot(root: HTMLElement): void {
     shell.liveBtn.classList.toggle('is-on', live)
   }
   clock.subscribe(() => paintClock())
+
+  registerPlaceFly((hit) => {
+    armStreet(hit.rangeKm)
+    dropSearchPin(hit.lat, hit.lon)
+    globe.flyTo(hit.lat, hit.lon, hit.rangeKm)
+  })
 
   for (const panel of registry.panels()) {
     const card = document.createElement('section')

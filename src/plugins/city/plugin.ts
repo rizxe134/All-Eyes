@@ -2,6 +2,7 @@ import { CITIES, findCity } from '../../core/cities'
 import { distanceKm } from '../../core/geo'
 import type { AllEyesPlugin, Contact, LayerContext, PluginContext, ViewState } from '../../core/types'
 import { getJson } from '../../net/http'
+import { attachAddressSearch } from '../../search/city-ui'
 import { parseBasemapMode } from '../../city/basemap'
 import { OSM_DEBOUNCE_MS, createArmFlag, viewMoved } from '../../city/budget'
 import { cityBand } from '../../city/mercator'
@@ -402,31 +403,12 @@ function mountPanel(parent: HTMLElement, ctx: PluginContext): () => void {
   const fly = (lat: number, lon: number, range: number) => {
     ctx.globe.flyTo(lat, lon, range)
   }
-  form.addEventListener('submit', (event) => {
-    event.preventDefault()
-    const query = input.value.trim()
-    if (!query) return
-    void flyQuery(query, 2.2)
-  })
+  const detachSearch = attachAddressSearch(form, input, ctx)
   pick.addEventListener('change', () => {
     const city = findCity(pick.value)
     if (!city) return
     fly(city.lat, city.lon, 12)
   })
-
-  async function flyQuery(query: string, range: number) {
-    const city = findCity(query)
-    if (city) {
-      fly(city.lat, city.lon, Math.max(range, 8))
-      return
-    }
-    try {
-      const hit = parseNominatim(await getJson(`/api/nominatim?q=${encodeURIComponent(query)}`, ctx.settings))
-      if (hit) fly(hit.lat, hit.lon, range)
-    } catch {
-      /* the command line reports a miss; the panel keeps the last city */
-    }
-  }
 
   const paint = () => {
     const view = ctx.globe.getView()
@@ -463,7 +445,10 @@ function mountPanel(parent: HTMLElement, ctx: PluginContext): () => void {
   }
   const clock = window.setInterval(paint, 1000)
   paint()
-  return () => window.clearInterval(clock)
+  return () => {
+    window.clearInterval(clock)
+    detachSearch()
+  }
 }
 
 function label(textValue: string): HTMLElement {
