@@ -35,6 +35,9 @@ export function mountViewer(): ModelViewer {
   toggle.type = 'button'
   toggle.className = 'ae-btn'
   toggle.textContent = 'HIDE'
+  toggle.title = 'Hide or show the model'
+  toggle.classList.add('is-on')
+  toggle.setAttribute('aria-pressed', 'true')
   head.append(title, speed, toggle)
   const body = document.createElement('div')
   body.className = 'ae-viewer-body'
@@ -222,6 +225,8 @@ export function mountViewer(): ModelViewer {
       open = next
       body.hidden = !next
       toggle.textContent = next ? 'HIDE' : 'SHOW'
+      toggle.classList.toggle('is-on', next)
+      toggle.setAttribute('aria-pressed', next ? 'true' : 'false')
       root.classList.toggle('is-shut', !next)
       if (next) {
         resize()

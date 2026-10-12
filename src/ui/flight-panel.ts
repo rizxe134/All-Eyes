@@ -15,6 +15,9 @@ export interface FlightPanel {
   onWatch(cb: () => void): void
   onSpeed(cb: () => void): void
   onPin(cb: () => void): void
+  onMore(cb: (open: boolean) => void): void
+  setMore(open: boolean): void
+  moreOpen(): boolean
   setPinned(on: boolean): void
 }
 
@@ -209,15 +212,20 @@ export function mountFlightPanel(): FlightPanel {
     watch: [] as Array<() => void>,
     speed: [] as Array<() => void>,
     pin: [] as Array<() => void>,
+    more: [] as Array<(open: boolean) => void>,
   }
+  let muteMore = false
   close.addEventListener('click', () => hooks.close.forEach((fn) => fn()))
   view3d.addEventListener('click', () => hooks.view3d.forEach((fn) => fn()))
   routeBtn.addEventListener('click', () => hooks.route.forEach((fn) => fn()))
   follow.addEventListener('click', () => hooks.follow.forEach((fn) => fn()))
   share.addEventListener('click', () => hooks.share.forEach((fn) => fn()))
   function setMenu(open: boolean) {
+    const was = !menu.hidden
     menu.hidden = !open
     more.setAttribute('aria-expanded', open ? 'true' : 'false')
+    more.classList.toggle('is-on', open)
+    if (was !== open && !muteMore) hooks.more.forEach((fn) => fn(open))
   }
   more.addEventListener('click', () => setMenu(menu.hidden))
   copy.addEventListener('click', () => {
@@ -235,7 +243,9 @@ export function mountFlightPanel(): FlightPanel {
   document.addEventListener('pointerdown', (event) => {
     if (menu.hidden) return
     const target = event.target
-    if (target instanceof Node && actions.contains(target)) return
+    if (!(target instanceof Node)) return
+    if (actions.contains(target)) return
+    if (target instanceof Element && target.closest('.ae-globe')) return
     setMenu(false)
   })
   document.addEventListener('keydown', (event) => {
@@ -317,6 +327,13 @@ export function mountFlightPanel(): FlightPanel {
     onWatch: (cb) => hooks.watch.push(cb),
     onSpeed: (cb) => hooks.speed.push(cb),
     onPin: (cb) => hooks.pin.push(cb),
+    onMore: (cb) => hooks.more.push(cb),
+    setMore(open: boolean) {
+      muteMore = true
+      setMenu(open)
+      muteMore = false
+    },
+    moreOpen: () => !menu.hidden,
     setPinned(on: boolean) {
       pin.textContent = on ? 'UNPIN CARD' : 'PIN CARD'
       pin.classList.toggle('is-on', on)

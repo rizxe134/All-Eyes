@@ -39,6 +39,30 @@ export function hudFrame(width: number, height: number): HudFrame {
   }
 }
 
+/** Settings panel in the gap between the layer dock and the model viewer. */
+export function cfgFrame(width: number, height: number): HudBox {
+  const frame = hudFrame(width, height)
+  const gap = 8
+  const left = frame.dock.x + frame.dock.w + gap
+  const rightEdge = frame.right.x - gap
+  const w = Math.max(0, Math.min(360, rightEdge - left))
+  const x = rightEdge - w
+  const h = Math.min(480, frame.dock.h)
+  return { x, y: frame.dock.y, w, h }
+}
+
+/** Radar slot inside the dock. It never leaves that rectangle. */
+export function radarFrame(width: number, height: number): HudBox {
+  const frame = hudFrame(width, height)
+  const short = height <= 720 || width <= 900
+  if (!short) {
+    const h = 176
+    return { x: frame.dock.x, y: frame.dock.y + frame.dock.h - h, w: frame.dock.w, h }
+  }
+  const w = 108
+  return { x: frame.dock.x + frame.dock.w - w, y: frame.dock.y, w, h: frame.dock.h }
+}
+
 export function overlapArea(a: HudBox, b: HudBox): number {
   const x = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x))
   const y = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y))

@@ -17,7 +17,9 @@ export interface Shell {
   radarWrap: HTMLElement
   radarLabel: HTMLElement
   radarToggle: HTMLButtonElement
+  radarBtn: HTMLButtonElement
   legend: HTMLElement
+  legendRoot: HTMLDetailsElement
   readout: HTMLElement
   scrub: HTMLInputElement
   scrubLabel: HTMLElement
@@ -38,6 +40,7 @@ export interface Shell {
   liveBtn: HTMLButtonElement
   settings: HTMLElement
   settingsForm: HTMLFormElement
+  cfgClose: HTMLButtonElement
   globeCrt: HTMLElement
   watchForm: HTMLFormElement
   info: HTMLElement
@@ -73,20 +76,18 @@ export function buildShell(root: HTMLElement): Shell {
   feeds.append(feed, ships, sats)
   const coords = el('div', 'ae-coords', '')
   const actions = el('div', 'ae-top-actions')
-  const mute = el('button', 'ae-btn', 'SND') as HTMLButtonElement
-  const shot = el('button', 'ae-btn', 'SHOT') as HTMLButtonElement
-  const link = el('button', 'ae-btn', 'LINK') as HTMLButtonElement
-  const cfg = el('button', 'ae-btn', 'CFG') as HTMLButtonElement
-  mute.type = 'button'
-  shot.type = 'button'
-  link.type = 'button'
-  cfg.type = 'button'
-  actions.append(mute, shot, link, cfg)
+  const mute = barButton('SND', 'SND', 'Sound on or off')
+  const shot = barButton('SHOT', 'SHOT', 'Save a picture of the globe')
+  const link = barButton('LINK', 'LINK', 'Copy a link to this view')
+  const radarBtn = barButton('RADAR', 'RAD', 'Show or hide the radar')
+  const cfg = barButton('CFG', 'CFG', 'Optional keys')
+  radarBtn.setAttribute('aria-pressed', 'true')
+  actions.append(mute, shot, link, radarBtn, cfg)
   top.append(brand, clock, live, count, feeds, coords, actions)
 
   const dock = el('div', 'ae-dock')
   const layers = el('aside', 'ae-layers')
-  const legend = el('details', 'ae-legend')
+  const legend = el('details', 'ae-legend') as HTMLDetailsElement
   const legendSummary = el('summary', '', 'LEGEND')
   const legendBody = el('div', 'ae-legend-body')
   legend.append(legendSummary, legendBody)
@@ -169,17 +170,24 @@ export function buildShell(root: HTMLElement): Shell {
   const settings = el('div', 'ae-modal')
   settings.hidden = true
   const dialog = el('form', 'ae-dialog') as HTMLFormElement
-  dialog.append(el('h2', '', 'OPTIONAL KEYS'))
+  const dialogHead = el('header', 'ae-dialog-head')
+  const dialogTitle = el('h2', '', 'OPTIONAL KEYS')
+  const cfgClose = el('button', 'ae-btn ae-dialog-x', 'X') as HTMLButtonElement
+  cfgClose.type = 'button'
+  cfgClose.title = 'Close'
+  cfgClose.setAttribute('aria-label', 'Close settings')
+  dialogHead.append(dialogTitle, cfgClose)
+  const dialogBody = el('div', 'ae-dialog-body')
   const note = el('p', '', 'Stored in this browser only. The globe runs with none of these set.')
-  dialog.append(note)
-  dialog.append(field('OpenSky client id', 'openskyId', 'text'))
-  dialog.append(field('OpenSky client secret', 'openskySecret', 'password'))
-  dialog.append(field('NASA FIRMS map key', 'firmsKey', 'password'))
-  dialog.append(field('AISStream key (global ships)', 'aisstreamKey', 'password'))
-  dialog.append(field('MapTiler key (optional basemap)', 'maptilerKey', 'password'))
-  dialog.append(field('Mapbox token (optional basemap)', 'mapboxKey', 'password'))
-  dialog.append(field('TomTom key (live traffic speed)', 'tomtomKey', 'password'))
-  dialog.append(field('HERE key (live traffic speed)', 'hereKey', 'password'))
+  dialogBody.append(note)
+  dialogBody.append(field('OpenSky client id', 'openskyId', 'text'))
+  dialogBody.append(field('OpenSky client secret', 'openskySecret', 'password'))
+  dialogBody.append(field('NASA FIRMS map key', 'firmsKey', 'password'))
+  dialogBody.append(field('AISStream key (global ships)', 'aisstreamKey', 'password'))
+  dialogBody.append(field('MapTiler key (optional basemap)', 'maptilerKey', 'password'))
+  dialogBody.append(field('Mapbox token (optional basemap)', 'mapboxKey', 'password'))
+  dialogBody.append(field('TomTom key (live traffic speed)', 'tomtomKey', 'password'))
+  dialogBody.append(field('HERE key (live traffic speed)', 'hereKey', 'password'))
   const sourceWrap = el('label', 'ae-field')
   sourceWrap.append(document.createTextNode('BASEMAP SOURCE'))
   const basemapSource = el('select') as HTMLSelectElement
@@ -190,11 +198,11 @@ export function buildShell(root: HTMLElement): Shell {
     basemapSource.append(option)
   }
   sourceWrap.append(basemapSource)
-  dialog.append(sourceWrap)
+  dialogBody.append(sourceWrap)
   const clearCache = el('button', 'ae-btn', 'CLEAR MAP CACHE') as HTMLButtonElement
   clearCache.type = 'button'
   clearCache.name = 'clearCache'
-  dialog.append(clearCache)
+  dialogBody.append(clearCache)
   const sizeWrap = el('label', 'ae-field')
   sizeWrap.append(document.createTextNode('MARKER SIZE'))
   const markerSize = el('input') as HTMLInputElement
@@ -205,7 +213,7 @@ export function buildShell(root: HTMLElement): Shell {
   markerSize.step = '0.05'
   markerSize.value = '0.45'
   sizeWrap.append(markerSize)
-  dialog.append(sizeWrap)
+  dialogBody.append(sizeWrap)
   const themeWrap = el('label', 'ae-field')
   themeWrap.append(document.createTextNode('GLOBE'))
   const theme = el('select') as HTMLSelectElement
@@ -217,7 +225,7 @@ export function buildShell(root: HTMLElement): Shell {
   }
   theme.value = 'color'
   themeWrap.append(theme)
-  dialog.append(themeWrap)
+  dialogBody.append(themeWrap)
   const crtWrap = el('label', 'ae-field')
   crtWrap.append(document.createTextNode('CRT'))
   const crt = el('input') as HTMLInputElement
@@ -228,7 +236,7 @@ export function buildShell(root: HTMLElement): Shell {
   crt.step = '0.05'
   crt.value = '0.4'
   crtWrap.append(crt)
-  dialog.append(crtWrap)
+  dialogBody.append(crtWrap)
   const colorWrap = el('label', 'ae-field')
   colorWrap.append(document.createTextNode('MARKER COLORS'))
   const markerStyle = el('select') as HTMLSelectElement
@@ -239,15 +247,13 @@ export function buildShell(root: HTMLElement): Shell {
     markerStyle.append(option)
   }
   colorWrap.append(markerStyle)
-  dialog.append(colorWrap)
+  dialogBody.append(colorWrap)
   const row = el('div', 'ae-row')
   const save = el('button', 'ae-btn', 'SAVE') as HTMLButtonElement
   save.type = 'submit'
-  const close = el('button', 'ae-btn', 'CLOSE') as HTMLButtonElement
-  close.type = 'button'
-  close.addEventListener('click', () => { settings.hidden = true })
-  row.append(save, close)
-  dialog.append(row)
+  row.append(save)
+  dialogBody.append(row)
+  dialog.append(dialogHead, dialogBody)
   settings.append(dialog)
 
   right.append(side)
@@ -291,7 +297,9 @@ export function buildShell(root: HTMLElement): Shell {
     radarWrap,
     radarLabel,
     radarToggle,
+    radarBtn,
     legend: legendBody,
+    legendRoot: legend,
     readout: coords,
     scrub,
     scrubLabel,
@@ -312,6 +320,7 @@ export function buildShell(root: HTMLElement): Shell {
     liveBtn,
     settings,
     settingsForm: dialog,
+    cfgClose,
     globeCrt,
     watchForm,
     info,
@@ -322,6 +331,15 @@ export function buildShell(root: HTMLElement): Shell {
     infoUnpin,
     recover,
   }
+}
+
+function barButton(full: string, short: string, title: string): HTMLButtonElement {
+  const button = el('button', 'ae-btn') as HTMLButtonElement
+  button.type = 'button'
+  button.title = title
+  button.setAttribute('aria-pressed', 'false')
+  button.append(el('span', 'ae-full', full), el('span', 'ae-short', short))
+  return button
 }
 
 function field(label: string, name: string, type: string): HTMLElement {

@@ -14,7 +14,9 @@ import { toMarker, type CommandContext, type GlobeTheme, type LayerHandle, type 
 import { builtinPlugins } from '../plugins'
 import { getJson } from '../net/http'
 import { clampBox, placeTip } from '../ui/clamp'
+import { cfgFrame } from '../ui/hud-frame'
 import { buildShell } from '../ui/shell'
+import { escapePanels, pointerPanels, togglePanel, toggleRadar, type PanelName } from '../ui/toggles'
 import { startRadar } from '../ui/radar'
 import { mountViewer } from '../ui/viewer'
 import { mountFlightPanel } from '../ui/flight-panel'
@@ -249,6 +251,72 @@ export function boot(root: HTMLElement): void {
   function applyRadar(on: boolean) {
     shell.radarWrap.hidden = !on
     shell.radarToggle.textContent = on ? 'HIDE' : 'SHOW'
+    shell.radarToggle.title = on ? 'Hide the radar' : 'Show the radar'
+    shell.radarBtn.classList.toggle('is-on', on)
+    shell.radarBtn.setAttribute('aria-pressed', on ? 'true' : 'false')
+  }
+
+  let panel: PanelName | null = null
+  let painting = false
+
+  function placeCfg() {
+    const box = cfgFrame(window.innerWidth, window.innerHeight)
+    const dialog = shell.settingsForm
+    dialog.style.top = `${box.y}px`
+    dialog.style.left = `${box.x}px`
+    dialog.style.width = `${box.w}px`
+    dialog.style.height = `${box.h}px`
+  }
+
+  function paintMute(muted: boolean) {
+    const label = muted ? 'MUT' : 'SND'
+    for (const node of shell.mute.querySelectorAll('.ae-full, .ae-short')) node.textContent = label
+    shell.mute.classList.toggle('is-on', !muted)
+    shell.mute.setAttribute('aria-pressed', muted ? 'false' : 'true')
+    shell.mute.title = muted ? 'Sound is off' : 'Sound is on'
+  }
+
+  function paintPanel() {
+    const name = panel
+    shell.settings.hidden = name !== 'cfg'
+    shell.cfg.classList.toggle('is-on', name === 'cfg')
+    shell.cfg.setAttribute('aria-pressed', name === 'cfg' ? 'true' : 'false')
+    shell.link.classList.toggle('is-on', name === 'link')
+    shell.link.setAttribute('aria-pressed', name === 'link' ? 'true' : 'false')
+    shell.shot.classList.toggle('is-on', name === 'shot')
+    shell.shot.setAttribute('aria-pressed', name === 'shot' ? 'true' : 'false')
+    if (name !== 'link' && name !== 'shot') shell.output.hidden = true
+    shell.legendRoot.classList.toggle('is-on', name === 'legend')
+    if (shell.legendRoot.open !== (name === 'legend')) {
+      painting = true
+      shell.legendRoot.open = name === 'legend'
+      painting = false
+    }
+    if (flight.moreOpen() !== (name === 'more')) flight.setMore(name === 'more')
+    if (name === 'cfg') placeCfg()
+  }
+
+  function openPanel(next: PanelName | null) {
+    panel = next
+    paintPanel()
+  }
+
+  function fillCfg() {
+    const current = settings.get()
+    const form = shell.settingsForm
+    ;(form.elements.namedItem('openskyId') as HTMLInputElement).value = current.openskyId
+    ;(form.elements.namedItem('openskySecret') as HTMLInputElement).value = current.openskySecret
+    ;(form.elements.namedItem('firmsKey') as HTMLInputElement).value = current.firmsKey
+    ;(form.elements.namedItem('aisstreamKey') as HTMLInputElement).value = current.aisstreamKey
+    ;(form.elements.namedItem('maptilerKey') as HTMLInputElement).value = current.maptilerKey
+    ;(form.elements.namedItem('mapboxKey') as HTMLInputElement).value = current.mapboxKey
+    ;(form.elements.namedItem('tomtomKey') as HTMLInputElement).value = current.tomtomKey
+    ;(form.elements.namedItem('hereKey') as HTMLInputElement).value = current.hereKey
+    ;(form.elements.namedItem('basemapSource') as HTMLSelectElement).value = current.basemapSource
+    ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
+    ;(form.elements.namedItem('crt') as HTMLInputElement).value = String(current.crt)
+    ;(form.elements.namedItem('theme') as HTMLSelectElement).value = current.theme
+    ;(form.elements.namedItem('markerStyle') as HTMLSelectElement).value = current.markerStyle
   }
 
   let cardPinned = false
@@ -519,8 +587,7 @@ export function boot(root: HTMLElement): void {
       const mute = !settings.get().mute
       settings.update({ mute })
       audio.setMuted(mute)
-      shell.mute.textContent = mute ? 'MUT' : 'SND'
-      shell.mute.classList.toggle('is-on', !mute)
+      paintMute(mute)
       return mute
     },
     setMarkerSize(scale) {
@@ -585,6 +652,7 @@ export function boot(root: HTMLElement): void {
   function showOutput(text: string) {
     shell.output.hidden = !text
     shell.output.textContent = text
+    if (panel === 'link' || panel === 'shot') openPanel(null)
   }
 
   async function runPrompt(line: string) {
@@ -653,8 +721,10 @@ export function boot(root: HTMLElement): void {
         shell.prompt.value = pick.name + ' '
       }
     } else if (event.key === 'Escape') {
+      event.stopPropagation()
       shell.suggest.hidden = true
       shell.output.hidden = true
+      if (panel === 'link' || panel === 'shot') openPanel(null)
       shell.prompt.blur()
     }
   })
@@ -668,28 +738,44 @@ export function boot(root: HTMLElement): void {
     shell.scrub.value = '0'
   })
   shell.mute.addEventListener('click', () => commands.toggleMute())
-  shell.shot.addEventListener('click', () => screenshot())
+  shell.shot.addEventListener('click', () => {
+    if (panel === 'shot') {
+      openPanel(null)
+      return
+    }
+    screenshot()
+    shell.output.hidden = false
+    shell.output.textContent = 'SHOT SAVED'
+    openPanel('shot')
+  })
   shell.link.addEventListener('click', () => {
-    void copyLink().then((url) => showOutput(`LINK ${url}`))
+    if (panel === 'link') {
+      openPanel(null)
+      return
+    }
+    void copyLink().then((url) => {
+      shell.output.hidden = false
+      shell.output.textContent = `LINK ${url}`
+      openPanel('link')
+    })
+  })
+  shell.radarBtn.addEventListener('click', () => {
+    audio.play('click')
+    const next = toggleRadar({ panel, radar: settings.get().radar, sound: !settings.get().mute, viewer: viewer.isOpen() })
+    const on = commands.setRadar(next.radar)
+    if (panel === 'link' || panel === 'shot') openPanel(null)
+    shell.output.hidden = false
+    shell.output.textContent = on ? 'RADAR ON' : 'RADAR OFF'
   })
   shell.cfg.addEventListener('click', () => {
     audio.play('click')
-    const current = settings.get()
-    const form = shell.settingsForm
-    ;(form.elements.namedItem('openskyId') as HTMLInputElement).value = current.openskyId
-    ;(form.elements.namedItem('openskySecret') as HTMLInputElement).value = current.openskySecret
-    ;(form.elements.namedItem('firmsKey') as HTMLInputElement).value = current.firmsKey
-    ;(form.elements.namedItem('aisstreamKey') as HTMLInputElement).value = current.aisstreamKey
-    ;(form.elements.namedItem('maptilerKey') as HTMLInputElement).value = current.maptilerKey
-    ;(form.elements.namedItem('mapboxKey') as HTMLInputElement).value = current.mapboxKey
-    ;(form.elements.namedItem('tomtomKey') as HTMLInputElement).value = current.tomtomKey
-    ;(form.elements.namedItem('hereKey') as HTMLInputElement).value = current.hereKey
-    ;(form.elements.namedItem('basemapSource') as HTMLSelectElement).value = current.basemapSource
-    ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
-    ;(form.elements.namedItem('crt') as HTMLInputElement).value = String(current.crt)
-    ;(form.elements.namedItem('theme') as HTMLSelectElement).value = current.theme
-    ;(form.elements.namedItem('markerStyle') as HTMLSelectElement).value = current.markerStyle
-    shell.settings.hidden = false
+    const next = togglePanel({ panel, radar: settings.get().radar, sound: !settings.get().mute, viewer: viewer.isOpen() }, 'cfg')
+    if (next.panel === 'cfg') fillCfg()
+    openPanel(next.panel)
+  })
+  shell.cfgClose.addEventListener('click', () => {
+    audio.play('click')
+    openPanel(null)
   })
   shell.settingsForm.addEventListener('submit', (event) => {
     event.preventDefault()
@@ -710,7 +796,7 @@ export function boot(root: HTMLElement): void {
           : 'free',
       markerStyle: (form.elements.namedItem('markerStyle') as HTMLSelectElement).value === 'mono' ? 'mono' : 'color',
     })
-    shell.settings.hidden = true
+    openPanel(null)
     const size = Number((form.elements.namedItem('markerSize') as HTMLInputElement).value)
     if (Number.isFinite(size)) commands.setMarkerSize(size)
     const crt = Number((form.elements.namedItem('crt') as HTMLInputElement).value)
@@ -735,14 +821,20 @@ export function boot(root: HTMLElement): void {
   })
 
   window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return
+    const open = panel !== null || !shell.output.hidden || !shell.suggest.hidden || flight.moreOpen()
+    if (!open) return
+    shell.suggest.hidden = true
+    openPanel(escapePanels({ panel, radar: settings.get().radar, sound: !settings.get().mute, viewer: viewer.isOpen() }).panel)
+    event.stopPropagation()
+  }, true)
+  window.addEventListener('keydown', (event) => {
     const typing = document.activeElement === shell.prompt || (document.activeElement instanceof HTMLInputElement)
     if (event.key === '/' && !typing) {
       event.preventDefault()
       shell.prompt.focus()
     } else if (event.key === 'Escape') {
-      shell.settings.hidden = true
-      const menuOpen = document.querySelector('.ae-flight-menu:not([hidden])')
-      if (!menuOpen && !typing) setTrack(null)
+      if (!typing) setTrack(null)
     } else if (!typing && (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
       const view = globe.getView()
       const step = 4 * (view.rangeKm / 10000)
@@ -888,12 +980,39 @@ export function boot(root: HTMLElement): void {
     audio.play('click')
     commands.setViewer(!viewer.isOpen())
   })
+  shell.legendRoot.addEventListener('toggle', () => {
+    if (painting) return
+    const next = togglePanel({ panel, radar: settings.get().radar, sound: !settings.get().mute, viewer: viewer.isOpen() }, 'legend')
+    if (shell.legendRoot.open) openPanel(next.panel === 'legend' ? 'legend' : next.panel)
+    else if (panel === 'legend') openPanel(null)
+  })
+  flight.onMore((open) => {
+    if (painting) return
+    if (open) openPanel('more')
+    else if (panel === 'more') openPanel(null)
+  })
+  window.addEventListener('pointerdown', (event) => {
+    const target = event.target
+    if (!(target instanceof Element)) return
+    const hit = target.closest('.ae-globe')
+      ? 'globe'
+      : target.closest('.ae-dialog, .ae-output, .ae-suggest, .ae-legend, .ae-flight-actions')
+        ? 'panel'
+        : target.closest('.ae-top-actions')
+          ? 'button'
+          : 'away'
+    const next = pointerPanels({ panel, radar: settings.get().radar, sound: !settings.get().mute, viewer: viewer.isOpen() }, hit)
+    if (hit === 'away' && !shell.suggest.hidden) shell.suggest.hidden = true
+    if (hit === 'away' && panel !== 'cfg' && !shell.output.hidden && next.panel === null) shell.output.hidden = true
+    if (next.panel !== panel) openPanel(next.panel)
+  })
   try {
     if (localStorage.getItem(VIEWER_KEY) === '0') viewer.setOpen(false)
   } catch {
     /* keep the viewer open */
   }
   window.addEventListener('resize', () => {
+    if (!shell.settings.hidden) placeCfg()
     if (shell.info.hidden || !shell.info.classList.contains('is-moved')) return
     placeCard(shell.info.offsetLeft, shell.info.offsetTop)
   })
@@ -988,8 +1107,7 @@ export function boot(root: HTMLElement): void {
     panel.mount(body, pluginCtx)
   }
 
-  shell.mute.textContent = settings.get().mute ? 'MUT' : 'SND'
-  shell.mute.classList.toggle('is-on', !settings.get().mute)
+  paintMute(settings.get().mute)
   renderLayers()
   renderAlerts()
   paintClock()

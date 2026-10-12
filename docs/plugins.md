@@ -132,7 +132,7 @@ Aircraft type codes live in `src/plugins/aircraft/types.ts` (`EXACT`, then prefi
 
 ## Commands worth knowing
 
-`help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `sat`, `find`, `beacon`, `size`, `colors`, `radar`, `theme`, `crt`, `viewer`, `mute`, `shot`, `link`. `sat iss` and `find 25544` lock a satellite. `find` also takes a ship name or MMSI. `colors mono` restores the single phosphor. `colors aircraft #4da3ff` sets one layer. `colors reset` clears those overrides. `radar off` hides the scope.
+`help`, `fly`, `goto`, `layer`, `layers`, `track`, `drop`, `time`, `pin`, `where`, `watch`, `pass`, `sat`, `find`, `beacon`, `size`, `colors`, `radar`, `theme`, `crt`, `viewer`, `mute`, `shot`, `link`. `sat iss` and `find 25544` lock a satellite. `find` also takes a ship name or MMSI. `colors mono` restores the single phosphor. `colors aircraft #4da3ff` sets one layer. `colors reset` clears those overrides. `radar off` hides the scope. The top-bar RADAR button does the same thing and stays lit while the scope is showing. CFG, LINK, SHOT, LEGEND, and MORE toggle: the second click closes the panel.
 
 `size 0.45` (or `size up` / `size down`) matches the marker-size slider in CFG. `theme color` and `theme green` match the globe control. `crt 0.4` matches the CRT slider.
 

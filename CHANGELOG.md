@@ -2,6 +2,11 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 2.1.2
+
+- The top-bar buttons toggle. CFG, LINK, SHOT, LEGEND, and MORE open on the first click and close on the second. The open button stays lit. Escape closes the open panel. A click outside closes a small popover, and a click on the globe still selects a contact. Opening one panel closes the others. SND stays the mute switch, lit while sound is on. The settings panel has an X and sits beside the model viewer with its own scroll.
+- RADAR is on the top bar next to those buttons. It shows and hides the corner radar, the same switch as `radar`, and it is remembered. The radar stays in the layer dock.
+
 ## 2.1.1
 
 - Street imagery sat in the wrong place. The tile bitmaps ignore the usual GPU flip, so each tile was drawn with north and south swapped and the photo drifted off the buildings and roads as the camera moved. Tiles are now oriented north-up and draped on the Web Mercator latitude, so the image lines up with the OpenStreetMap footprints.
