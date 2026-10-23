@@ -975,12 +975,90 @@ button { cursor: pointer; }
   min-height: 0;
   overflow: auto;
 }
-.ae-flight[hidden] { display: none; }
+.ae-flight[hidden],
+.ae-cam[hidden] { display: none; }
+.ae-cam {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  z-index: 2;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: rgba(2, 14, 8, 0.94);
+  border: 3px solid var(--accent, var(--line));
+  box-shadow: 4px 4px 0 var(--shadow);
+  color: var(--ink);
+  box-sizing: border-box;
+}
+.ae-cam-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  background: #0c3a1c;
+}
+.ae-cam-title {
+  flex: 1;
+  min-width: 0;
+  font-family: "Ae Pixel", monospace;
+  font-size: 9px;
+  color: var(--hot);
+  line-height: 1.4;
+}
+.ae-cam-badge {
+  border: 2px solid var(--accent, var(--hot));
+  padding: 3px 4px;
+  font-size: 8px;
+  color: var(--accent, var(--hot));
+  max-width: 118px;
+  line-height: 1.3;
+}
+.ae-cam-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+}
+.ae-cam-stage {
+  height: 148px;
+  margin-bottom: 8px;
+  background: #010804;
+  border: 2px solid var(--mid);
+  overflow: hidden;
+}
+.ae-cam-still,
+.ae-cam-video {
+  width: 100%;
+  height: 148px;
+  object-fit: cover;
+  background: #010804;
+  display: block;
+}
+.ae-cam-row {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0;
+  font-size: 8px;
+  line-height: 1.4;
+}
+.ae-cam-v { flex: 1; min-width: 0; color: var(--ink); }
+.ae-cam-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
 .ae-flight { border-color: var(--accent, var(--line)); }
 .ae-hud.is-flight .ae-layers,
 .ae-hud.is-flight .ae-legend,
-.ae-hud.is-flight .ae-radar-wrap { display: none; }
-.ae-hud.is-flight .ae-dock {
+.ae-hud.is-flight .ae-radar-wrap,
+.ae-hud.is-cam .ae-layers,
+.ae-hud.is-cam .ae-legend,
+.ae-hud.is-cam .ae-radar-wrap { display: none; }
+.ae-hud.is-flight .ae-dock,
+.ae-hud.is-cam .ae-dock {
   left: 10px;
   top: 82px;
   bottom: 114px;
@@ -1268,7 +1346,8 @@ button { cursor: pointer; }
   .ae-field { font-size: 14px; }
   .ae-field input { font-size: 16px; }
   .ae-flight { width: 100%; max-height: none; }
-  .ae-hud.is-flight .ae-dock { left: 10px; top: 82px; bottom: 114px; width: 400px; max-height: none; }
+  .ae-hud.is-flight .ae-dock,
+  .ae-hud.is-cam .ae-dock { left: 10px; top: 82px; bottom: 114px; width: 400px; max-height: none; }
   .ae-right { width: 220px; top: 82px; bottom: 114px; }
   .ae-track { left: 418px; }
   .ae-viewer-canvas { height: 128px; }
@@ -1288,7 +1367,8 @@ button { cursor: pointer; }
   .ae-find { grid-column: 1 / -1; grid-row: 1; }
   .ae-layers { grid-column: 1; grid-row: 2; width: auto; max-height: none; }
   .ae-legend { grid-column: 1; grid-row: 3; max-height: 88px; }
-  .ae-hud.is-flight .ae-flight { grid-column: 1 / -1; grid-row: 2 / span 2; }
+  .ae-hud.is-flight .ae-flight,
+  .ae-hud.is-cam .ae-cam { grid-column: 1 / -1; grid-row: 2 / span 2; }
   .ae-radar-wrap {
     grid-column: 2;
     grid-row: 2 / span 2;

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
+import { routeCam } from './cams.mjs'
 
-const UA = 'AllEyes/2.3.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/3.0.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -590,6 +591,8 @@ async function route(req, url) {
     })
   }
 
+  if (path.startsWith('/api/cams/')) return routeCam(req, url)
+
   return jsonError(404, 'unknown feed')
 }
 
@@ -605,7 +608,7 @@ export async function handleApi(req, res) {
   if (req.method === 'OPTIONS') {
     res.statusCode = 204
     res.setHeader('access-control-allow-origin', '*')
-    res.setHeader('access-control-allow-headers', 'x-opensky-client-id, x-opensky-client-secret, x-firms-map-key, x-tomtom-key, x-here-key')
+    res.setHeader('access-control-allow-headers', 'x-opensky-client-id, x-opensky-client-secret, x-firms-map-key, x-tomtom-key, x-here-key, x-windy-key, x-wsdot-key, x-ohgo-key')
     res.setHeader('access-control-allow-methods', 'GET, OPTIONS')
     res.end()
     return true

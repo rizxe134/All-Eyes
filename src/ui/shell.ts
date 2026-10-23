@@ -95,8 +95,8 @@ export function buildShell(root: HTMLElement): Shell {
   find.type = 'text'
   find.autocomplete = 'off'
   find.spellcheck = false
-  find.placeholder = 'Search flight, ship, satellite…'
-  find.setAttribute('aria-label', 'Search flights, ships, and satellites')
+  find.placeholder = 'Search flight, ship, satellite, camera…'
+  find.setAttribute('aria-label', 'Search flights, ships, satellites, and cameras')
   find.setAttribute('aria-keyshortcuts', 'Control+F Meta+F')
   find.setAttribute('aria-autocomplete', 'list')
   findBox.append(find)
@@ -208,6 +208,9 @@ export function buildShell(root: HTMLElement): Shell {
   dialogBody.append(field('Mapbox token (optional basemap)', 'mapboxKey', 'password'))
   dialogBody.append(field('TomTom key (live traffic speed)', 'tomtomKey', 'password'))
   dialogBody.append(field('HERE key (live traffic speed)', 'hereKey', 'password'))
+  dialogBody.append(field('Windy webcams key', 'windyKey', 'password'))
+  dialogBody.append(field('WSDOT camera key', 'wsdotKey', 'password'))
+  dialogBody.append(field('OHGO camera key', 'ohgoKey', 'password'))
   const sourceWrap = el('label', 'ae-field')
   sourceWrap.append(document.createTextNode('BASEMAP SOURCE'))
   const basemapSource = el('select') as HTMLSelectElement

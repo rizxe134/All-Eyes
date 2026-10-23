@@ -13,5 +13,5 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "tests", "vite.config.ts", "server/vite-plugin.ts"]
+  "include": ["src", "tests", "vite.config.ts", "server/vite-plugin.ts", "server/cams.d.mts"]
 }

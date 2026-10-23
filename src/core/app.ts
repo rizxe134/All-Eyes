@@ -21,6 +21,9 @@ import { escapePanels, pointerPanels, togglePanel, toggleRadar, type PanelName }
 import { startRadar } from '../ui/radar'
 import { mountViewer } from '../ui/viewer'
 import { mountFlightPanel } from '../ui/flight-panel'
+import { mountCameraPanel } from '../ui/camera-panel'
+import { camById, searchCams } from '../plugins/cameras/catalog'
+import { registerCameraOpen } from '../plugins/cameras/focus'
 import { flightText, formatFlight } from '../plugins/aircraft/detail'
 import { callsignMatch, parseFlightQuery } from '../plugins/aircraft/callsign'
 import { parseAdsbRoute } from '../plugins/aircraft/lookup'
@@ -89,6 +92,22 @@ export function boot(root: HTMLElement): void {
   const flight = mountFlightPanel()
   shell.layers.parentElement?.append(flight.root)
   const globe = new Globe(shell.canvas, () => clock.now())
+  const camPanel = mountCameraPanel({
+    follow(cam) {
+      if (state.enabled.get('cameras') !== true) setLayer('cameras', true)
+      globe.flyTo(cam.lat, cam.lon, 1.6)
+      state.following = true
+      globe.setFollow({ lat: cam.lat, lon: cam.lon, altKm: 0 })
+    },
+    open(id) {
+      const cam = camById(id)
+      lockContact(id, cam?.lat, cam?.lon)
+    },
+    close() {
+      setTrack(null)
+    },
+  })
+  shell.layers.parentElement?.append(camPanel.root)
   const registry = new PluginRegistry()
   for (const plugin of builtinPlugins) registry.register(plugin)
 
@@ -339,6 +358,9 @@ export function boot(root: HTMLElement): void {
     ;(form.elements.namedItem('mapboxKey') as HTMLInputElement).value = current.mapboxKey
     ;(form.elements.namedItem('tomtomKey') as HTMLInputElement).value = current.tomtomKey
     ;(form.elements.namedItem('hereKey') as HTMLInputElement).value = current.hereKey
+    ;(form.elements.namedItem('windyKey') as HTMLInputElement).value = current.windyKey
+    ;(form.elements.namedItem('wsdotKey') as HTMLInputElement).value = current.wsdotKey
+    ;(form.elements.namedItem('ohgoKey') as HTMLInputElement).value = current.ohgoKey
     ;(form.elements.namedItem('basemapSource') as HTMLSelectElement).value = current.basemapSource
     ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
     ;(form.elements.namedItem('crt') as HTMLInputElement).value = String(current.crt)
@@ -442,6 +464,7 @@ export function boot(root: HTMLElement): void {
         flight.setView(null)
         flight.setGraph([])
         hud?.classList.remove('is-flight')
+        renderCamera()
         return
       }
       flight.setView(formatFlight(fix, airMetaFor(hex), unit))
@@ -451,6 +474,7 @@ export function boot(root: HTMLElement): void {
         gsKt: sample.speedKt,
       })))
       hud?.classList.add('is-flight')
+      renderCamera()
       return
     }
     if (id?.startsWith('ship:')) {
@@ -459,12 +483,14 @@ export function boot(root: HTMLElement): void {
         flight.setView(null)
         flight.setGraph([])
         hud?.classList.remove('is-flight')
+        renderCamera()
         return
       }
       flight.setView(formatShip(ship, shipMeta(ship.mmsi), unit))
       flight.setRouteOn(shipTrackOn())
       flight.setGraph(shipTrail(ship.mmsi).map((sample) => ({ altFt: sample.cog, gsKt: sample.sog })), 'CSE  BRIGHT    SPD  DIM')
       hud?.classList.add('is-flight')
+      renderCamera()
       return
     }
     if (id?.startsWith('sat:')) {
@@ -473,17 +499,34 @@ export function boot(root: HTMLElement): void {
         flight.setView(null)
         flight.setGraph([])
         hud?.classList.remove('is-flight')
+        renderCamera()
         return
       }
       flight.setView(view)
       flight.setRouteOn(satTrackOn())
       flight.setGraph(satSeries(Number(id.slice(4))), 'ALT  BRIGHT    SPD  DIM  PROPAGATED')
       hud?.classList.add('is-flight')
+      renderCamera()
       return
     }
     flight.setView(null)
     flight.setGraph([])
     hud?.classList.remove('is-flight')
+    renderCamera()
+  }
+
+  function renderCamera() {
+    const hud = shell.hud
+    const id = state.trackId
+    const cam = id?.startsWith('cam:') ? camById(id) : null
+    if (!cam) {
+      camPanel.setView(null)
+      hud?.classList.remove('is-cam')
+      return
+    }
+    camPanel.root.style.setProperty('--accent', layerHex('cameras'))
+    camPanel.setView(cam)
+    hud?.classList.add('is-cam')
   }
 
   function renderAlerts() {
@@ -665,12 +708,13 @@ export function boot(root: HTMLElement): void {
       if (state.enabled.get('aircraft') !== true) setLayer('aircraft', true)
       if (state.enabled.get('airground') !== true) setLayer('airground', true)
     }
+    if (id.startsWith('cam:') && state.enabled.get('cameras') !== true) setLayer('cameras', true)
     setTrack(id)
     const contact = entities.get(id)
     const atLat = contact?.lat ?? lat
     const atLon = contact?.lon ?? lon
     if (atLat != null && atLon != null) {
-      const range = id.startsWith('sat:') ? 1800 : id.startsWith('ship:') ? 40 : 420
+      const range = id.startsWith('sat:') ? 1800 : id.startsWith('ship:') ? 40 : id.startsWith('cam:') ? 1.6 : 420
       globe.flyTo(atLat, atLon, range)
     }
     const label = contact?.label || id
@@ -721,9 +765,23 @@ export function boot(root: HTMLElement): void {
     return 'NO RESULTS'
   }
 
+  function cameraHits(query: string): FindHit[] {
+    return searchCams(query, 8).map((cam) => ({
+      group: 'Cameras' as const,
+      key: cam.id,
+      title: cam.name,
+      detail: [cam.road, cam.direction, cam.agency].filter(Boolean).join(' · '),
+      sprite: 'cam',
+      layerId: 'cameras',
+      lat: cam.lat,
+      lon: cam.lon,
+      contactId: cam.id,
+    }))
+  }
+
   function refreshFind(query: string) {
     const text = query.trim()
-    const hits = text ? matchContacts(text, entities.all()) : recentHits(readContactRecent())
+    const hits = text ? [...matchContacts(text, entities.all()), ...cameraHits(text)] : recentHits(readContactRecent())
     paintFind(hits)
     if (text && !hits.length) {
       shell.findList.hidden = false
@@ -736,22 +794,27 @@ export function boot(root: HTMLElement): void {
 
   async function goContact(query: string): Promise<string> {
     const text = query.trim()
-    if (!text) return 'USAGE: SEARCH A FLIGHT, SHIP, OR SATELLITE'
-    const hits = matchContacts(text, entities.all())
-    const known = hits.find((hit) => hit.contactId)
+    if (!text) return 'USAGE: SEARCH A FLIGHT, SHIP, SATELLITE, OR CAMERA'
+    const contacts = matchContacts(text, entities.all())
+    const known = contacts.find((hit) => hit.contactId)
     if (known?.contactId) {
       pushContactRecent(text)
       return lockContact(known.contactId, known.lat, known.lon)
-    }
-    const seek = hits.find((hit) => hit.seek)
-    if (seek?.query) {
-      pushContactRecent(text)
-      return seekAndLock(seek.query)
     }
     const flight = parseFlightQuery(text)
     if (flight.kind === 'iata' || flight.kind === 'icao' || flight.kind === 'hex' || flight.kind === 'reg') {
       pushContactRecent(text)
       return seekAndLock(text)
+    }
+    const cam = cameraHits(text)[0]
+    if (cam?.contactId) {
+      pushContactRecent(text)
+      return lockContact(cam.contactId, cam.lat, cam.lon)
+    }
+    const seek = contacts.find((hit) => hit.seek)
+    if (seek?.query) {
+      pushContactRecent(text)
+      return seekAndLock(seek.query)
     }
     showFindCard('NO RESULTS')
     return 'NO RESULTS'
@@ -1032,6 +1095,9 @@ export function boot(root: HTMLElement): void {
       mapboxKey: (form.elements.namedItem('mapboxKey') as HTMLInputElement).value.trim(),
       tomtomKey: (form.elements.namedItem('tomtomKey') as HTMLInputElement).value.trim(),
       hereKey: (form.elements.namedItem('hereKey') as HTMLInputElement).value.trim(),
+      windyKey: (form.elements.namedItem('windyKey') as HTMLInputElement).value.trim(),
+      wsdotKey: (form.elements.namedItem('wsdotKey') as HTMLInputElement).value.trim(),
+      ohgoKey: (form.elements.namedItem('ohgoKey') as HTMLInputElement).value.trim(),
       basemapSource: (form.elements.namedItem('basemapSource') as HTMLSelectElement).value === 'mapbox'
         ? 'mapbox'
         : (form.elements.namedItem('basemapSource') as HTMLSelectElement).value === 'maptiler'
@@ -1108,6 +1174,13 @@ export function boot(root: HTMLElement): void {
     audio.unlock()
     if (hit.marker) {
       if (hit.marker.id === 'search:pin') return
+      if (hit.marker.id.startsWith('camc:')) {
+        const contact = entities.get(hit.marker.id)
+        const view = globe.getView()
+        if (contact) globe.flyTo(contact.lat, contact.lon, Math.max(40, view.rangeKm * 0.28))
+        audio.play('click')
+        return
+      }
       setTrack(hit.marker.id)
       audio.play('lock')
       return
@@ -1360,6 +1433,10 @@ export function boot(root: HTMLElement): void {
     armStreet(hit.rangeKm)
     dropSearchPin(hit.lat, hit.lon)
     globe.flyTo(hit.lat, hit.lon, hit.rangeKm)
+  })
+  registerCameraOpen((id) => {
+    const cam = camById(id)
+    lockContact(id, cam?.lat, cam?.lon)
   })
 
   for (const panel of registry.panels()) {

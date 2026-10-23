@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             three: ['three'],
             satellite: ['satellite.js'],
+            hls: ['hls.js'],
           },
         },
       },

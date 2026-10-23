@@ -2,6 +2,13 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 3.0.0
+
+- TRAFFIC CAMS is a layer and a legend row, and both use the same camera sprite. Public road cameras load for the area in view, merge, and cluster when the view is wide. One feed plays at a time.
+- The camera panel names the camera, road, direction, and agency. An open HLS stream or MJPEG plays as LIVE. A Transport for London clip plays as VIDEO CLIP. A still image is labeled SNAPSHOT and how often it refreshes. A dead feed says FEED OFFLINE. FOLLOW, the agency page, a pop-out window, and next/previous nearby cameras are on the panel.
+- Ctrl+F or Cmd+F can search a camera by name or road. The CITY panel lists cameras near the view.
+- Keyless catalogs: Transport for London JamCam, Caltrans, NYC DOT, Fintraffic / Digitraffic, Georgia 511, FL511, Wisconsin 511, AZ511, Ontario 511, 511PA, New England 511, and UDOT. Windy, WSDOT, and OHGO stay off until a key is set in CFG. Each agency is named on the panel.
+
 ## 2.3.0
 
 - The top search is flights, ships, and satellites. Ctrl+F or Cmd+F focuses it. Places and addresses are not listed there.

@@ -4,7 +4,7 @@ import { callsignMatch, parseFlightQuery, type FlightQuery } from '../plugins/ai
 import type { Contact } from '../core/types'
 import type { GeoHit } from './parse'
 
-export type FindGroup = 'Places' | 'Flights' | 'Ships' | 'Satellites' | 'Recent'
+export type FindGroup = 'Places' | 'Flights' | 'Ships' | 'Satellites' | 'Cameras' | 'Recent'
 
 export interface FindHit {
   group: FindGroup

@@ -2,6 +2,8 @@ import { CITIES, findCity } from '../../core/cities'
 import { distanceKm } from '../../core/geo'
 import type { AllEyesPlugin, Contact, LayerContext, PluginContext, ViewState } from '../../core/types'
 import { getJson } from '../../net/http'
+import { camsNear } from '../cameras/catalog'
+import { openCamera } from '../cameras/focus'
 import { attachAddressSearch } from '../../search/city-ui'
 import { parseBasemapMode } from '../../city/basemap'
 import { OSM_DEBOUNCE_MS, createArmFlag, viewMoved } from '../../city/budget'
@@ -396,9 +398,11 @@ function mountPanel(parent: HTMLElement, ctx: PluginContext): () => void {
   ships.className = 'ae-city-list'
   const quakes = document.createElement('div')
   quakes.className = 'ae-city-list'
+  const cams = document.createElement('div')
+  cams.className = 'ae-city-list'
   const attr = document.createElement('div')
   attr.className = 'ae-city-attr'
-  parent.append(form, pick, rows, label('PLACES'), places, label('AIRPORTS'), airports, label('OVERHEAD'), overhead, label('SHIPS'), ships, label('QUAKES'), quakes, attr)
+  parent.append(form, pick, rows, label('PLACES'), places, label('AIRPORTS'), airports, label('CAMS'), cams, label('OVERHEAD'), overhead, label('SHIPS'), ships, label('QUAKES'), quakes, attr)
 
   const fly = (lat: number, lon: number, range: number) => {
     ctx.globe.flyTo(lat, lon, range)
@@ -437,6 +441,23 @@ function mountPanel(parent: HTMLElement, ctx: PluginContext): () => void {
       places.dataset.key = poiKey
       listButtons(places, pois.filter((poi) => poi.kind !== 'aerodrome').map((poi) => ({ name: poi.name, lat: poi.lat, lon: poi.lon })), flyPlace)
       listButtons(airports, pois.filter((poi) => poi.kind === 'aerodrome').map((poi) => ({ name: poi.name, lat: poi.lat, lon: poi.lon })), flyPlace)
+    }
+    const nearCams = camsNear(view.lat, view.lon, 25, 6)
+    const camKey = nearCams.map((cam) => cam.id).join(',')
+    if (camKey !== cams.dataset.key) {
+      cams.dataset.key = camKey
+      cams.replaceChildren()
+      if (!nearCams.length) cams.textContent = 'NONE'
+      else {
+        for (const cam of nearCams) {
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.className = 'ae-city-jump'
+          button.textContent = cam.name
+          button.addEventListener('click', () => openCamera(cam.id))
+          cams.append(button)
+        }
+      }
     }
     const nearby = ctx.nearby?.(view.lat, view.lon, 40) ?? []
     overhead.textContent = nearby.filter((contact) => contact.kind === 'air').slice(0, 5).map((contact) => contact.label).join('  ') || 'NONE'

@@ -1,4 +1,5 @@
 import './aircraft/sprites'
+import './cameras/sprites'
 import './markers/sprites'
 import './satellites/sprites'
 import './ships/sprites'

@@ -1,6 +1,6 @@
 /** Public module API. Plugins depend on this file and nothing else in core. */
 
-export type EntityKind = 'air' | 'ship' | 'sat' | 'quake' | 'storm' | 'event' | 'launch' | 'beacon'
+export type EntityKind = 'air' | 'ship' | 'sat' | 'quake' | 'storm' | 'event' | 'launch' | 'beacon' | 'cam'
 
 /** Sprite id. The same id selects the model in the viewer. Built-ins: dot, chevron, diamond, ring, box, drop. */
 export type MarkerShape = string
@@ -129,6 +129,12 @@ export interface Settings {
   tomtomKey: string
   /** Optional HERE key. Live speed ratio when the flow call succeeds. */
   hereKey: string
+  /** Optional Windy webcams key. Empty skips that catalog. */
+  windyKey: string
+  /** Optional WSDOT camera key. Empty skips that catalog. */
+  wsdotKey: string
+  /** Optional OHGO camera key. Empty skips that catalog. */
+  ohgoKey: string
   basemap: 'sat' | 'streets' | 'hybrid' | 'dark'
   basemapSource: 'free' | 'maptiler' | 'mapbox'
   /** Multiplier for globe sprites. About 0.2 to 1.6. Default is small. */

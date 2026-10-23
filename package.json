@@ -1,7 +1,7 @@
 {
   "name": "all-eyes",
   "private": true,
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "All Eyes — a live 8-bit intelligence console with a natural-color globe for the browser, Mac, Windows, and Linux.",
   "license": "MIT",
   "type": "module",
@@ -23,6 +23,7 @@
     "icon": "node build/make-icon.mjs"
   },
   "dependencies": {
+    "hls.js": "^1.6.15",
     "satellite.js": "^5.0.0",
     "three": "^0.170.0"
   },

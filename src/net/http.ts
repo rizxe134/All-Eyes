@@ -14,6 +14,9 @@ export function authHeaders(url: string, settings: SettingsStore): Record<string
   if (url.includes('/api/traffic/here') && current.hereKey) headers['x-here-key'] = current.hereKey
   if (url.includes('/api/geocode/maptiler') && current.maptilerKey) headers['x-maptiler-key'] = current.maptilerKey
   if (url.includes('/api/geocode/mapbox') && current.mapboxKey) headers['x-mapbox-key'] = current.mapboxKey
+  if (url.includes('/api/cams/windy') && current.windyKey) headers['x-windy-key'] = current.windyKey
+  if (url.includes('/api/cams/wsdot') && current.wsdotKey) headers['x-wsdot-key'] = current.wsdotKey
+  if (url.includes('/api/cams/ohgo') && current.ohgoKey) headers['x-ohgo-key'] = current.ohgoKey
   return headers
 }
 
@@ -36,8 +39,8 @@ export function linkTimeout(parent: AbortSignal | undefined, ms: number): Linked
   }
 }
 
-export async function getJson(url: string, settings: SettingsStore, parent?: AbortSignal): Promise<unknown> {
-  const linked = linkTimeout(parent, 20000)
+export async function getJson(url: string, settings: SettingsStore, parent?: AbortSignal, timeoutMs = 20000): Promise<unknown> {
+  const linked = linkTimeout(parent, timeoutMs)
   try {
     const res = await fetch(url, { signal: linked.signal, headers: authHeaders(url, settings) })
     if (!res.ok) throw new Error(`${res.status} ${url}`)
