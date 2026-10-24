@@ -9,15 +9,31 @@ const RANK: Record<CamMode, number> = {
   offline: 0,
 }
 
+/** Hosts the media proxy will relay. Anything else cannot play in the panel. */
+export function proxiedStream(videoUrl: string): boolean {
+  try {
+    const url = new URL(videoUrl)
+    if (url.protocol !== 'https:' || url.username || url.password) return false
+    const host = url.hostname
+    if (host.endsWith('.dot.ca.gov') || host.endsWith('.dot.wi.gov')) return true
+    if (host === 's3-eu-west-1.amazonaws.com' && url.pathname.toLowerCase().includes('jamcam')) return true
+    return false
+  } catch {
+    return false
+  }
+}
+
 export function feedMode(videoUrl: string, imageUrl: string, authRequired: boolean, videoType = ''): CamMode {
   const video = videoUrl.trim()
   const image = imageUrl.trim()
   if (authRequired || !video) return image ? 'snapshot' : 'offline'
   const kind = `${video} ${videoType}`.toLowerCase()
-  if (kind.includes('.m3u8') || kind.includes('mpegurl') || kind.includes('application/x-mpegurl') || kind.includes('hls')) return 'hls'
-  if (kind.includes('mjpeg') || kind.includes('.mjpg') || kind.includes('multipart/x-mixed-replace')) return 'mjpeg'
-  if (kind.includes('.mp4')) return 'mp4'
-  return image ? 'snapshot' : 'offline'
+  let mode: CamMode = image ? 'snapshot' : 'offline'
+  if (kind.includes('.m3u8') || kind.includes('mpegurl') || kind.includes('application/x-mpegurl') || kind.includes('hls')) mode = 'hls'
+  else if (kind.includes('mjpeg') || kind.includes('.mjpg') || kind.includes('multipart/x-mixed-replace')) mode = 'mjpeg'
+  else if (kind.includes('.mp4')) mode = 'mp4'
+  if (mode !== 'snapshot' && mode !== 'offline' && !proxiedStream(video)) return image ? 'snapshot' : 'offline'
+  return mode
 }
 
 export function modeLabel(mode: CamMode, refreshSec: number): string {

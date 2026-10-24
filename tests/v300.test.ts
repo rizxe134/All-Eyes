@@ -37,10 +37,11 @@ describe('camera feed mode', () => {
   it('keeps an open playlist as HLS and an auth-walled one as a snapshot', () => {
     expect(feedMode('https://cctv1.dot.wi.gov/rtplive/CCTV-49-0011/playlist.m3u8', 'https://511wi.gov/map/Cctv/1', false)).toBe('hls')
     expect(feedMode('https://sfs.example/playlist.m3u8', 'https://511ga.org/map/Cctv/18558', true)).toBe('snapshot')
-    expect(feedMode('https://jamcams.tfl.gov.uk/00002.00865.mp4', 'https://jamcams.tfl.gov.uk/00002.00865.jpg', false)).toBe('mp4')
-    expect(feedMode('https://cam.example/stream.mjpg', 'https://cam.example/still.jpg', false)).toBe('mjpeg')
+    expect(feedMode('https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00002.00865.mp4', 'https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00002.00865.jpg', false)).toBe('mp4')
+    expect(feedMode('https://cctv1.dot.wi.gov/stream.mjpg', 'https://cctv1.dot.wi.gov/still.jpg', false)).toBe('mjpeg')
     expect(feedMode('', 'https://webcams.nyctmc.org/api/cameras/1/image', false)).toBe('snapshot')
     expect(feedMode('', '', false)).toBe('offline')
+    expect(feedMode('https://dis-se16.divas.cloud:8200/chan-12637_h/index.m3u8', 'https://fl511.com/map/Cctv/1', false)).toBe('snapshot')
   })
 
   it('labels streams, clips, and stills differently', () => {

@@ -168,20 +168,32 @@ async function list511(host) {
   const pageSize = 100
   const cap = 6000
   const pull = async (start) => {
-    const res = await fetch(`https://${host}/List/GetData/Cameras`, {
-      method: 'POST',
-      headers: {
-        'user-agent': UA,
-        accept: 'application/json',
-        'content-type': 'application/x-www-form-urlencoded',
-        origin: `https://${host}`,
-        referer: `https://${host}/`,
-      },
-      body: new URLSearchParams({ draw: '1', start: String(start), length: String(pageSize) }),
-      signal: AbortSignal.timeout(20000),
-    })
-    if (!res.ok) throw new Error(`${res.status} ${host}`)
-    return res.json()
+    let last = 'failed'
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const res = await fetch(`https://${host}/List/GetData/Cameras`, {
+          method: 'POST',
+          headers: {
+            'user-agent': UA,
+            accept: 'application/json',
+            'content-type': 'application/x-www-form-urlencoded',
+            origin: `https://${host}`,
+            referer: `https://${host}/`,
+          },
+          body: new URLSearchParams({ draw: '1', start: String(start), length: String(pageSize) }),
+          signal: AbortSignal.timeout(20000),
+        })
+        if (!res.ok) {
+          last = String(res.status)
+        } else {
+          return await res.json()
+        }
+      } catch (err) {
+        last = err instanceof Error ? err.message : 'failed'
+      }
+      await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)))
+    }
+    throw new Error(`${host} page ${start} ${last}`)
   }
   const first = await pull(0)
   const total = Math.min(cap, Number(first.recordsTotal) || first.data?.length || 0)
@@ -196,7 +208,7 @@ async function list511(host) {
         const next = await pull(start)
         if (Array.isArray(next.data)) data.push(...next.data)
       } catch {
-        return
+        /* a flaky page stays missing; the rest of the catalog still loads */
       }
     }
   }
