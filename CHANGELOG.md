@@ -2,6 +2,13 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 4.0.0
+
+- GLOBE, CAMERAS, NEWS, and STOCKS are tabs. Ctrl+1 through Ctrl+4, or Cmd+1 through Cmd+4, switch them. The globe stays mounted, and its render loop pauses on the other tabs. Camera streams, detection, and the news and quote polls pause when their tab is hidden.
+- CAMERAS is the traffic-camera browser. Search by name, road, or city, and filter by source, region, and LIVE, VIDEO CLIP, or SNAPSHOT. NEAR VIEW and NEAR ME limit the wall. The wall is 1, 4, or 9 tiles. The open camera is streamed by the full viewer, and at most three other visible tiles stream. FULL SCREEN and DETECT stay on that viewer. A camera on the globe opens this tab. The camera panel is no longer in the globe dock.
+- NEWS lists headlines from BBC World, Al Jazeera, NPR, the Guardian, DW, and France 24, plus GDELT when it answers. Reuters and AP have no public RSS here. Search, region, and category filter the list. The list refreshes on its own and names the source and the published time. SHOW ON GLOBE adds a NEWS layer. GDELT points are the story. A pin with no event location says OUTLET COUNTRY or SOURCE COUNTRY. NewsAPI and GNews stay off until a key is set in CFG.
+- STOCKS shows each major exchange in its own local time as OPEN, CLOSED, PRE, POST, or HOLIDAY from the built-in 2026–2027 calendar, and the same places are the STOCK EXCHANGES layer. Indices, futures, FX, crypto, and commodities show a price, change, percent, and sparkline when a feed actually returned one. A watchlist takes tickers. A chart covers 1D, 5D, 1M, 6M, 1Y, and 5Y. Kraken and Coinbase crypto are LIVE at fetch time. Frankfurter and FRED are EOD. Stooq is DELAYED or EOD, and a browser check is labeled STOOQ BROWSER CHECK instead of a price. Finnhub, Twelve Data, Alpha Vantage, Polygon, and FMP run only with a CFG key.
+
 ## 3.1.0
 
 - A camera with a dead playlist or clip falls through to the snapshot and is labeled SNAPSHOT with the reason. FEED OFFLINE is kept for when the snapshot fails too, and it includes the reason and the last time the picture worked. Cleartext camera URLs are requested over https. The media proxy sends the agency Referer and Origin. Catalog-disabled cameras are left off the globe and out of search.

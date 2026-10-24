@@ -17,6 +17,13 @@ export function authHeaders(url: string, settings: SettingsStore): Record<string
   if (url.includes('/api/cams/windy') && current.windyKey) headers['x-windy-key'] = current.windyKey
   if (url.includes('/api/cams/wsdot') && current.wsdotKey) headers['x-wsdot-key'] = current.wsdotKey
   if (url.includes('/api/cams/ohgo') && current.ohgoKey) headers['x-ohgo-key'] = current.ohgoKey
+  if (url.includes('/api/desk/newsapi') && current.newsApiKey) headers['x-newsapi-key'] = current.newsApiKey
+  if (url.includes('/api/desk/gnews') && current.gnewsKey) headers['x-gnews-key'] = current.gnewsKey
+  if (url.includes('/api/desk/finnhub') && current.finnhubKey) headers['x-finnhub-key'] = current.finnhubKey
+  if (url.includes('/api/desk/twelve') && current.twelveKey) headers['x-twelve-key'] = current.twelveKey
+  if (url.includes('/api/desk/alpha') && current.alphaKey) headers['x-alpha-key'] = current.alphaKey
+  if (url.includes('/api/desk/polygon') && current.polygonKey) headers['x-polygon-key'] = current.polygonKey
+  if (url.includes('/api/desk/fmp') && current.fmpKey) headers['x-fmp-key'] = current.fmpKey
   return headers
 }
 

@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { routeCam } from './cams.mjs'
+import { routeDesk } from './desk.mjs'
 
-const UA = 'AllEyes/3.1.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/4.0.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -592,6 +593,7 @@ async function route(req, url) {
   }
 
   if (path.startsWith('/api/cams/')) return routeCam(req, url)
+  if (path.startsWith('/api/desk/')) return routeDesk(req, url)
 
   return jsonError(404, 'unknown feed')
 }
@@ -608,7 +610,7 @@ export async function handleApi(req, res) {
   if (req.method === 'OPTIONS') {
     res.statusCode = 204
     res.setHeader('access-control-allow-origin', '*')
-    res.setHeader('access-control-allow-headers', 'x-opensky-client-id, x-opensky-client-secret, x-firms-map-key, x-tomtom-key, x-here-key, x-windy-key, x-wsdot-key, x-ohgo-key')
+    res.setHeader('access-control-allow-headers', 'x-opensky-client-id, x-opensky-client-secret, x-firms-map-key, x-tomtom-key, x-here-key, x-windy-key, x-wsdot-key, x-ohgo-key, x-newsapi-key, x-gnews-key, x-finnhub-key, x-twelve-key, x-alpha-key, x-polygon-key, x-fmp-key')
     res.setHeader('access-control-allow-methods', 'GET, OPTIONS')
     res.end()
     return true

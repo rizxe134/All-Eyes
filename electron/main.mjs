@@ -3,7 +3,7 @@ import { appendFileSync, mkdirSync } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
 import { allowRecover, heapAction, rendererAction } from './guard.mjs'
 import { applyEnvFile, handleApi } from '../server/proxy.mjs'
 
@@ -98,6 +98,10 @@ async function open() {
       nodeIntegration: false,
       sandbox: true,
     },
+  })
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//i.test(url)) void shell.openExternal(url)
+    return { action: 'deny' }
   })
   let lastView = null
   let recovers = []

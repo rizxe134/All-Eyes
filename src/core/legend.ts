@@ -43,6 +43,8 @@ export const LAYER_SPRITE: Readonly<Record<string, string>> = {
   roads: 'city-road',
   traffic: 'city-car',
   cameras: 'cam',
+  news: 'news',
+  markets: 'exchange',
   searchpin: 'drop',
 }
 
@@ -70,7 +72,9 @@ export const LEGEND_ROWS: readonly LegendRow[] = [
   { kind: 'icon', id: 'buildings', name: 'BUILDINGS', sprite: 'city-building', meaning: 'OpenStreetMap footprints.' },
   { kind: 'icon', id: 'roads', name: 'ROADS', sprite: 'city-road', meaning: 'OpenStreetMap roads and rails.' },
   { kind: 'icon', id: 'traffic', name: 'TRAFFIC', sprite: 'city-car', meaning: 'Car on the road layer. Simulated unless a traffic key is set.' },
-  { kind: 'icon', id: 'cameras', name: 'TRAFFIC CAMS', sprite: 'cam', meaning: 'Public road camera. Wide views cluster. The panel plays a stream or a snapshot.' },
+  { kind: 'icon', id: 'cameras', name: 'TRAFFIC CAMS', sprite: 'cam', meaning: 'Public road camera. A click opens it on the CAMERAS tab.' },
+  { kind: 'icon', id: 'news', name: 'NEWS', sprite: 'news', meaning: 'Headline. GDELT points are the story. OUTLET COUNTRY is only the feed home.' },
+  { kind: 'icon', id: 'markets', name: 'STOCK EXCHANGES', sprite: 'exchange', meaning: 'Exchange, with local time and OPEN, CLOSED, PRE, POST, or HOLIDAY.' },
   { kind: 'icon', id: 'transit', name: 'TRANSIT', sprite: 'chevron', meaning: 'Live transit vehicle where a keyless feed exists.' },
   { kind: 'icon', id: 'poi', name: 'PLACES', sprite: 'drop', meaning: 'Hospital, station, museum, or airport pin.' },
   { kind: 'line', id: 'select', name: 'SELECT', meaning: 'Bright ring around the locked contact.', dashed: false },

@@ -384,6 +384,10 @@ export class Globe implements GlobeApi {
     this.renderer.setAnimationLoop(this.frame)
   }
 
+  setRunning(on: boolean): void {
+    this.renderer.setAnimationLoop(on ? this.frame : null)
+  }
+
   setMarkers(layerId: string, markers: Marker[]): void {
     this.layers.set(layerId, markers)
     this.dirty = true

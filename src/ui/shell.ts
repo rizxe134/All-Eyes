@@ -46,6 +46,16 @@ export interface Shell {
   cfgClose: HTMLButtonElement
   globeCrt: HTMLElement
   watchForm: HTMLFormElement
+  tabs: {
+    globe: HTMLButtonElement
+    cameras: HTMLButtonElement
+    news: HTMLButtonElement
+    stocks: HTMLButtonElement
+  }
+  tabCfg: HTMLButtonElement
+  cameras: HTMLElement
+  news: HTMLElement
+  stocks: HTMLElement
   info: HTMLElement
   infoHead: HTMLElement
   infoTitle: HTMLElement
@@ -211,6 +221,13 @@ export function buildShell(root: HTMLElement): Shell {
   dialogBody.append(field('Windy webcams key', 'windyKey', 'password'))
   dialogBody.append(field('WSDOT camera key', 'wsdotKey', 'password'))
   dialogBody.append(field('OHGO camera key', 'ohgoKey', 'password'))
+  dialogBody.append(field('NewsAPI key', 'newsApiKey', 'password'))
+  dialogBody.append(field('GNews key', 'gnewsKey', 'password'))
+  dialogBody.append(field('Finnhub key', 'finnhubKey', 'password'))
+  dialogBody.append(field('Twelve Data key', 'twelveKey', 'password'))
+  dialogBody.append(field('Alpha Vantage key', 'alphaKey', 'password'))
+  dialogBody.append(field('Polygon key', 'polygonKey', 'password'))
+  dialogBody.append(field('FMP key', 'fmpKey', 'password'))
   const detectWrap = el('label', 'ae-field')
   detectWrap.append(document.createTextNode('DETECT CONFIDENCE'))
   const detectConf = el('input') as HTMLInputElement
@@ -311,7 +328,21 @@ export function buildShell(root: HTMLElement): Shell {
   const globeCrt = el('div', 'ae-globe-crt')
   const tip = el('div', 'ae-tip', '')
   tip.hidden = true
-  root.append(canvas, globeCrt, cross, hud, info, tip, boot, settings, scan)
+  const tabs = el('nav', 'ae-tabs')
+  tabs.setAttribute('role', 'tablist')
+  const tabGlobe = tabButton('GLOBE', '1')
+  const tabCameras = tabButton('CAMERAS', '2')
+  const tabNews = tabButton('NEWS', '3')
+  const tabStocks = tabButton('STOCKS', '4')
+  const tabCfg = barButton('CFG', 'CFG', 'Optional keys')
+  tabs.append(tabGlobe, tabCameras, tabNews, tabStocks, tabCfg)
+  const cameras = el('section', 'ae-desk')
+  const news = el('section', 'ae-desk')
+  const stocks = el('section', 'ae-desk')
+  cameras.setAttribute('role', 'tabpanel')
+  news.setAttribute('role', 'tabpanel')
+  stocks.setAttribute('role', 'tabpanel')
+  root.append(canvas, globeCrt, cross, hud, info, tip, boot, settings, scan, tabs, cameras, news, stocks)
 
   return {
     canvas,
@@ -361,6 +392,11 @@ export function buildShell(root: HTMLElement): Shell {
     cfgClose,
     globeCrt,
     watchForm,
+    tabs: { globe: tabGlobe, cameras: tabCameras, news: tabNews, stocks: tabStocks },
+    tabCfg,
+    cameras,
+    news,
+    stocks,
     info,
     infoHead,
     infoTitle,
@@ -369,6 +405,15 @@ export function buildShell(root: HTMLElement): Shell {
     infoUnpin,
     recover,
   }
+}
+
+function tabButton(label: string, key: string): HTMLButtonElement {
+  const button = el('button', 'ae-btn', label) as HTMLButtonElement
+  button.type = 'button'
+  button.title = `Ctrl+${key} or Cmd+${key}`
+  button.setAttribute('role', 'tab')
+  button.setAttribute('aria-selected', 'false')
+  return button
 }
 
 function barButton(full: string, short: string, title: string): HTMLButtonElement {

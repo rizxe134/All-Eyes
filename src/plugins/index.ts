@@ -10,6 +10,8 @@ import { spaceWeatherPlugin } from './spaceweather/plugin'
 import { stormPlugin } from './storms/plugin'
 import { systemPlugin } from './system/plugin'
 import { cameraPlugin } from './cameras/plugin'
+import { marketsPlugin } from './markets/plugin'
+import { newsPlugin } from './news/plugin'
 import { cityPlugin } from './city/plugin'
 import { weatherPlugin } from './weather/plugin'
 import type { AllEyesPlugin } from '../core/types'
@@ -27,6 +29,8 @@ export const builtinPlugins: AllEyesPlugin[] = [
   cityPlugin,
   shipPlugin,
   cameraPlugin,
+  newsPlugin,
+  marketsPlugin,
   stormPlugin,
   eventPlugin,
   launchPlugin,

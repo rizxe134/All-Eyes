@@ -47,7 +47,7 @@ export const cameraPlugin: AllEyesPlugin = {
     {
       id: LAYER,
       label: 'TRAFFIC CAMS',
-      description: 'Public road cameras for the area in view. One feed plays at a time.',
+      description: 'Public road cameras for the area in view. A click opens the CAMERAS tab.',
       defaultOn: true,
       create(ctx: LayerContext) {
         installCamDebug()

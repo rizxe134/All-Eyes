@@ -63,7 +63,7 @@ button { cursor: pointer; }
 
 .ae-recover {
   position: absolute;
-  top: 82px;
+  top: 120px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 6;
@@ -82,7 +82,7 @@ button { cursor: pointer; }
 
 .ae-top {
   position: absolute;
-  top: 10px;
+  top: 48px;
   left: 10px;
   right: 10px;
   height: 64px;
@@ -208,7 +208,7 @@ button { cursor: pointer; }
 
 .ae-dock {
   position: absolute;
-  top: 82px;
+  top: 120px;
   left: 10px;
   bottom: 114px;
   width: 252px;
@@ -410,7 +410,7 @@ button { cursor: pointer; }
 
 .ae-right {
   position: absolute;
-  top: 82px;
+  top: 120px;
   right: 10px;
   bottom: 114px;
   width: 292px;
@@ -617,7 +617,7 @@ button { cursor: pointer; }
   position: fixed;
   z-index: 24;
   pointer-events: auto;
-  top: 82px;
+  top: 120px;
   left: 270px;
   width: 240px;
   max-height: min(420px, calc(100vh - 200px));
@@ -851,7 +851,7 @@ button { cursor: pointer; }
 
 .ae-track {
   position: absolute;
-  top: 82px;
+  top: 120px;
   left: 270px;
   transform: none;
   max-width: 180px;
@@ -890,7 +890,7 @@ button { cursor: pointer; }
 .ae-modal[hidden] { display: none; }
 .ae-dialog {
   position: absolute;
-  top: 82px;
+  top: 120px;
   left: 270px;
   width: 340px;
   height: 420px;
@@ -1131,7 +1131,7 @@ button { cursor: pointer; }
 .ae-hud.is-flight .ae-dock,
 .ae-hud.is-cam .ae-dock {
   left: 10px;
-  top: 82px;
+  top: 120px;
   bottom: 114px;
   display: flex;
   flex-direction: column;
@@ -1397,7 +1397,7 @@ button { cursor: pointer; }
 @media (max-width: 900px), (max-height: 720px) {
   .ae-side { display: none; }
   .ae-alerts { display: none; }
-  .ae-dock { width: 400px; top: 82px; bottom: 114px; left: 10px; }
+  .ae-dock { width: 400px; top: 120px; bottom: 114px; left: 10px; }
   .ae-layers {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1418,8 +1418,8 @@ button { cursor: pointer; }
   .ae-field input { font-size: 16px; }
   .ae-flight { width: 100%; max-height: none; }
   .ae-hud.is-flight .ae-dock,
-  .ae-hud.is-cam .ae-dock { left: 10px; top: 82px; bottom: 114px; width: 400px; max-height: none; }
-  .ae-right { width: 220px; top: 82px; bottom: 114px; }
+  .ae-hud.is-cam .ae-dock { left: 10px; top: 120px; bottom: 114px; width: 400px; max-height: none; }
+  .ae-right { width: 220px; top: 120px; bottom: 114px; }
   .ae-track { left: 418px; }
   .ae-viewer-canvas { height: 128px; }
   .ae-viewer-credit { font-size: 14px; }
@@ -1432,7 +1432,7 @@ button { cursor: pointer; }
     grid-template-columns: minmax(0, 1fr) 108px;
     grid-template-rows: auto minmax(0, 1fr) auto;
     width: 400px;
-    top: 82px;
+    top: 120px;
     bottom: 114px;
   }
   .ae-find { grid-column: 1 / -1; grid-row: 1; }
@@ -1449,3 +1449,133 @@ button { cursor: pointer; }
   }
   .ae-radar { width: 96px; height: 96px; }
 }
+
+.ae-tabs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  z-index: 28;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 8px;
+  background: #010a06;
+  border-bottom: 3px solid #145c32;
+  pointer-events: auto;
+  overflow: hidden;
+}
+.ae-tabs .ae-btn { flex: 0 0 auto; }
+.ae-desk {
+  position: fixed;
+  top: 42px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 22;
+  display: none;
+  overflow: auto;
+  background: #010a06;
+  color: var(--ink);
+  padding: 10px 12px 24px;
+  pointer-events: auto;
+}
+.ae-desk.is-on { display: flex; flex-direction: column; gap: 8px; }
+.is-desk > .ae-globe,
+.is-desk > .ae-globe-crt,
+.is-desk > .ae-hud,
+.is-desk > .ae-tip,
+.is-desk > .ae-scan,
+.is-desk > .ae-cross { visibility: hidden; }
+.ae-deskbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.ae-desk-search, .ae-desk-select {
+  background: #062615;
+  color: var(--ink);
+  border: 3px solid var(--dim);
+  font-family: "Ae Term", monospace;
+  font-size: 18px;
+  padding: 2px 6px;
+}
+.ae-desk-search { min-width: 180px; flex: 1 1 180px; }
+.ae-desk-note, .ae-desk-foot {
+  color: var(--mid);
+  font-size: 16px;
+  margin: 0;
+}
+.ae-desk-h {
+  margin: 0;
+  font-family: "Ae Pixel", monospace;
+  font-size: 10px;
+  color: var(--hot);
+}
+.ae-camwall {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.ae-camwall.is-1 { grid-template-columns: 1fr; }
+.ae-camwall.is-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ae-camtile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  background: #062615;
+  color: var(--ink);
+  border: 3px solid var(--dim);
+  padding: 6px;
+  font-family: "Ae Term", monospace;
+}
+.ae-camtile.is-on { border-color: var(--mid); background: #145c32; }
+.ae-camtile-stage {
+  height: 120px;
+  background: #010804;
+  border: 2px solid #145c32;
+  overflow: hidden;
+}
+.ae-camtile-stage img, .ae-camtile-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #010804;
+}
+.ae-camtile-name { font-size: 16px; color: var(--hot); }
+.ae-camtile-meta, .ae-camtile-badge, .ae-camtile-off { font-size: 14px; color: var(--mid); }
+.ae-desk .ae-cam { width: 100%; min-height: 280px; }
+.ae-desk .ae-cam-stage { height: min(52vh, 480px); }
+.ae-newslist, .ae-quotegrid, .ae-exgrid { display: grid; gap: 8px; }
+.ae-exgrid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.ae-quotegrid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.ae-news, .ae-quote, .ae-ex {
+  background: #062615;
+  border: 3px solid var(--dim);
+  color: var(--ink);
+  padding: 8px;
+  text-align: left;
+}
+.ae-quote.is-on, .ae-ex.is-open { border-color: var(--mid); }
+.ae-ex { display: flex; flex-direction: column; gap: 2px; font-size: 16px; }
+.ae-ex strong, .ae-quote strong, .ae-news-title {
+  font-family: "Ae Pixel", monospace;
+  font-size: 9px;
+  color: var(--hot);
+}
+.ae-news-title {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.ae-news-meta, .ae-news-snip, .ae-quote-q { color: var(--mid); font-size: 15px; margin: 4px 0 0; }
+.ae-quote { display: flex; flex-direction: column; gap: 3px; font-family: "Ae Term", monospace; font-size: 16px; }
+.ae-quote-px { color: var(--hot); font-size: 20px; }
+.ae-spark, .ae-chart-canvas { background: #010804; border: 2px solid #145c32; }
+.ae-chart-canvas { width: 100%; height: 180px; }
+.ae-moverlist { display: flex; flex-direction: column; gap: 4px; font-size: 16px; color: var(--ink); }

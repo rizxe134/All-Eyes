@@ -112,6 +112,8 @@ export interface GlobeApi {
   cityNote(): string
   setCityDetail(level: 'full' | 'low'): void
   cityStats(): { tiles: number; textures: number; queue: number; inflight: number; vehicles: number; buildings: number; roads: number }
+  /** False pauses the render loop. The canvas stays mounted. */
+  setRunning(on: boolean): void
 }
 
 export interface Settings {
@@ -135,6 +137,18 @@ export interface Settings {
   wsdotKey: string
   /** Optional OHGO camera key. Empty skips that catalog. */
   ohgoKey: string
+  /** Optional NewsAPI key. Empty keeps keyless RSS and GDELT. */
+  newsApiKey: string
+  /** Optional GNews key. Empty keeps keyless RSS and GDELT. */
+  gnewsKey: string
+  /** Optional quote keys. Empty keeps the keyless sources. */
+  finnhubKey: string
+  twelveKey: string
+  alphaKey: string
+  polygonKey: string
+  fmpKey: string
+  /** Tickers the stocks tab polls. Capped at 40. */
+  watchlist: string[]
   /** Minimum score for on-device camera detection. About 0.2 to 0.9. */
   detectConf: number
   /** Camera ids where DETECT was turned on. Empty means off. */

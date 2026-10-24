@@ -31,6 +31,8 @@ export const LAYER_COLORS: Record<string, string> = {
   roads: '#f4f1ea',
   traffic: '#8dff6a',
   cameras: '#ff4d6d',
+  news: '#5ee0ff',
+  markets: '#f6e27a',
   searchpin: '#c6ff4a',
 }
 

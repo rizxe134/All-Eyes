@@ -22,6 +22,14 @@ const EMPTY: Settings = {
   windyKey: '',
   wsdotKey: '',
   ohgoKey: '',
+  newsApiKey: '',
+  gnewsKey: '',
+  finnhubKey: '',
+  twelveKey: '',
+  alphaKey: '',
+  polygonKey: '',
+  fmpKey: '',
+  watchlist: [],
   detectConf: 0.45,
   detectCams: [],
   basemap: 'hybrid',
@@ -67,6 +75,19 @@ export function detectConfOf(value: unknown): number {
   return Math.min(0.9, Math.max(0.2, Math.round(n * 20) / 20))
 }
 
+function watchlistOf(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  const out: string[] = []
+  for (const item of value) {
+    const text = String(item ?? '').trim().toUpperCase()
+    if (!/^[A-Z0-9.^]{1,16}$/.test(text)) continue
+    if (out.includes(text)) continue
+    out.push(text)
+    if (out.length >= 40) break
+  }
+  return out
+}
+
 function detectCamsOf(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   const out: string[] = []
@@ -95,7 +116,7 @@ export class SettingsStore implements SettingsApi {
   private listeners = new Set<() => void>()
 
   constructor() {
-    this.state = { ...EMPTY, detectCams: [] }
+    this.state = { ...EMPTY, detectCams: [], watchlist: [] }
     try {
       const raw = localStorage.getItem(KEY)
       if (raw) {
@@ -118,6 +139,14 @@ export class SettingsStore implements SettingsApi {
         windyKey: String(parsed.windyKey ?? ''),
         wsdotKey: String(parsed.wsdotKey ?? ''),
         ohgoKey: String(parsed.ohgoKey ?? ''),
+        newsApiKey: String(parsed.newsApiKey ?? ''),
+        gnewsKey: String(parsed.gnewsKey ?? ''),
+        finnhubKey: String(parsed.finnhubKey ?? ''),
+        twelveKey: String(parsed.twelveKey ?? ''),
+        alphaKey: String(parsed.alphaKey ?? ''),
+        polygonKey: String(parsed.polygonKey ?? ''),
+        fmpKey: String(parsed.fmpKey ?? ''),
+        watchlist: watchlistOf(parsed.watchlist),
         detectConf: detectConfOf(parsed.detectConf),
         detectCams: detectCamsOf(parsed.detectCams),
         basemap: parseBasemapMode(String(parsed.basemap ?? '')) ?? 'hybrid',
@@ -132,7 +161,7 @@ export class SettingsStore implements SettingsApi {
       }
       }
     } catch {
-      this.state = { ...EMPTY }
+      this.state = { ...EMPTY, detectCams: [], watchlist: [], colorOverrides: {} }
     }
     applyPalette(this.state.markerStyle, this.state.colorOverrides)
   }
@@ -142,7 +171,9 @@ export class SettingsStore implements SettingsApi {
   }
 
   update(patch: Partial<Settings>): void {
-    this.state = { ...this.state, ...patch }
+    const next = { ...this.state, ...patch }
+    if (patch.watchlist) next.watchlist = watchlistOf(patch.watchlist)
+    this.state = next
     applyPalette(this.state.markerStyle, this.state.colorOverrides)
     localStorage.setItem(KEY, JSON.stringify(this.state))
     for (const fn of this.listeners) fn()

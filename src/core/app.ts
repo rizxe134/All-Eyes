@@ -22,6 +22,10 @@ import { startRadar } from '../ui/radar'
 import { mountViewer } from '../ui/viewer'
 import { mountFlightPanel } from '../ui/flight-panel'
 import { mountCameraPanel } from '../ui/camera-panel'
+import { mountCamerasDesk, type CamerasDesk } from '../ui/cameras-tab'
+import { mountNewsDesk, type NewsDesk } from '../ui/news-tab'
+import { mountStocksDesk, type StocksDesk } from '../ui/stocks-tab'
+import { tabFromShortcut, type TabId } from '../desk/tabs'
 import { camById, searchCams } from '../plugins/cameras/catalog'
 import { registerCameraOpen } from '../plugins/cameras/focus'
 import { flightText, formatFlight } from '../plugins/aircraft/detail'
@@ -92,6 +96,9 @@ export function boot(root: HTMLElement): void {
   const flight = mountFlightPanel()
   shell.layers.parentElement?.append(flight.root)
   const globe = new Globe(shell.canvas, () => clock.now())
+  let camerasDesk: CamerasDesk
+  let newsDesk: NewsDesk
+  let stocksDesk: StocksDesk
   const camPanel = mountCameraPanel({
     follow(cam) {
       if (state.enabled.get('cameras') !== true) setLayer('cameras', true)
@@ -100,11 +107,10 @@ export function boot(root: HTMLElement): void {
       globe.setFollow({ lat: cam.lat, lon: cam.lon, altKm: 0 })
     },
     open(id) {
-      const cam = camById(id)
-      lockContact(id, cam?.lat, cam?.lon)
+      camerasDesk.open(id)
     },
     close() {
-      setTrack(null)
+      camerasDesk.close()
     },
     conf: () => settings.get().detectConf,
     setConf(value) {
@@ -117,7 +123,6 @@ export function boot(root: HTMLElement): void {
     },
     subscribe: (cb) => settings.subscribe(cb),
   })
-  shell.layers.parentElement?.append(camPanel.root)
   const registry = new PluginRegistry()
   for (const plugin of builtinPlugins) registry.register(plugin)
 
@@ -136,6 +141,16 @@ export function boot(root: HTMLElement): void {
     historyAt: -1,
     suggestAt: 0,
   }
+  camerasDesk = mountCamerasDesk(shell.cameras, { panel: camPanel, view: () => globe.getView() })
+  newsDesk = mountNewsDesk(shell.news, {
+    settings,
+    newsOn: () => state.enabled.get('news') === true,
+    setNewsLayer(on) {
+      setLayer('news', on)
+    },
+  })
+  stocksDesk = mountStocksDesk(shell.stocks, settings)
+  showTab('globe')
   const trackListeners = new Set<(id: string | null) => void>()
   const pinListeners = new Set<(pin: { lat: number; lon: number }) => void>()
   const handles = new Map<string, LayerHandle>()
@@ -371,6 +386,13 @@ export function boot(root: HTMLElement): void {
     ;(form.elements.namedItem('windyKey') as HTMLInputElement).value = current.windyKey
     ;(form.elements.namedItem('wsdotKey') as HTMLInputElement).value = current.wsdotKey
     ;(form.elements.namedItem('ohgoKey') as HTMLInputElement).value = current.ohgoKey
+    ;(form.elements.namedItem('newsApiKey') as HTMLInputElement).value = current.newsApiKey
+    ;(form.elements.namedItem('gnewsKey') as HTMLInputElement).value = current.gnewsKey
+    ;(form.elements.namedItem('finnhubKey') as HTMLInputElement).value = current.finnhubKey
+    ;(form.elements.namedItem('twelveKey') as HTMLInputElement).value = current.twelveKey
+    ;(form.elements.namedItem('alphaKey') as HTMLInputElement).value = current.alphaKey
+    ;(form.elements.namedItem('polygonKey') as HTMLInputElement).value = current.polygonKey
+    ;(form.elements.namedItem('fmpKey') as HTMLInputElement).value = current.fmpKey
     ;(form.elements.namedItem('detectConf') as HTMLInputElement).value = String(current.detectConf)
     ;(form.elements.namedItem('basemapSource') as HTMLSelectElement).value = current.basemapSource
     ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
@@ -527,17 +549,25 @@ export function boot(root: HTMLElement): void {
   }
 
   function renderCamera() {
-    const hud = shell.hud
-    const id = state.trackId
-    const cam = id?.startsWith('cam:') ? camById(id) : null
-    if (!cam) {
-      camPanel.setView(null)
-      hud?.classList.remove('is-cam')
-      return
+    shell.hud.classList.remove('is-cam')
+  }
+
+  function showTab(tab: TabId) {
+    for (const id of ['globe', 'cameras', 'news', 'stocks'] as const) {
+      const button = shell.tabs[id]
+      button.classList.toggle('is-on', id === tab)
+      button.setAttribute('aria-selected', id === tab ? 'true' : 'false')
     }
-    camPanel.root.style.setProperty('--accent', layerHex('cameras'))
-    camPanel.setView(cam)
-    hud?.classList.add('is-cam')
+    const desk = tab !== 'globe'
+    root.classList.toggle('is-desk', desk)
+    shell.cameras.classList.toggle('is-on', tab === 'cameras')
+    shell.news.classList.toggle('is-on', tab === 'news')
+    shell.stocks.classList.toggle('is-on', tab === 'stocks')
+    globe.setRunning(!desk)
+    camerasDesk.setActive(tab === 'cameras')
+    newsDesk.setActive(tab === 'news')
+    stocksDesk.setActive(tab === 'stocks')
+    if (desk) shell.tip.hidden = true
   }
 
   function renderAlerts() {
@@ -715,6 +745,18 @@ export function boot(root: HTMLElement): void {
   }
 
   function lockContact(id: string, lat?: number, lon?: number): string {
+    if (id.startsWith('cam:') && !id.startsWith('camc:')) {
+      if (state.enabled.get('cameras') !== true) setLayer('cameras', true)
+      showTab('cameras')
+      camerasDesk.open(id)
+      const cam = camById(id)
+      const atLat = cam?.lat ?? lat
+      const atLon = cam?.lon ?? lon
+      if (atLat != null && atLon != null) globe.flyTo(atLat, atLon, 1.6)
+      const label = cam?.name || id
+      showFindCard(label)
+      return `OPEN ${label}`
+    }
     if (id.startsWith('air:')) {
       if (state.enabled.get('aircraft') !== true) setLayer('aircraft', true)
       if (state.enabled.get('airground') !== true) setLayer('airground', true)
@@ -1084,6 +1126,13 @@ export function boot(root: HTMLElement): void {
     shell.output.hidden = false
     shell.output.textContent = on ? 'RADAR ON' : 'RADAR OFF'
   })
+  for (const id of ['globe', 'cameras', 'news', 'stocks'] as const) {
+    shell.tabs[id].addEventListener('click', () => {
+      audio.play('click')
+      showTab(id)
+    })
+  }
+  shell.tabCfg.addEventListener('click', () => shell.cfg.click())
   shell.cfg.addEventListener('click', () => {
     audio.play('click')
     const next = togglePanel({ panel, radar: settings.get().radar, sound: !settings.get().mute, viewer: viewer.isOpen() }, 'cfg')
@@ -1109,6 +1158,13 @@ export function boot(root: HTMLElement): void {
       windyKey: (form.elements.namedItem('windyKey') as HTMLInputElement).value.trim(),
       wsdotKey: (form.elements.namedItem('wsdotKey') as HTMLInputElement).value.trim(),
       ohgoKey: (form.elements.namedItem('ohgoKey') as HTMLInputElement).value.trim(),
+      newsApiKey: (form.elements.namedItem('newsApiKey') as HTMLInputElement).value.trim(),
+      gnewsKey: (form.elements.namedItem('gnewsKey') as HTMLInputElement).value.trim(),
+      finnhubKey: (form.elements.namedItem('finnhubKey') as HTMLInputElement).value.trim(),
+      twelveKey: (form.elements.namedItem('twelveKey') as HTMLInputElement).value.trim(),
+      alphaKey: (form.elements.namedItem('alphaKey') as HTMLInputElement).value.trim(),
+      polygonKey: (form.elements.namedItem('polygonKey') as HTMLInputElement).value.trim(),
+      fmpKey: (form.elements.namedItem('fmpKey') as HTMLInputElement).value.trim(),
       detectConf: detectConfOf((form.elements.namedItem('detectConf') as HTMLInputElement).value),
       basemapSource: (form.elements.namedItem('basemapSource') as HTMLSelectElement).value === 'mapbox'
         ? 'mapbox'
@@ -1142,6 +1198,12 @@ export function boot(root: HTMLElement): void {
   })
 
   window.addEventListener('keydown', (event) => {
+    const tabKey = tabFromShortcut(event.key)
+    if ((event.metaKey || event.ctrlKey) && tabKey) {
+      event.preventDefault()
+      showTab(tabKey)
+      return
+    }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
       event.preventDefault()
       shell.find.focus()
@@ -1191,6 +1253,11 @@ export function boot(root: HTMLElement): void {
         const view = globe.getView()
         if (contact) globe.flyTo(contact.lat, contact.lon, Math.max(40, view.rangeKm * 0.28))
         audio.play('click')
+        return
+      }
+      if (hit.marker.id.startsWith('cam:')) {
+        lockContact(hit.marker.id)
+        audio.play('lock')
         return
       }
       setTrack(hit.marker.id)

@@ -1,6 +1,6 @@
 import { gunzipSync } from 'node:zlib'
 
-const UA = 'AllEyes/3.1.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/4.0.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 const CATALOG_TTL = 20 * 60 * 1000
 
 const HOSTS = new Map([
@@ -155,7 +155,7 @@ async function digitraffic() {
   const url = 'https://tie.digitraffic.fi/api/weathercam/v1/stations'
   const headers = {
     accept: 'application/json',
-    'digitraffic-user': 'AllEyes/3.1.0',
+    'digitraffic-user': 'AllEyes/4.0.0',
   }
   let res = await fetch(url, { headers, signal: AbortSignal.timeout(30000) })
   if (res.status === 406) {
