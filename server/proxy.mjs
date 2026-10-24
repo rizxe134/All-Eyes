@@ -1,8 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { routeCam } from './cams.mjs'
 import { routeDesk } from './desk.mjs'
+import { routeFlock } from './flock.mjs'
 
-const UA = 'AllEyes/4.0.1 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/4.1.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',
@@ -594,6 +595,7 @@ async function route(req, url) {
 
   if (path.startsWith('/api/cams/')) return routeCam(req, url)
   if (path.startsWith('/api/desk/')) return routeDesk(req, url)
+  if (path.startsWith('/api/flock/')) return routeFlock(req, url)
 
   return jsonError(404, 'unknown feed')
 }

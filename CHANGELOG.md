@@ -2,6 +2,13 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 4.1.0
+
+- FLOCK ALPR is a new layer, off by default. Turn it on from the layers list. It shows where license-plate reader (ALPR) cameras are, using OpenStreetMap data crowdsourced by DeFlock (deflock.me). Flock Safety cameras are matched by maker name or Wikidata Q108485435. Other ALPR makers are shown too and labeled by maker (Motorola, Rekor, and others), or Unknown ALPR when the maker isn't tagged.
+- Zoomed out, the layer loads DeFlock's public, keyless daily GeoJSON once and groups the cameras into clusters (for example, 120 ALPR · 98 FLOCK · 22 OTHER). Zoomed in, including in the city view, it asks Overpass for the half-degree tiles in view and shows each camera separately with its full OpenStreetMap tags. DeFlock's own Overpass server is tried first, then overpass-api.de and overpass.private.coffee. Overpass requests go one at a time, at least 1.1s apart. Tiles are cached for 30 minutes and the overview for 6 hours. A timed-out Overpass answer counts as a failure, so it is never cached as an empty area.
+- Clicking a camera opens its card with the maker, the direction it faces and the operator (when OpenStreetMap has them), and the OpenStreetMap node link. Source: OpenStreetMap / DeFlock (crowdsourced). Feed: NOT AVAILABLE — private ALPR camera, no public feed. The app shows locations only and never requests any Flock feed, image, or portal. Clicking a cluster zooms in on it.
+- The new layer has its own orange plate-reader marker and a FLOCK ALPR row in the legend.
+
 ## 4.0.1
 
 - NEWS on the globe puts a small icon at each story's location. The icon shows the category: conflict, business, science, or world. Every pin's card says LOCATED BY and how the spot was found: GDELT GEO (reported story coordinates), PLACE IN HEADLINE or PLACE IN SUMMARY (a named city or country in the text), or OUTLET COUNTRY (only the feed's home, not the story). Pins that share a spot fan out so each one can be clicked. The legend lists the category glyphs.

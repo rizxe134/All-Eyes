@@ -767,7 +767,7 @@ export function boot(root: HTMLElement): void {
     const atLat = contact?.lat ?? lat
     const atLon = contact?.lon ?? lon
     if (atLat != null && atLon != null) {
-      const range = id.startsWith('sat:') ? 1800 : id.startsWith('ship:') ? 40 : id.startsWith('cam:') ? 1.6 : 420
+      const range = id.startsWith('alprc:') ? 40 : id.startsWith('alpr:') ? 1.2 : id.startsWith('sat:') ? 1800 : id.startsWith('ship:') ? 40 : id.startsWith('cam:') ? 1.6 : 420
       globe.flyTo(atLat, atLon, range)
     }
     const label = contact?.label || id
