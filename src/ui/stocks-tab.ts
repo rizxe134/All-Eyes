@@ -188,7 +188,7 @@ export function mountStocksDesk(host: HTMLElement, settings: SettingsStore): Sto
   let range: ChartRange = '1M'
   let backoff = 0
 
-  function blank(id: string, name: string, note = ''): Shown {
+  function blank(id: string, name: string, note = 'LOADING'): Shown {
     return { id, name, price: null, change: null, percent: null, label: null, spark: [], history: [], historyNote: '', note }
   }
 
@@ -432,6 +432,8 @@ export function mountStocksDesk(host: HTMLElement, settings: SettingsStore): Sto
           put(next)
           return
         }
+        const label = labelQuote({ source: 'frankfurter', now: Date.now(), observed: parsed.date })
+        put({ ...next, price, label, historyNote: 'EOD' })
         const end = parsed.date
         const start = new Date(Date.parse(`${end}T00:00:00Z`) - 40 * 86400000).toISOString().slice(0, 10)
         const series = await pull(`/api/desk/fx?from=${base}&to=${quote}&start=${start}&end=${end}`, settings)
@@ -443,7 +445,7 @@ export function mountStocksDesk(host: HTMLElement, settings: SettingsStore): Sto
           price,
           change: moved.change,
           percent: moved.percent,
-          label: labelQuote({ source: 'frankfurter', now: Date.now(), observed: parsed.date }),
+          label,
           spark: history.map((point) => point.v),
           history,
           historyNote: 'EOD',

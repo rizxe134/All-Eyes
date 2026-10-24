@@ -13,7 +13,7 @@ const FEEDS = {
 }
 
 const FRED = new Set(['SP500', 'DJIA', 'NASDAQCOM', 'NASDAQ100', 'NIKKEI225', 'DCOILWTICO'])
-const FX = new Set(['EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'CNY', 'INR', 'BRL', 'MXN', 'ZAR', 'KRW', 'SGD', 'HKD', 'SEK', 'NOK'])
+const FX = new Set(['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'CNY', 'INR', 'BRL', 'MXN', 'ZAR', 'KRW', 'SGD', 'HKD', 'SEK', 'NOK'])
 const COINS = new Set(['BTC-USD', 'ETH-USD', 'SOL-USD'])
 const KRAKEN = new Set(['XBTUSD', 'XXBTZUSD', 'ETHUSD', 'XETHZUSD', 'SOLUSD'])
 const GRAN = new Set(['60', '300', '900', '3600', '21600', '86400'])
