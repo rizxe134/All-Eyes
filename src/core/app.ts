@@ -7,7 +7,7 @@ import { clamp, distanceKm, formatLat, formatLon } from './geo'
 import { Globe } from './globe'
 import { PluginRegistry } from './registry'
 import { decodeShare, encodeShare } from './share'
-import { MARKER_MAX, MARKER_MIN, SettingsStore } from './settings'
+import { detectConfOf, MARKER_MAX, MARKER_MIN, SettingsStore } from './settings'
 import { Sfx } from './audio'
 import { layerHex } from './palette'
 import { LEGEND_ROWS, spriteForLayer } from './legend'
@@ -106,6 +106,16 @@ export function boot(root: HTMLElement): void {
     close() {
       setTrack(null)
     },
+    conf: () => settings.get().detectConf,
+    setConf(value) {
+      settings.update({ detectConf: detectConfOf(value) })
+    },
+    detectOn: (id) => settings.get().detectCams.includes(id),
+    setDetect(id, on) {
+      const cur = settings.get().detectCams.filter((item) => item !== id)
+      settings.update({ detectCams: on ? [id, ...cur].slice(0, 40) : cur })
+    },
+    subscribe: (cb) => settings.subscribe(cb),
   })
   shell.layers.parentElement?.append(camPanel.root)
   const registry = new PluginRegistry()
@@ -361,6 +371,7 @@ export function boot(root: HTMLElement): void {
     ;(form.elements.namedItem('windyKey') as HTMLInputElement).value = current.windyKey
     ;(form.elements.namedItem('wsdotKey') as HTMLInputElement).value = current.wsdotKey
     ;(form.elements.namedItem('ohgoKey') as HTMLInputElement).value = current.ohgoKey
+    ;(form.elements.namedItem('detectConf') as HTMLInputElement).value = String(current.detectConf)
     ;(form.elements.namedItem('basemapSource') as HTMLSelectElement).value = current.basemapSource
     ;(form.elements.namedItem('markerSize') as HTMLInputElement).value = String(current.markerSize)
     ;(form.elements.namedItem('crt') as HTMLInputElement).value = String(current.crt)
@@ -1098,6 +1109,7 @@ export function boot(root: HTMLElement): void {
       windyKey: (form.elements.namedItem('windyKey') as HTMLInputElement).value.trim(),
       wsdotKey: (form.elements.namedItem('wsdotKey') as HTMLInputElement).value.trim(),
       ohgoKey: (form.elements.namedItem('ohgoKey') as HTMLInputElement).value.trim(),
+      detectConf: detectConfOf((form.elements.namedItem('detectConf') as HTMLInputElement).value),
       basemapSource: (form.elements.namedItem('basemapSource') as HTMLSelectElement).value === 'mapbox'
         ? 'mapbox'
         : (form.elements.namedItem('basemapSource') as HTMLSelectElement).value === 'maptiler'

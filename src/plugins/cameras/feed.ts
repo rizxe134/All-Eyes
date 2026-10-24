@@ -9,10 +9,18 @@ const RANK: Record<CamMode, number> = {
   offline: 0,
 }
 
+/** Upgrade cleartext camera URLs. The media proxy only relays https. */
+export function secureUrl(url: string): string {
+  const trim = url.trim()
+  if (/^http:\/\//i.test(trim)) return `https://${trim.slice(7)}`
+  if (trim.startsWith('//')) return `https:${trim}`
+  return trim
+}
+
 /** Hosts the media proxy will relay. Anything else cannot play in the panel. */
 export function proxiedStream(videoUrl: string): boolean {
   try {
-    const url = new URL(videoUrl)
+    const url = new URL(secureUrl(videoUrl))
     if (url.protocol !== 'https:' || url.username || url.password) return false
     const host = url.hostname
     if (host.endsWith('.dot.ca.gov') || host.endsWith('.dot.wi.gov')) return true
@@ -24,8 +32,8 @@ export function proxiedStream(videoUrl: string): boolean {
 }
 
 export function feedMode(videoUrl: string, imageUrl: string, authRequired: boolean, videoType = ''): CamMode {
-  const video = videoUrl.trim()
-  const image = imageUrl.trim()
+  const video = secureUrl(videoUrl)
+  const image = secureUrl(imageUrl)
   if (authRequired || !video) return image ? 'snapshot' : 'offline'
   const kind = `${video} ${videoType}`.toLowerCase()
   let mode: CamMode = image ? 'snapshot' : 'offline'
@@ -41,6 +49,61 @@ export function modeLabel(mode: CamMode, refreshSec: number): string {
   if (mode === 'mp4') return 'VIDEO CLIP · refreshes every 60s'
   if (mode === 'snapshot') return `SNAPSHOT · refreshes every ${Math.max(3, Math.round(refreshSec || 30))}s`
   return 'FEED OFFLINE'
+}
+
+export type PlaybackKind = 'hls' | 'mjpeg' | 'mp4' | 'snapshot'
+
+export interface PlaybackStep {
+  kind: PlaybackKind
+  url: string
+}
+
+export interface PlaybackPlan {
+  hidden: boolean
+  steps: PlaybackStep[]
+  /** Why the live stream is not playing, when a later step still can. */
+  reason: string
+}
+
+/**
+ * Try a public live stream, then a clip, then a snapshot.
+ * Auth-walled and unproxied streams are not attempted. Catalog-disabled cameras are hidden.
+ */
+export function playbackPlan(cam: Pick<TrafficCam, 'online' | 'mode' | 'videoUrl' | 'imageUrl'>): PlaybackPlan {
+  if (!cam.online) return { hidden: true, steps: [], reason: 'CATALOG DISABLED' }
+  const video = secureUrl(cam.videoUrl)
+  const image = secureUrl(cam.imageUrl)
+  const steps: PlaybackStep[] = []
+  let reason = ''
+  const live = cam.mode === 'hls' || cam.mode === 'mjpeg' || cam.mode === 'mp4'
+  if (live && video && proxiedStream(video) && cam.mode !== 'snapshot' && cam.mode !== 'offline') steps.push({ kind: cam.mode, url: video })
+  else if (live && video) reason = 'STREAM HOST NOT PROXIED'
+  else if (video && cam.mode === 'snapshot') reason = 'STREAM NOT PUBLIC'
+  if (image) steps.push({ kind: 'snapshot', url: image })
+  if (!steps.length) reason = reason || 'NO MEDIA URL'
+  return { hidden: false, steps, reason }
+}
+
+export function stepLabel(kind: PlaybackKind, refreshSec: number, priorReason = ''): string {
+  if (kind === 'hls' || kind === 'mjpeg') return priorReason ? `LIVE · ${priorReason}` : 'LIVE'
+  if (kind === 'mp4') return priorReason ? `VIDEO CLIP · ${priorReason}` : 'VIDEO CLIP · refreshes every 60s'
+  return priorReason
+    ? `SNAPSHOT · ${priorReason}`
+    : `SNAPSHOT · refreshes every ${Math.max(3, Math.round(refreshSec || 30))}s`
+}
+
+export function lastGoodLabel(ms: number | null, now = Date.now()): string {
+  if (ms == null || !Number.isFinite(ms)) return 'NEVER'
+  const sec = Math.max(0, Math.round((now - ms) / 1000))
+  if (sec < 5) return 'JUST NOW'
+  if (sec < 90) return `${sec}s AGO`
+  const min = Math.round(sec / 60)
+  if (min < 90) return `${min}m AGO`
+  return `${new Date(ms).toISOString().slice(11, 19)}Z`
+}
+
+export function offlineLabel(reason: string, lastGood: string): string {
+  return `FEED OFFLINE · ${reason || 'NO MEDIA'} · LAST GOOD ${lastGood || 'NEVER'}`
 }
 
 function nameKey(name: string): string {
@@ -84,7 +147,7 @@ export interface CamMark {
 
 export function marksForView(cams: readonly TrafficCam[], view: { lat: number; lon: number; rangeKm: number }): CamMark[] {
   const reach = view.rangeKm * 0.62
-  const near = cams.filter((cam) => distanceKm(view.lat, view.lon, cam.lat, cam.lon) <= Math.max(reach, 30))
+  const near = cams.filter((cam) => cam.online && distanceKm(view.lat, view.lon, cam.lat, cam.lon) <= Math.max(reach, 30))
   if (view.rangeKm >= 450) {
     const cell = Math.min(12, Math.max(0.2, view.rangeKm / 7000))
     const groups = new Map<string, TrafficCam[]>()

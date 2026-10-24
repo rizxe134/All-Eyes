@@ -36,6 +36,7 @@ export function searchCams(query: string, limit = 8): TrafficCam[] {
   if (text.length < 2) return []
   const hits: TrafficCam[] = []
   for (const cam of merged) {
+    if (!cam.online) continue
     if (cam.name.toUpperCase().includes(text) || cam.road.toUpperCase().includes(text)) hits.push(cam)
     if (hits.length >= limit) break
   }
@@ -45,6 +46,7 @@ export function searchCams(query: string, limit = 8): TrafficCam[] {
 export function camsNear(lat: number, lon: number, radiusKm: number, limit = 8): TrafficCam[] {
   const scored: { cam: TrafficCam; distance: number }[] = []
   for (const cam of merged) {
+    if (!cam.online) continue
     const distance = distanceKm(lat, lon, cam.lat, cam.lon)
     if (distance <= radiusKm) scored.push({ cam, distance })
   }
@@ -59,10 +61,11 @@ export interface SourceCount {
   mjpeg: number
   snapshot: number
   offline: number
+  disabled: number
 }
 
 function emptyCount(): SourceCount {
-  return { total: 0, hls: 0, mp4: 0, mjpeg: 0, snapshot: 0, offline: 0 }
+  return { total: 0, hls: 0, mp4: 0, mjpeg: 0, snapshot: 0, offline: 0, disabled: 0 }
 }
 
 export function sourceCounts(): Record<string, SourceCount> {
@@ -72,6 +75,7 @@ export function sourceCounts(): Record<string, SourceCount> {
     for (const cam of list) {
       count.total += 1
       count[cam.mode] += 1
+      if (!cam.online) count.disabled += 1
     }
     out[source] = count
   }

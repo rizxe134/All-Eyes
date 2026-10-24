@@ -135,6 +135,10 @@ export interface Settings {
   wsdotKey: string
   /** Optional OHGO camera key. Empty skips that catalog. */
   ohgoKey: string
+  /** Minimum score for on-device camera detection. About 0.2 to 0.9. */
+  detectConf: number
+  /** Camera ids where DETECT was turned on. Empty means off. */
+  detectCams: string[]
   basemap: 'sat' | 'streets' | 'hybrid' | 'dark'
   basemapSource: 'free' | 'maptiler' | 'mapbox'
   /** Multiplier for globe sprites. About 0.2 to 1.6. Default is small. */

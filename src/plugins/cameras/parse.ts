@@ -257,7 +257,7 @@ export function parse511(body: unknown, source: string): TrafficCam[] {
     const images = Array.isArray(row.images) ? row.images : []
     for (const image of images) {
       const view = record(image)
-      if (view.disabled === true) continue
+      if (view.disabled === true || view.visible === false || row.visible === false) continue
       const imageUrl = absUrl(host, str(view.imageUrl))
       const videoUrl = str(view.videoUrl)
       const auth = view.isVideoAuthRequired === true || view.videoDisabled === true || view.blocked === true

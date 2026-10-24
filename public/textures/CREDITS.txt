@@ -1,3 +1,7 @@
+Camera object detection uses SSDLite MobileNet v2 from TensorFlow.js COCO-SSD.
+The model code and weights are Copyright Google LLC, Apache License 2.0.
+A copy of that license ships at models/ssdlite/LICENSE.
+
 Earth day and night images are NASA Blue Marble and city lights, public domain,
 as distributed with the three-globe example assets.
 The color theme shows them in natural color, with city lights on the night side.

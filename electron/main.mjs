@@ -23,6 +23,7 @@ const MIME = {
   '.ttf': 'font/ttf',
   '.ico': 'image/x-icon',
   '.webp': 'image/webp',
+  '.wasm': 'application/wasm',
   '.txt': 'text/plain; charset=utf-8',
   '.woff2': 'font/woff2',
 }

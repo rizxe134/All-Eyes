@@ -22,6 +22,8 @@ const EMPTY: Settings = {
   windyKey: '',
   wsdotKey: '',
   ohgoKey: '',
+  detectConf: 0.45,
+  detectCams: [],
   basemap: 'hybrid',
   basemapSource: 'free',
   markerSize: MARKER_DEFAULT,
@@ -59,6 +61,24 @@ function styleOf(value: unknown): MarkerStyle {
   return value === 'mono' ? 'mono' : 'color'
 }
 
+export function detectConfOf(value: unknown): number {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return 0.45
+  return Math.min(0.9, Math.max(0.2, Math.round(n * 20) / 20))
+}
+
+function detectCamsOf(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  const out: string[] = []
+  for (const item of value) {
+    if (typeof item !== 'string' || !item.startsWith('cam:') || item.length > 96) continue
+    if (out.includes(item)) continue
+    out.push(item)
+    if (out.length >= 40) break
+  }
+  return out
+}
+
 function overridesOf(value: unknown): Record<string, string> {
   if (!value || typeof value !== 'object') return {}
   const out: Record<string, string> = {}
@@ -75,7 +95,7 @@ export class SettingsStore implements SettingsApi {
   private listeners = new Set<() => void>()
 
   constructor() {
-    this.state = { ...EMPTY }
+    this.state = { ...EMPTY, detectCams: [] }
     try {
       const raw = localStorage.getItem(KEY)
       if (raw) {
@@ -98,6 +118,8 @@ export class SettingsStore implements SettingsApi {
         windyKey: String(parsed.windyKey ?? ''),
         wsdotKey: String(parsed.wsdotKey ?? ''),
         ohgoKey: String(parsed.ohgoKey ?? ''),
+        detectConf: detectConfOf(parsed.detectConf),
+        detectCams: detectCamsOf(parsed.detectCams),
         basemap: parseBasemapMode(String(parsed.basemap ?? '')) ?? 'hybrid',
         basemapSource: parseBasemapSource(String(parsed.basemapSource ?? '')) ?? 'free',
         markerSize: legacySize ? MARKER_DEFAULT : markerSize(parsed.markerSize),

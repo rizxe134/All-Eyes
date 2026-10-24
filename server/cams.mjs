@@ -1,6 +1,6 @@
 import { gunzipSync } from 'node:zlib'
 
-const UA = 'AllEyes/3.0.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/3.1.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 const CATALOG_TTL = 20 * 60 * 1000
 
 const HOSTS = new Map([
@@ -88,6 +88,35 @@ export function rewritePlaylist(text, base) {
 /**
  * @param {string} target
  */
+/** Cleartext camera URLs are promoted before the host allowlist runs. */
+export function canonicalMedia(target) {
+  if (typeof target !== 'string') return ''
+  const trim = target.trim()
+  if (/^http:\/\//i.test(trim)) return `https://${trim.slice(7)}`
+  return trim
+}
+
+/**
+ * Referer and Origin of the agency page. Some camera hosts reject a bare hotlink.
+ * @param {string} target
+ */
+export function mediaHeaders(target) {
+  const url = new URL(target)
+  const host = url.hostname
+  let page = `https://${host}`
+  if (host.endsWith('.dot.ca.gov')) page = 'https://cwwp2.dot.ca.gov'
+  else if (host.endsWith('.dot.wi.gov')) page = 'https://511wi.gov'
+  else if (host === 's3-eu-west-1.amazonaws.com') page = 'https://www.tfl.gov.uk'
+  else if (host === 'weathercam.digitraffic.fi') page = 'https://www.digitraffic.fi'
+  else if (host === 'webcams.nyctmc.org') page = 'https://webcams.nyctmc.org'
+  return {
+    'user-agent': UA,
+    accept: '*/*',
+    referer: `${page}/`,
+    origin: page,
+  }
+}
+
 export function mediaAllowed(target) {
   let url
   try {
@@ -126,7 +155,7 @@ async function digitraffic() {
   const url = 'https://tie.digitraffic.fi/api/weathercam/v1/stations'
   const headers = {
     accept: 'application/json',
-    'digitraffic-user': 'AllEyes/3.0.0',
+    'digitraffic-user': 'AllEyes/3.1.0',
   }
   let res = await fetch(url, { headers, signal: AbortSignal.timeout(30000) })
   if (res.status === 406) {
@@ -221,22 +250,23 @@ async function list511(host) {
  * @param {number} hops
  */
 async function fetchMedia(target, hops = 0) {
-  if (!mediaAllowed(target)) return json(400, { error: 'camera host is not allowed' })
-  const res = await fetch(target, {
-    headers: { 'user-agent': UA, accept: '*/*' },
+  const url = canonicalMedia(target)
+  if (!mediaAllowed(url)) return json(400, { error: 'camera host is not allowed' })
+  const res = await fetch(url, {
+    headers: mediaHeaders(url),
     redirect: 'manual',
     signal: AbortSignal.timeout(20000),
   })
   if (res.status >= 300 && res.status < 400) {
     const next = res.headers.get('location')
     if (!next || hops >= 2) return json(502, { error: 'camera redirect failed' })
-    return fetchMedia(new URL(next, target).href, hops + 1)
+    return fetchMedia(canonicalMedia(new URL(next, url).href), hops + 1)
   }
   const body = Buffer.from(await res.arrayBuffer())
   const type = res.headers.get('content-type') || 'application/octet-stream'
   const head = body.subarray(0, 16).toString('utf8')
   if (type.includes('mpegurl') || type.includes('m3u8') || head.startsWith('#EXTM3U')) {
-    const text = rewritePlaylist(body.toString('utf8'), target)
+    const text = rewritePlaylist(body.toString('utf8'), url)
     return {
       status: res.status,
       type: 'application/vnd.apple.mpegurl',
@@ -292,7 +322,7 @@ export async function routeCam(req, url) {
     return remember(`cams:ohgo:${key.slice(0, 6)}`, CATALOG_TTL, () => getBuffer('https://publicapi.ohgo.com/api/v1/cameras', { 'Ocp-Apim-Subscription-Key': key }, 30000))
   }
   if (path === '/api/cams/media') {
-    const target = url.searchParams.get('u') || ''
+    const target = canonicalMedia(url.searchParams.get('u') || '')
     if (!mediaAllowed(target)) return json(400, { error: 'camera host is not allowed' })
     const playlist = target.includes('.m3u8') || target.includes('mpegurl')
     const hit = mediaCache.get(target)

@@ -2,6 +2,12 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 3.1.0
+
+- A camera with a dead playlist or clip falls through to the snapshot and is labeled SNAPSHOT with the reason. FEED OFFLINE is kept for when the snapshot fails too, and it includes the reason and the last time the picture worked. Cleartext camera URLs are requested over https. The media proxy sends the agency Referer and Origin. Catalog-disabled cameras are left off the globe and out of search.
+- FULL SCREEN is on the camera viewer. Double-click the picture, or press F, and Esc leaves full screen. The pop-out window can go full screen too. The picture keeps the name, road, LIVE / VIDEO CLIP / SNAPSHOT badge, previous and next camera, and the detection switch.
+- DETECT runs on this machine. The model is SSDLite MobileNet v2 from TensorFlow.js COCO-SSD, Apache-2.0, bundled with the app. It draws car, truck, bus, motorcycle, bicycle, and person with a confidence and a live count. It is off until it is turned on for that camera, and the choice is remembered. The confidence slider is on the viewer and in CFG. A frame that cannot be read says DETECTION UNAVAILABLE and the reason. Inference stops when the viewer closes.
+
 ## 3.0.0
 
 - TRAFFIC CAMS is a layer and a legend row, and both use the same camera sprite. Public road cameras load for the area in view, merge, and cluster when the view is wide. One feed plays at a time.

@@ -1,7 +1,7 @@
 {
   "name": "all-eyes",
   "private": true,
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "All Eyes — a live 8-bit intelligence console with a natural-color globe for the browser, Mac, Windows, and Linux.",
   "license": "MIT",
   "type": "module",
@@ -23,6 +23,10 @@
     "icon": "node build/make-icon.mjs"
   },
   "dependencies": {
+    "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "hls.js": "^1.6.15",
     "satellite.js": "^5.0.0",
     "three": "^0.170.0"

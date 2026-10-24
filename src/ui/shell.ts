@@ -211,6 +211,18 @@ export function buildShell(root: HTMLElement): Shell {
   dialogBody.append(field('Windy webcams key', 'windyKey', 'password'))
   dialogBody.append(field('WSDOT camera key', 'wsdotKey', 'password'))
   dialogBody.append(field('OHGO camera key', 'ohgoKey', 'password'))
+  const detectWrap = el('label', 'ae-field')
+  detectWrap.append(document.createTextNode('DETECT CONFIDENCE'))
+  const detectConf = el('input') as HTMLInputElement
+  detectConf.name = 'detectConf'
+  detectConf.type = 'range'
+  detectConf.min = '0.2'
+  detectConf.max = '0.9'
+  detectConf.step = '0.05'
+  detectConf.value = '0.45'
+  detectWrap.append(detectConf)
+  dialogBody.append(detectWrap)
+  dialogBody.append(el('p', 'ae-cam-credit', 'Camera detection uses SSDLite MobileNet v2 (TensorFlow.js COCO-SSD), Apache-2.0. It stays off until DETECT is turned on for that camera.'))
   const sourceWrap = el('label', 'ae-field')
   sourceWrap.append(document.createTextNode('BASEMAP SOURCE'))
   const basemapSource = el('select') as HTMLSelectElement
