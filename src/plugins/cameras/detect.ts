@@ -8,36 +8,50 @@ export interface LoadedDetector {
 let pending: Promise<LoadedDetector> | null = null
 let backendName = ''
 
+function first<T>(promise: Promise<T>, ms: number): Promise<T> {
+  promise.catch(() => undefined)
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('backend timeout')), ms)
+    promise.then((value) => {
+      clearTimeout(timer)
+      resolve(value)
+    }, (err: unknown) => {
+      clearTimeout(timer)
+      reject(err)
+    })
+  })
+}
+
 async function prepareBackend(): Promise<string> {
   const tf = await import('@tensorflow/tfjs')
   const base = import.meta.env.BASE_URL || '/'
   try {
-    await import('@tensorflow/tfjs-backend-webgpu')
-    if (await tf.setBackend('webgpu')) {
-      await tf.ready()
+    await first(import('@tensorflow/tfjs-backend-webgpu'), 4000)
+    if (await first(tf.setBackend('webgpu'), 4000)) {
+      await first(tf.ready(), 4000)
       if (tf.getBackend() === 'webgpu') return 'webgpu'
     }
   } catch {
     /* This browser has no WebGPU device. */
   }
   try {
-    const wasm = await import('@tensorflow/tfjs-backend-wasm')
+    const wasm = await first(import('@tensorflow/tfjs-backend-wasm'), 8000)
     wasm.setThreadsCount(1)
     wasm.setWasmPaths(`${base}tfjs/`)
-    if (await tf.setBackend('wasm')) {
-      await tf.ready()
+    if (await first(tf.setBackend('wasm'), 15000)) {
+      await first(tf.ready(), 15000)
       if (tf.getBackend() === 'wasm') return 'wasm'
     }
   } catch {
-    /* WASM binaries failed to compile. Try WebGL next. */
+    /* WASM binaries failed to compile. WebGL is next. */
   }
   try {
-    if (await tf.setBackend('webgl')) {
-      await tf.ready()
+    if (await first(tf.setBackend('webgl'), 8000)) {
+      await first(tf.ready(), 8000)
       if (tf.getBackend() === 'webgl') return 'webgl'
     }
   } catch {
-    /* WebGL is unavailable. */
+    /* WebGL could not start. The CPU backend is last. */
   }
   await tf.setBackend('cpu')
   await tf.ready()

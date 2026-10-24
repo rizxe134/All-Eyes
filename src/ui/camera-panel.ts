@@ -251,8 +251,11 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
     const scale = Math.min(1, 480 / Math.max(srcW, srcH))
     const dw = Math.max(1, Math.round(srcW * scale))
     const dh = Math.max(1, Math.round(srcH * scale))
-    scratch.width = dw
-    scratch.height = dh
+    // Assigning width resets the bitmap. Doing it every frame makes the next video read stall.
+    if (scratch.width !== dw || scratch.height !== dh) {
+      scratch.width = dw
+      scratch.height = dh
+    }
     const ctx = scratch.getContext('2d', { willReadFrequently: true })
     if (!ctx) return 'empty'
     try {
@@ -275,19 +278,21 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
     if (!ctx) return
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, w, h)
-    ctx.lineWidth = 2
-    ctx.font = '12px monospace'
+    const font = Math.max(12, Math.round(h / 42))
+    ctx.lineWidth = Math.max(2, h / 280)
+    ctx.font = `${font}px monospace`
     for (const box of boxes) {
       const mapped = mapBox(box, srcW, srcH, w, h)
       ctx.strokeStyle = '#ff4d6d'
       ctx.strokeRect(mapped.x, mapped.y, mapped.w, mapped.h)
       const label = `${box.class} ${Math.round(box.score * 100)}%`
-      const width = ctx.measureText(label).width + 6
-      const top = Math.max(0, mapped.y - 14)
+      const labelH = font + 4
+      const width = ctx.measureText(label).width + 8
+      const top = Math.max(0, mapped.y - labelH)
       ctx.fillStyle = '#ff4d6d'
-      ctx.fillRect(mapped.x, top, width, 14)
+      ctx.fillRect(mapped.x, top, width, labelH)
       ctx.fillStyle = '#04140a'
-      ctx.fillText(label, mapped.x + 3, top + 11)
+      ctx.fillText(label, mapped.x + 4, top + font - 1)
     }
   }
 
@@ -384,10 +389,11 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
     startLoop(kind)
   }
 
-  function playStep(cam: TrafficCam, step: PlaybackStep, hooks: { ready(): void; fail(reason: string): void }) {
+  function playStep(cam: TrafficCam, step: PlaybackStep, prior: string, hooks: { ready(): void; fail(reason: string): void }) {
     const my = token
     let closed = false
     let announced = false
+    setBadge(prior ? stepLabel(step.kind, cam.refreshSec, prior) : 'OPENING')
     const fail = (reason: string) => {
       if (closed || my !== token) return
       closed = true
@@ -411,12 +417,12 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
       if (Hls.isSupported()) {
         const player = new Hls({
           enableWorker: false,
-          manifestLoadingMaxRetry: 2,
-          levelLoadingMaxRetry: 2,
-          fragLoadingMaxRetry: 1,
-          manifestLoadingTimeOut: 12000,
-          levelLoadingTimeOut: 12000,
-          fragLoadingTimeOut: 12000,
+          manifestLoadingMaxRetry: 1,
+          levelLoadingMaxRetry: 1,
+          fragLoadingMaxRetry: 0,
+          manifestLoadingTimeOut: 8000,
+          levelLoadingTimeOut: 8000,
+          fragLoadingTimeOut: 8000,
         })
         hls = player
         player.loadSource(src)
@@ -427,7 +433,8 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
         })
         player.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal || closed || my !== token) return
-          if (!recovered && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          const code = data.response?.code
+          if (!recovered && !code && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
             recovered = true
             player.startLoad()
             return
@@ -540,7 +547,7 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
         return
       }
       stopMedia()
-      playStep(cam, step, {
+      playStep(cam, step, prior, {
         ready() {
           setBadge(stepLabel(step.kind, cam.refreshSec, prior))
           armDetect(step.kind)

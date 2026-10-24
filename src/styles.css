@@ -1040,6 +1040,23 @@ button { cursor: pointer; }
   border: 0;
   background: #010804;
 }
+.ae-cam-stage.is-full .ae-cam-overlay,
+.ae-cam-stage:fullscreen .ae-cam-overlay {
+  padding: 16px 18px 22px;
+  gap: 10px;
+}
+.ae-cam-stage.is-full .ae-cam-name,
+.ae-cam-stage:fullscreen .ae-cam-name { font-size: 22px; }
+.ae-cam-stage.is-full .ae-cam-road,
+.ae-cam-stage.is-full .ae-cam-counts,
+.ae-cam-stage.is-full .ae-cam-detect-note,
+.ae-cam-stage:fullscreen .ae-cam-road,
+.ae-cam-stage:fullscreen .ae-cam-counts,
+.ae-cam-stage:fullscreen .ae-cam-detect-note { font-size: 16px; }
+.ae-cam-stage.is-full .ae-cam-badge,
+.ae-cam-stage:fullscreen .ae-cam-badge { font-size: 14px; max-width: none; }
+.ae-cam-stage.is-full .ae-btn,
+.ae-cam-stage:fullscreen .ae-btn { font-size: 14px; padding: 8px 12px; }
 .ae-cam-still,
 .ae-cam-video,
 .ae-cam-boxes {
