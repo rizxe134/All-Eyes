@@ -7,6 +7,11 @@ export interface NewsPoint {
   title: string
   detail: string
   source: string
+  /** How the location was derived, e.g. GDELT GEO, PLACE IN HEADLINE, OUTLET COUNTRY. */
+  locatedBy?: string
+  /** Sprite id for the category glyph. */
+  glyph?: string
+  category?: string
 }
 
 let points: NewsPoint[] = []

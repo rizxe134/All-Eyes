@@ -11,6 +11,7 @@ import {
 } from '../plugins/cameras/feed'
 import { countClasses, DETECT_CLASSES, DETECT_CREDIT, filterDetections, mapBox, type DetBox } from '../plugins/cameras/detect-math'
 import { disposeDetector, loadDetector } from '../plugins/cameras/detect'
+import { CLIP_WAIT_SEC, clipCountdownLabel, HLS_LIVE_CONFIG, MAX_STALL_RELOADS, needsResync, StallWatch } from '../plugins/cameras/live'
 
 export interface CameraPanel {
   root: HTMLElement
@@ -173,6 +174,7 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
     video.onerror = null
     video.onloadeddata = null
     video.ontimeupdate = null
+    video.onended = null
     video.pause()
     video.removeAttribute('src')
     video.load()
@@ -415,15 +417,7 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
       const src = mediaSrc(step.url)
       let recovered = false
       if (Hls.isSupported()) {
-        const player = new Hls({
-          enableWorker: false,
-          manifestLoadingMaxRetry: 1,
-          levelLoadingMaxRetry: 1,
-          fragLoadingMaxRetry: 0,
-          manifestLoadingTimeOut: 8000,
-          levelLoadingTimeOut: 8000,
-          fragLoadingTimeOut: 8000,
-        })
+        const player = new Hls({ ...HLS_LIVE_CONFIG })
         hls = player
         player.loadSource(src)
         player.attachMedia(video)
@@ -441,6 +435,32 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
           }
           fail(streamReason(data))
         })
+        // Stay at the live edge: jump forward when far behind, reload when playback stops moving.
+        const watch = new StallWatch()
+        watch.reset(Date.now())
+        let reloads = 0
+        timer = window.setInterval(() => {
+          if (closed || my !== token || hls !== player) return
+          if (needsResync(video.currentTime, player.liveSyncPosition)) {
+            video.currentTime = player.liveSyncPosition as number
+          }
+          if (!announced) return
+          if (watch.feed(video.currentTime, Date.now(), video.paused && video.readyState >= 3)) {
+            if (reloads >= MAX_STALL_RELOADS) {
+              fail('STREAM STALLED')
+              return
+            }
+            reloads += 1
+            setBadge(`LIVE · STALLED · RELOADING (${reloads}/${MAX_STALL_RELOADS})`)
+            watch.reset(Date.now())
+            player.stopLoad()
+            player.startLoad(-1)
+            void video.play().catch(() => undefined)
+          } else if (reloads && video.currentTime > 0) {
+            reloads = 0
+            setBadge(stepLabel('hls', cam.refreshSec, prior))
+          }
+        }, 2000)
         video.ontimeupdate = () => {
           if (video.currentTime > 0.2) noteGood(cam.id)
         }
@@ -462,15 +482,34 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
     if (step.kind === 'mp4') {
       img.hidden = true
       video.hidden = false
-      video.loop = true
+      video.loop = false
       let via: 'proxy' | 'direct' = 'proxy'
+      let fresh = false
       const play = (src: string) => {
         video.src = src
         void video.play().catch(() => undefined)
       }
       video.onloadeddata = () => {
         ready()
-        if (!timer) timer = window.setInterval(() => play(via === 'proxy' ? mediaSrc(bust(step.url)) : bust(step.url)), 60000)
+        if (fresh) setBadge(stepLabel('mp4', cam.refreshSec, prior))
+      }
+      // A clip plays once. Then a countdown, then a fresh clip from the source, never the old one again.
+      video.onended = () => {
+        if (closed || my !== token) return
+        window.clearInterval(timer)
+        const due = Date.now() + CLIP_WAIT_SEC * 1000
+        setBadge(clipCountdownLabel(CLIP_WAIT_SEC))
+        timer = window.setInterval(() => {
+          if (closed || my !== token) return
+          const left = (due - Date.now()) / 1000
+          setBadge(clipCountdownLabel(left))
+          if (left <= 0) {
+            window.clearInterval(timer)
+            timer = 0
+            fresh = true
+            play(via === 'proxy' ? mediaSrc(bust(step.url)) : bust(step.url))
+          }
+        }, 500)
       }
       video.onerror = () => {
         if (via === 'proxy') {
@@ -659,12 +698,19 @@ export function mountCameraPanel(actions: CameraActions): CameraPanel {
       node.autoplay = true
       node.playsInline = true
       node.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#010804'
-      if (stepNow.kind === 'mp4') node.loop = true
+      if (stepNow.kind === 'mp4') {
+        node.loop = false
+        node.onended = () => {
+          window.setTimeout(() => {
+            if (popVideo === node) node.src = absolute(mediaSrc(bust(stepNow.url)))
+          }, CLIP_WAIT_SEC * 1000)
+        }
+      }
       popStageEl.append(node, canvas, note, nameEl, roadEl, bar)
       doc.body.append(popStageEl)
       popVideo = node
       if (stepNow.kind === 'hls' && Hls.isSupported()) {
-        const player = new Hls({ enableWorker: false })
+        const player = new Hls({ ...HLS_LIVE_CONFIG })
         popup = player
         player.loadSource(absolute(mediaSrc(stepNow.url)))
         player.attachMedia(node)

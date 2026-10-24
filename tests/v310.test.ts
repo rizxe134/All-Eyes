@@ -78,7 +78,7 @@ describe('playback fallback', () => {
     expect(dead.reason).toBe('NO MEDIA URL')
     expect(stepLabel('snapshot', 5, 'STREAM 404')).toBe('SNAPSHOT · STREAM 404')
     expect(stepLabel('hls', 5, '')).toBe('LIVE')
-    expect(stepLabel('mp4', 60, '')).toBe('VIDEO CLIP · refreshes every 60s')
+    expect(stepLabel('mp4', 60, '')).toBe('VIDEO CLIP · plays once, then a new clip')
     expect(offlineLabel('SNAPSHOT FAILED', 'NEVER')).toBe('FEED OFFLINE · SNAPSHOT FAILED · LAST GOOD NEVER')
     expect(lastGoodLabel(1_000, 1_000)).toBe('JUST NOW')
     expect(lastGoodLabel(null)).toBe('NEVER')

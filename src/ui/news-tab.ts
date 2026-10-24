@@ -1,11 +1,9 @@
 import type { SettingsStore } from '../core/types'
 import { authHeaders } from '../net/http'
 import {
-  countryMarkers,
   feedsForRegion,
   filterHeadlines,
   NEWS_CATEGORIES,
-  NEWS_FEEDS,
   NEWS_REGIONS,
   parseGdeltArtList,
   parseGdeltGeo,
@@ -13,6 +11,7 @@ import {
   type Headline,
 } from '../desk/news'
 import { setNewsPoints, type NewsPoint } from '../desk/news-store'
+import { categorize, locateHeadline, NEWS_GLYPH, spread } from '../desk/news-geo'
 
 export interface NewsDesk {
   root: HTMLElement
@@ -122,31 +121,39 @@ export function mountNewsDesk(host: HTMLElement, opts: NewsDeskOptions): NewsDes
   }
 
   function paintGlobe(headlines: Headline[], geo: ReturnType<typeof parseGdeltGeo>) {
-    let points: NewsPoint[] = []
-    if (geo.length) {
-      points = geo.slice(0, 40).map((story) => ({
+    const points: NewsPoint[] = []
+    for (const story of geo.slice(0, 40)) {
+      const category = categorize(story.title)
+      points.push({
         id: `news:${story.id}`,
         lat: story.lat,
         lon: story.lon,
         title: story.title,
-        detail: 'GDELT',
+        detail: 'GDELT · story location',
         source: story.source,
-      }))
-    } else {
-      const gdelt = headlines.filter((row) => row.country && row.source !== 'BBC World' && !NEWS_FEEDS.some((feed) => feed.name === row.source))
-      const markers = gdelt.length
-        ? countryMarkers(gdelt, 'SOURCE COUNTRY')
-        : countryMarkers(headlines, 'OUTLET COUNTRY')
-      points = markers.map((marker) => ({
-        id: marker.id,
-        lat: marker.lat,
-        lon: marker.lon,
-        title: marker.title,
-        detail: marker.detail,
-        source: marker.source,
-      }))
+        locatedBy: 'GDELT GEO',
+        category,
+        glyph: NEWS_GLYPH[category],
+      })
     }
-    setNewsPoints(points)
+    for (const row of headlines.slice(0, 80)) {
+      if (points.length >= 80) break
+      const at = locateHeadline(row.title, row.snippet, row.country)
+      if (!at) continue
+      const category = categorize(`${row.title} ${row.snippet}`)
+      points.push({
+        id: `news:${row.id}`,
+        lat: at.lat,
+        lon: at.lon,
+        title: row.title,
+        detail: `${at.place} · LOCATED BY ${at.locatedBy} · ${row.source}`,
+        source: row.source,
+        locatedBy: at.locatedBy === 'OUTLET COUNTRY' ? 'OUTLET COUNTRY (feed home, not the story)' : `${at.locatedBy} (${at.place})`,
+        category,
+        glyph: NEWS_GLYPH[category],
+      })
+    }
+    setNewsPoints(spread(points))
   }
 
   function paint(headlines: Headline[]) {

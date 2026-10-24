@@ -47,7 +47,7 @@ describe('camera feed mode', () => {
   it('labels streams, clips, and stills differently', () => {
     expect(modeLabel('hls', 5)).toBe('LIVE')
     expect(modeLabel('mjpeg', 5)).toBe('LIVE')
-    expect(modeLabel('mp4', 60)).toBe('VIDEO CLIP · refreshes every 60s')
+    expect(modeLabel('mp4', 60)).toBe('VIDEO CLIP · plays once, then a new clip')
     expect(modeLabel('snapshot', 600)).toBe('SNAPSHOT · refreshes every 600s')
     expect(modeLabel('offline', 5)).toBe('FEED OFFLINE')
   })
@@ -134,14 +134,14 @@ describe('camera parsers', () => {
   })
 
   it('treats Georgia auth video as a snapshot and Wisconsin open video as HLS', () => {
-    const row = (host: string, auth: boolean, video: string | null) => ({
+    const row = (host: string, auth: boolean, video: string | null, wkt = 'POINT (-84.38 33.85)') => ({
       host,
       data: [{
         id: '11148',
         roadway: 'SR 13',
         direction: 'North',
         location: 'ATL-0602',
-        latLng: { geography: { wellKnownText: 'POINT (-84.38 33.85)' } },
+        latLng: { geography: { wellKnownText: wkt } },
         images: [{
           id: '18558',
           description: 'ATL-0602: SR 13 at Lenox Rd',
@@ -158,11 +158,11 @@ describe('camera parsers', () => {
       videoUrl: '',
       attribution: 'Georgia 511 / GDOT',
     })
-    const wisconsin = parse511(row('511wi.gov', false, 'https://cctv1.dot.wi.gov/rtplive/CCTV-49-0011/playlist.m3u8'), 'wi')
+    const wisconsin = parse511(row('511wi.gov', false, 'https://cctv1.dot.wi.gov/rtplive/CCTV-49-0011/playlist.m3u8', 'POINT (-89.4 43.07)'), 'wi')
     expect(wisconsin[0]?.mode).toBe('hls')
-    expect(parseFeed('fl', row('fl511.com', true, 'https://divas.cloud/live/playlist.m3u8'))[0]?.mode).toBe('snapshot')
-    expect(parseFeed('az', row('az511.gov', false, null))[0]?.mode).toBe('snapshot')
-    expect(parseFeed('on', row('511on.ca', false, null))[0]?.mode).toBe('snapshot')
+    expect(parseFeed('fl', row('fl511.com', true, 'https://divas.cloud/live/playlist.m3u8', 'POINT (-80.19 25.76)'))[0]?.mode).toBe('snapshot')
+    expect(parseFeed('az', row('az511.gov', false, null, 'POINT (-112.07 33.45)'))[0]?.mode).toBe('snapshot')
+    expect(parseFeed('on', row('511on.ca', false, null, 'POINT (-79.38 43.65)'))[0]?.mode).toBe('snapshot')
   })
 
   it('reads optional keyed catalogs as snapshots', () => {

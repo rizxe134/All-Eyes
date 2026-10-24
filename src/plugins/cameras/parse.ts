@@ -50,7 +50,33 @@ function str(value: unknown): string {
 }
 
 function point(lat: number | null, lon: number | null): boolean {
-  return lat != null && lon != null && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
+  if (lat == null || lon == null) return false
+  if (Math.abs(lat) < 1e-6 && Math.abs(lon) < 1e-6) return false
+  return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
+}
+
+/** [south, west, north, east] — a camera outside its source's region is hidden, never plotted. */
+export const SOURCE_BOUNDS: Record<string, readonly [number, number, number, number]> = {
+  tfl: [51.2, -0.6, 51.75, 0.35],
+  caltrans: [32.4, -124.6, 42.1, -114.0],
+  az: [31.2, -115.0, 37.1, -108.9],
+  ut: [36.9, -114.1, 42.1, -108.9],
+  wsdot: [45.5, -124.9, 49.1, -116.8],
+  nyc: [40.45, -74.3, 40.95, -73.65],
+  ga: [30.3, -85.7, 35.1, -80.7],
+  fl: [24.3, -87.7, 31.1, -79.9],
+  pa: [39.6, -80.6, 42.4, -74.6],
+  ne: [40.9, -73.8, 47.6, -66.8],
+  wi: [42.4, -93.0, 47.4, -86.2],
+  ohgo: [38.3, -84.9, 42.4, -80.4],
+  on: [41.6, -95.2, 56.9, -74.3],
+  fi: [59.6, 19.0, 70.2, 31.7],
+}
+
+export function inSourceBounds(source: string, lat: number, lon: number): boolean {
+  const box = SOURCE_BOUNDS[source]
+  if (!box) return point(lat, lon)
+  return point(lat, lon) && lat >= box[0] && lat <= box[2] && lon >= box[1] && lon <= box[3]
 }
 
 function refreshSec(value: unknown, fallback: number): number {
@@ -252,7 +278,12 @@ export function parse511(body: unknown, source: string): TrafficCam[] {
     const row = record(item)
     const latLng = record(row.latLng)
     const geography = record(latLng.geography)
-    const at = pointWkt(str(geography.wellKnownText))
+    let at = pointWkt(str(geography.wellKnownText))
+    if (!at) {
+      const lat = num(row.latitude ?? row.Latitude ?? latLng.latitude)
+      const lon = num(row.longitude ?? row.Longitude ?? latLng.longitude)
+      at = point(lat, lon) ? { lat: lat as number, lon: lon as number } : null
+    }
     if (!at) continue
     const images = Array.isArray(row.images) ? row.images : []
     for (const image of images) {
@@ -391,6 +422,10 @@ export function parseOhgo(body: unknown): TrafficCam[] {
 }
 
 export function parseFeed(id: string, body: unknown): TrafficCam[] {
+  return parseFeedRaw(id, body).filter((c) => inSourceBounds(c.source || id, c.lat, c.lon))
+}
+
+function parseFeedRaw(id: string, body: unknown): TrafficCam[] {
   if (id === 'tfl') return parseTfl(body)
   if (id === 'caltrans') return parseCaltrans(body)
   if (id === 'nyc') return parseNyc(body)

@@ -2,6 +2,14 @@
 
 Release pages list only that version. This file keeps the history.
 
+## 4.0.1
+
+- NEWS on the globe puts a small icon at each story's location. The icon shows the category: conflict, business, science, or world. Every pin's card says LOCATED BY and how the spot was found: GDELT GEO (reported story coordinates), PLACE IN HEADLINE or PLACE IN SUMMARY (a named city or country in the text), or OUTLET COUNTRY (only the feed's home, not the story). Pins that share a spot fan out so each one can be clicked. The legend lists the category glyphs.
+- CAMERAS: a TfL VIDEO CLIP plays once. When it ends, the badge counts down (NEW CLIP IN 10s) and then loads a fresh clip from TfL. It no longer loops an old clip.
+- CAMERAS: HLS streams stay at the live edge. If playback falls more than 12 seconds behind, it jumps forward. If the picture stops moving for 8 seconds, the badge says STALLED · RELOADING and the stream reloads up to twice. After that, it falls through to the snapshot with the reason STREAM STALLED.
+- CAMERAS: the new LIVE ONLY button shows only cameras with a live stream. The LIVE, VIDEO CLIP, SNAPSHOT, and NOT AVAILABLE labels are unchanged.
+- Camera locations: missing, null, or 0,0 coordinates now count as missing and are never plotted at 0,0 (Wisconsin cameras were showing up in the Gulf of Guinea). 511 catalogs fall back to plain latitude and longitude fields when the map point is empty. Each source has a bounding box, and a camera outside its source's region is hidden.
+
 ## 4.0.0
 
 - GLOBE, CAMERAS, NEWS, and STOCKS are tabs. Ctrl+1 through Ctrl+4, or Cmd+1 through Cmd+4, switch them. The globe stays mounted, and its render loop pauses on the other tabs. Camera streams, detection, and the news and quote polls pause when their tab is hidden.

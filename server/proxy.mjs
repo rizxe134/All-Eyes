@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { routeCam } from './cams.mjs'
 import { routeDesk } from './desk.mjs'
 
-const UA = 'AllEyes/4.0.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/4.0.1 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 const CELESTRAK_GROUPS = new Set([
   'stations',

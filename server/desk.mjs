@@ -1,4 +1,4 @@
-const UA = 'AllEyes/4.0.0 (local educational globe; https://github.com/rizxe134/All-Eyes)'
+const UA = 'AllEyes/4.0.1 (local educational globe; https://github.com/rizxe134/All-Eyes)'
 
 /** @type {Map<string, { exp: number, status: number, type: string, body: Buffer }>} */
 const cache = new Map()

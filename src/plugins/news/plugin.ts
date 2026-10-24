@@ -6,12 +6,12 @@ const LAYER = 'news'
 export const newsPlugin: AllEyesPlugin = {
   id: 'news',
   name: 'World news',
-  version: '4.0.0',
+  version: '4.0.1',
   layers: [
     {
       id: LAYER,
       label: 'NEWS',
-      description: 'Geolocated headlines. Off until SHOW ON GLOBE is on. Outlet-country pins are labeled OUTLET COUNTRY.',
+      description: 'Geolocated headlines. Off until SHOW ON GLOBE is on. Each pin says how it was located: GDELT GEO, PLACE IN HEADLINE, PLACE IN SUMMARY, or OUTLET COUNTRY.',
       defaultOn: false,
       create(ctx: LayerContext) {
         let stop = () => {}
@@ -27,12 +27,14 @@ export const newsPlugin: AllEyesPlugin = {
             label: point.title,
             detail: point.detail,
             brightness: 0.95,
-            shape: 'news',
+            shape: point.glyph || 'news',
             scale: 1.1,
             card: [
               { k: 'STORY', v: point.title },
               { k: 'SOURCE', v: point.source },
               { k: 'WHERE', v: point.detail },
+              { k: 'LOCATED BY', v: point.locatedBy || '' },
+              { k: 'CATEGORY', v: (point.category || '').toUpperCase() },
             ],
           }))
           ctx.publish(LAYER, contacts)

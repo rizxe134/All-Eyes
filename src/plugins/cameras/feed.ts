@@ -46,7 +46,7 @@ export function feedMode(videoUrl: string, imageUrl: string, authRequired: boole
 
 export function modeLabel(mode: CamMode, refreshSec: number): string {
   if (mode === 'hls' || mode === 'mjpeg') return 'LIVE'
-  if (mode === 'mp4') return 'VIDEO CLIP · refreshes every 60s'
+  if (mode === 'mp4') return 'VIDEO CLIP · plays once, then a new clip'
   if (mode === 'snapshot') return `SNAPSHOT · refreshes every ${Math.max(3, Math.round(refreshSec || 30))}s`
   return 'FEED OFFLINE'
 }
@@ -86,7 +86,7 @@ export function playbackPlan(cam: Pick<TrafficCam, 'online' | 'mode' | 'videoUrl
 
 export function stepLabel(kind: PlaybackKind, refreshSec: number, priorReason = ''): string {
   if (kind === 'hls' || kind === 'mjpeg') return priorReason ? `LIVE · ${priorReason}` : 'LIVE'
-  if (kind === 'mp4') return priorReason ? `VIDEO CLIP · ${priorReason}` : 'VIDEO CLIP · refreshes every 60s'
+  if (kind === 'mp4') return priorReason ? `VIDEO CLIP · ${priorReason}` : 'VIDEO CLIP · plays once, then a new clip'
   return priorReason
     ? `SNAPSHOT · ${priorReason}`
     : `SNAPSHOT · refreshes every ${Math.max(3, Math.round(refreshSec || 30))}s`

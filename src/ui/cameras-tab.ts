@@ -2,6 +2,7 @@ import Hls from 'hls.js'
 import type { ViewState } from '../core/types'
 import { allCams, camById } from '../plugins/cameras/catalog'
 import type { TrafficCam } from '../plugins/cameras/parse'
+import { CLIP_WAIT_SEC, HLS_LIVE_CONFIG } from '../plugins/cameras/live'
 import { CAM_REGIONS, CAM_SOURCES, feedBucket, filterCams, sourceLabel, streamingIds, tileCount, type FeedFilter, type GridSize } from '../desk/cameras'
 import type { CameraPanel } from '../ui/camera-panel'
 
@@ -60,6 +61,8 @@ export function mountCamerasDesk(host: HTMLElement, opts: CamerasDeskOptions): C
   const mode = document.createElement('select')
   mode.className = 'ae-desk-select'
   mode.append(option('ALL', 'all'), option('LIVE', 'live'), option('CLIP', 'clip'), option('SNAPSHOT', 'snapshot'))
+  const liveOnly = button('LIVE ONLY')
+  liveOnly.title = 'Show only cameras with a live stream'
   const nearMe = button('NEAR ME')
   const nearView = button('NEAR VIEW')
   nearView.classList.add('is-on')
@@ -71,7 +74,7 @@ export function mountCamerasDesk(host: HTMLElement, opts: CamerasDeskOptions): C
     return node
   })
   const note = el('div', 'ae-desk-note', 'CAMERAS LOADING')
-  bar.append(search, source, region, mode, nearMe, nearView, nearAll, ...grids, note)
+  bar.append(search, source, region, mode, liveOnly, nearMe, nearView, nearAll, ...grids, note)
 
   const wall = el('div', 'ae-camwall is-4')
   const viewer = el('div', 'ae-camhost')
@@ -107,7 +110,7 @@ export function mountCamerasDesk(host: HTMLElement, opts: CamerasDeskOptions): C
       text: search.value,
       source: source.value,
       region: region.value,
-      mode: mode.value as FeedFilter,
+      mode: liveOnly.classList.contains('is-on') ? 'live' : (mode.value as FeedFilter),
       near: radius(),
     }).slice(0, 80)
   }
@@ -155,15 +158,7 @@ export function mountCamerasDesk(host: HTMLElement, opts: CamerasDeskOptions): C
       video.autoplay = true
       video.playsInline = true
       stage.append(video)
-      const player = new Hls({
-        enableWorker: false,
-        manifestLoadingMaxRetry: 1,
-        levelLoadingMaxRetry: 1,
-        fragLoadingMaxRetry: 0,
-        manifestLoadingTimeOut: 8000,
-        levelLoadingTimeOut: 8000,
-        fragLoadingTimeOut: 8000,
-      })
+      const player = new Hls({ ...HLS_LIVE_CONFIG })
       player.loadSource(mediaSrc(cam.videoUrl))
       player.attachMedia(video)
       player.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -175,7 +170,13 @@ export function mountCamerasDesk(host: HTMLElement, opts: CamerasDeskOptions): C
       video.muted = true
       video.autoplay = true
       video.playsInline = true
+      video.loop = false
       video.src = mediaSrc(cam.videoUrl)
+      video.onended = () => {
+        window.setTimeout(() => {
+          if (video.isConnected) video.src = mediaSrc(bust(cam.videoUrl))
+        }, CLIP_WAIT_SEC * 1000)
+      }
       stage.append(video)
       void video.play().catch(() => undefined)
     } else if (cam.mode === 'mjpeg' && cam.imageUrl) {
@@ -256,6 +257,12 @@ export function mountCamerasDesk(host: HTMLElement, opts: CamerasDeskOptions): C
       paint()
     })
   }
+  liveOnly.addEventListener('click', () => {
+    const on = liveOnly.classList.toggle('is-on')
+    mode.disabled = on
+    signature = ''
+    paint()
+  })
   nearView.addEventListener('click', () => {
     near = 'view'
     nearView.classList.add('is-on')
